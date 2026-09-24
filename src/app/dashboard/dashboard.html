@@ -1,0 +1,206 @@
+<div class="dashboard">
+  <header class="dashboard-topbar">
+    <div class="topbar-title">
+      <h1>Gestión de requerimientos por correo electrónico</h1>
+      @if (lastUpdated(); as updated) {
+        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+      }
+    </div>
+
+    <div class="topbar-dates date-filters">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [value]="startDate() ?? ''"
+          (change)="setStartDate($any($event.target).value)"
+        />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input
+          type="date"
+          [value]="endDate() ?? ''"
+          (change)="setEndDate($any($event.target).value)"
+        />
+      </label>
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="applyDateRange()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Filtrar"
+        aria-label="Filtrar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="refresh()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Recargar"
+        aria-label="Recargar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">
+      <span class="spinner spinner-large"></span>
+      Cargando datos…
+    </div>
+  } @else if (error(); as err) {
+    <div class="error">
+      <p>{{ err }}</p>
+      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    <section class="stats-row">
+      <div class="stat-card">
+        <span>Requerimientos recibidos</span>
+        <strong class="stat-value">{{ formatNumber(receivedTotal()) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Casos cerrados</span>
+        <strong class="stat-value">
+          {{ formatNumber(closedTotal()) }} ({{
+            closedPercentage().toLocaleString('es', { maximumFractionDigits: 1 })
+          }}%)
+        </strong>
+      </div>
+    </section>
+
+    <section class="filters">
+      <span class="filters-label">Mostrar:</span>
+      @for (chip of filterChips(); track chip.status) {
+        <button
+          class="filter-chip"
+          [class.filter-chip-hidden]="chip.hidden"
+          type="button"
+          (click)="toggleStatus(chip.status)"
+          [attr.aria-pressed]="!chip.hidden"
+        >
+          <span class="chip-dot"></span>
+          {{ chip.status }}
+          <span class="chip-count">{{ formatNumber(chip.total) }}</span>
+          @if (chip.hidden) {
+            <span class="chip-blank">✕</span>
+          }
+        </button>
+      }
+      @if (hasHiddenFilters()) {
+        <button class="reset-btn" type="button" (click)="resetFilters()">Limpiar filtro</button>
+      }
+    </section>
+
+    <section class="charts-grid">
+      <div class="chart-card chart-card-timeline">
+        <h2>Evolución por fecha</h2>
+        @if (timelineSeries()[0].series.length) {
+          <div class="chart-canvas chart-canvas-timeline" chartView #lineView="chartView">
+            @if (lineView.dims(); as view) {
+              <ngx-charts-line-chart
+                [results]="timelineSeries()"
+                [scheme]="scheme"
+                [animations]="false"
+                [view]="view"
+                [xAxis]="true"
+                [yAxis]="true"
+                [legend]="false"
+                [gradient]="false"
+                [xAxisTickFormatting]="formatXAxis"
+                [yAxisTickFormatting]="formatYAxis"
+                [xAxisTicks]="timelineTicks()"
+                [rotateXAxisTicks]="true"
+                [maxXAxisTickLength]="12"
+                [trimXAxisTicks]="false"
+              >
+              </ngx-charts-line-chart>
+            }
+          </div>
+        } @else {
+          <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+        }
+      </div>
+
+      <div class="chart-card">
+        <h2>Distribución por estado</h2>
+        @if (barData().length) {
+          <div class="chart-canvas chart-canvas-standard" chartView #barView="chartView">
+            @if (barView.dims(); as view) {
+              <ngx-charts-bar-vertical
+                [results]="barData()"
+                [scheme]="scheme"
+                [animations]="false"
+                [view]="view"
+                [xAxis]="true"
+                [yAxis]="true"
+                [legend]="false"
+                [showDataLabel]="true"
+                [gradient]="false"
+              >
+              </ngx-charts-bar-vertical>
+            }
+          </div>
+        } @else {
+          <div class="chart-empty">No hay estados seleccionados.</div>
+        }
+      </div>
+
+      <div class="chart-card">
+        <h2>Proporción por estado</h2>
+        @if (pieData().length) {
+          <div class="chart-canvas chart-canvas-standard" chartView #pieView="chartView">
+            @if (pieView.dims(); as view) {
+              <ngx-charts-pie-chart
+                [results]="pieData()"
+                [scheme]="scheme"
+                [animations]="false"
+                [view]="view"
+                [labels]="true"
+                [doughnut]="true"
+                [legend]="false"
+                [explodeSlices]="false"
+              >
+              </ngx-charts-pie-chart>
+            }
+          </div>
+        } @else {
+          <div class="chart-empty">No hay estados seleccionados.</div>
+        }
+      </div>
+    </section>
+  }
+</div>

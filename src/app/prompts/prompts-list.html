@@ -1,0 +1,162 @@
+<div class="prompts">
+  <header class="prompts-header">
+    <div>
+      <h1>Prompts</h1>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+    </div>
+    <button
+      *appHasPermission="PERMISSIONS.promptsWrite"
+      class="btn-new"
+      type="button"
+      (click)="newPrompt()"
+    >
+      Nuevo prompt
+    </button>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state">
+      <span class="spinner spinner-large"></span>
+      Cargando prompts…
+    </div>
+  } @else if (error(); as err) {
+    <div class="state state-error">
+      <p>{{ err }}</p>
+      <button class="btn-secondary" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    <div class="filters-bar">
+      <input
+        class="search-input"
+        type="search"
+        placeholder="Buscar por código, nombre, agente…"
+        [value]="searchText()"
+        (input)="onSearch($event)"
+      />
+      <select class="filter-select" [value]="typeFilter()" (change)="onTypeChange($event)">
+        <option value="all">Todos los tipos</option>
+        @for (type of types(); track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      <select class="filter-select" [value]="groupFilter()" (change)="onGroupChange($event)">
+        <option value="all">Todos los grupos</option>
+        @for (group of groups(); track group) {
+          <option [value]="group">{{ group }}</option>
+        }
+      </select>
+      <select class="filter-select" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="all">Todos los estados</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="resetFilters()"
+        [disabled]="!hasActiveFilters()"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+
+    <div class="sort-bar">
+      <label class="sort-label">
+        Ordenar por
+        <select class="filter-select" [value]="sortColumn()" (change)="onSortChange($event)">
+          @for (option of sortOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+      <button class="btn-secondary" type="button" (click)="toggleSortDirection()">
+        {{ sortDirection() === 'asc' ? '↑ Ascendente' : '↓ Descendente' }}
+      </button>
+      <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="isRefreshing()">
+        ↩ Refrescar
+      </button>
+    </div>
+
+    @if (prompts().length === 0) {
+      <div class="state">
+        <p>No hay prompts registrados.</p>
+      </div>
+    } @else if (sortedPrompts().length === 0) {
+      <div class="state">
+        <p>No hay prompts que coincidan con la búsqueda.</p>
+        <button class="btn-secondary" type="button" (click)="resetFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="prompts-table">
+          <thead>
+            <tr>
+              <th class="col-group">Grupo agente</th>
+              <th class="col-secuence">Secuencia</th>
+              <th class="col-name">Nombre</th>
+              <th class="col-code">Código</th>
+              <th class="col-version">Versión</th>
+              <th class="col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (prompt of pagedPrompts(); track prompt.promptId) {
+              <tr
+                class="clickable-row"
+                tabindex="0"
+                (click)="openPrompt(prompt)"
+                (keydown.enter)="openPrompt(prompt)"
+              >
+                <td class="col-group">{{ prompt.agentGroup || '—' }}</td>
+                <td class="col-secuence">{{ prompt.secuence }}</td>
+                <td class="col-name">{{ prompt.name }}</td>
+                <td class="col-code">{{ prompt.code }}</td>
+                <td class="col-version">{{ prompt.version }}</td>
+                <td class="col-actions">
+                  <button
+                    *appHasPermission="PERMISSIONS.promptsWrite"
+                    class="row-btn"
+                    type="button"
+                    (click)="openPrompt(prompt); $event.stopPropagation()"
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (sortedPrompts().length > 0) {
+        <div class="pagination">
+          <span class="page-info">{{ pageInfo() }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="prevPage()"
+            [disabled]="page() === 1"
+          >
+            « Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="nextPage()"
+            [disabled]="page() === totalPages()"
+          >
+            Siguiente »
+          </button>
+        </div>
+      }
+    }
+  }
+</div>

@@ -1,0 +1,104 @@
+<div class="users-page">
+  <header class="users-header">
+    <div>
+      <h1>Usuarios</h1>
+      <p class="users-subtitle">Crea cuentas, asigna perfiles y administra el acceso.</p>
+    </div>
+    <a class="btn-primary" routerLink="/usuarios/nuevo">Nuevo usuario</a>
+  </header>
+
+  @if (notice(); as notice) {
+    <div class="users-message users-notice" role="status">{{ notice }}</div>
+  }
+  @if (error(); as error) {
+    <div class="users-message users-error" role="alert">{{ error }}</div>
+  }
+
+  @if (isLoading()) {
+    <p class="users-loading">Cargando usuarios…</p>
+  } @else if (usersList().length === 0) {
+    <p class="users-empty">No hay usuarios registrados.</p>
+  } @else {
+    <div class="users-table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Nombre</th>
+            <th>Perfil</th>
+            <th>Estado</th>
+            <th>Último acceso</th>
+            <th class="col-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of usersList(); track user.userId) {
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.fullName ?? '—' }}</td>
+              <td>{{ profileName(user) }}</td>
+              <td>
+                <span class="badge" [class.badge-inactive]="!user.active">
+                  {{ user.active ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'short') : '—' }}</td>
+              <td class="col-actions">
+                <button type="button" class="row-btn" (click)="openEdit(user)">Editar</button>
+                <button type="button" class="row-btn" (click)="openPassword(user)">
+                  Contraseña
+                </button>
+                <button type="button" class="row-btn row-btn-danger" (click)="remove(user)">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (dialog(); as dialog) {
+    @if (dialog.kind === 'password') {
+      <div class="dialog-backdrop" (click)="closeDialog()">
+        <div class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+          <h2>Restablecer contraseña de {{ dialog.user.username }}</h2>
+          <p class="dialog-hint">Se cerrarán las sesiones activas de este usuario.</p>
+          @if (dialogError(); as dialogError) {
+            <div class="users-message users-error" role="alert">{{ dialogError }}</div>
+          }
+          <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()" novalidate>
+            <div class="form-field">
+              <label for="reset-password">Nueva contraseña</label>
+              <input
+                id="reset-password"
+                type="password"
+                formControlName="newPassword"
+                autocomplete="new-password"
+              />
+              @if (
+                passwordForm.controls.newPassword.touched &&
+                passwordForm.controls.newPassword.errors?.['minlength']
+              ) {
+                <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+              }
+            </div>
+            <div class="dialog-actions">
+              <button type="button" class="btn-secondary" (click)="closeDialog()">Cancelar</button>
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="passwordForm.invalid || isSaving()"
+              >
+                {{ isSaving() ? 'Guardando…' : 'Restablecer' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  }
+</div>

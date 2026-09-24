@@ -1,0 +1,103 @@
+<div class="user-form-page">
+  <header class="user-form-header">
+    <div>
+      <h1>{{ isEdit() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
+      @if (isEdit()) {
+        @if (user(); as user) {
+          <p class="subtitle">{{ user.username }}</p>
+        }
+      }
+    </div>
+    <a class="btn-secondary" routerLink="/usuarios">Volver</a>
+  </header>
+
+  @if (isLoading()) {
+    <div class="user-form-loading">
+      <span class="spinner spinner-large"></span>
+      Cargando usuario…
+    </div>
+  } @else if ((error() && !user() && isEdit()) || notFound()) {
+    <div class="user-form-error">
+      @if (notFound()) {
+        <p>El usuario no existe.</p>
+      } @else {
+        <p>{{ error() }}</p>
+      }
+      <a class="btn-secondary" routerLink="/usuarios">Volver al listado</a>
+    </div>
+  } @else {
+    <form class="user-form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (error(); as error) {
+        <div class="user-form-message user-form-error-inline" role="alert">{{ error }}</div>
+      }
+
+      @if (isEdit()) {
+        @if (user(); as user) {
+          <div class="form-field">
+            <label>Usuario</label>
+            <input type="text" [value]="user.username" disabled />
+          </div>
+        }
+      } @else {
+        <div class="form-field">
+          <label for="new-username">Usuario</label>
+          <input id="new-username" type="text" formControlName="username" autocomplete="off" />
+        </div>
+      }
+
+      <div class="form-field">
+        <label for="edit-email">Correo electrónico</label>
+        <input id="edit-email" type="email" formControlName="email" autocomplete="off" />
+        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <span class="field-error">El correo electrónico no es válido.</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="edit-fullname">Nombre completo</label>
+        <input id="edit-fullname" type="text" formControlName="fullName" autocomplete="off" />
+      </div>
+
+      @if (!isEdit()) {
+        <div class="form-field">
+          <label for="new-password">Contraseña</label>
+          <input
+            id="new-password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
+            <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+          }
+        </div>
+      }
+
+      <div class="form-field">
+        <label for="edit-profile">Perfil</label>
+        <select id="edit-profile" formControlName="profileId">
+          <option [ngValue]="0" disabled>Selecciona un perfil</option>
+          @for (profile of profiles(); track profile.profileId) {
+            <option [ngValue]="profile.profileId">{{ profile.name }}</option>
+          }
+        </select>
+      </div>
+
+      @if (isEdit()) {
+        <div class="form-field form-check">
+          <label>
+            <input type="checkbox" formControlName="active" />
+            Usuario activo
+          </label>
+        </div>
+      }
+
+      <div class="form-actions">
+        <a class="btn-secondary" routerLink="/usuarios">Cancelar</a>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || isSaving()">
+          {{ isSaving() ? 'Guardando…' : isEdit() ? 'Guardar cambios' : 'Crear usuario' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

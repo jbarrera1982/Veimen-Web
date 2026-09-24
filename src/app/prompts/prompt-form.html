@@ -1,0 +1,126 @@
+<div class="prompt-form">
+  <header class="prompt-form-header">
+    <h1>{{ isEdit() ? 'Editar prompt' : 'Nuevo prompt' }}</h1>
+    @if (error(); as err) {
+      <p class="form-error">{{ err }}</p>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="form-state">
+      <span class="spinner"></span>
+      Cargando prompt…
+    </div>
+  } @else {
+    <form class="prompt-form-grid" [formGroup]="form" novalidate>
+      <input type="hidden" formControlName="promptId" />
+
+      <label class="field field-full field-readonly">
+        <span>ID</span>
+        <input formControlName="promptId" type="number" readonly />
+      </label>
+
+      <label class="field">
+        <span>Secuencia</span>
+        <input formControlName="secuence" type="number" />
+      </label>
+
+      <label class="field">
+        <span>Código *</span>
+        <input formControlName="code" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Nombre *</span>
+        <input formControlName="name" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Agente *</span>
+        <input formControlName="agent" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Grupo de agente</span>
+        <input formControlName="agentGroup" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Tipo *</span>
+        <input formControlName="type" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Modelo LLM *</span>
+        <input formControlName="llmModel" type="text" />
+      </label>
+
+      <label class="field">
+        <span>Versión *</span>
+        <input formControlName="version" type="text" />
+      </label>
+
+      <label class="field field-full">
+        <span>Descripción</span>
+        <textarea formControlName="description" rows="2"></textarea>
+      </label>
+
+      <label class="field field-full">
+        <span>System prompt *</span>
+        <textarea formControlName="systemPrompt" rows="5"></textarea>
+      </label>
+
+      <label class="field field-full">
+        <span>User prompt</span>
+        <textarea formControlName="userPrompt" rows="4"></textarea>
+      </label>
+
+      <label class="field">
+        <span>Temperatura</span>
+        <input formControlName="temperature" type="number" step="0.1" min="0" max="2" />
+      </label>
+
+      <label class="field">
+        <span>Max tokens</span>
+        <input formControlName="maxTokens" type="number" min="1" />
+      </label>
+
+      <label class="field">
+        <span>Activo</span>
+        <input formControlName="active" type="checkbox" />
+      </label>
+
+      <label class="field field-full">
+        <span>Observaciones</span>
+        <textarea formControlName="observations" rows="2"></textarea>
+      </label>
+
+      <label class="field field-full">
+        <span>Schema output</span>
+        <textarea formControlName="schemaOutput" rows="4"></textarea>
+      </label>
+
+      <fieldset class="field field-full field-metadata">
+        <legend>Auditoría</legend>
+        <div class="metadata-row">
+          <label class="field">
+            <span>Creado por</span>
+            <input formControlName="createdBy" type="text" readonly />
+          </label>
+          <label class="field">
+            <span>Creado el</span>
+            <input formControlName="createdAt" type="text" readonly />
+          </label>
+          <label class="field">
+            <span>Actualizado por</span>
+            <input formControlName="updatedBy" type="text" readonly />
+          </label>
+          <label class="field">
+            <span>Actualizado el</span>
+            <input formControlName="updatedAt" type="text" readonly />
+          </label>
+        </div>
+      </fieldset>
+    </form>
+  }
+</div>

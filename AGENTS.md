@@ -1,0 +1,39 @@
+# AGENTS.md
+
+Single-application **Angular 21** project using the modern standalone style: no NgModules, signal-based components, `provideHttpClient`/`provideRouter`. **Client-side only — SSR is disabled** (no `@angular/ssr`, no server entrypoints; `angular.json` builds browser output only). Root is this directory (`Veimen Web/`); the git repo root is the parent (`../`).
+
+## Commands
+
+```bash
+npm start            # dev server on http://localhost:4200
+npm run build        # production build; output in dist/veimen-web/browser
+npm test             # unit tests (watch mode)
+npx prettier --write .   # formatting
+```
+
+- `npm test` maps to `ng test` using the `@angular/build:unit-test` builder (Vitest-based). It runs in **watch mode**; use `npx ng test --watch=false` for a single run.
+- No lint or typecheck script exists; the strict TS config is the type gate. Run `npx ng build` to type-check the app (strictTemplates is on) before relying on tests alone.
+- Package manager is npm (pin `packageManager: npm@11`). Node 20.19+/22+ required for Angular 21.
+
+## Architecture
+
+- Entrypoint: `src/main.ts` (browser bootstrap via `bootstrapApplication`). There is no server entrypoint.
+- Routes in `src/app/app.routes.ts`. All rendering happens client-side.
+- `src/app/` layout: feature folders (e.g. `dashboard/` hold `*.ts`, `*.html`, `*.css`, `*.spec.ts` together) plus `services/`.
+- Features: a dashboard (`DashboardComponent`) and a requests list (`ServiceRequestComponent`) that fetch data via `DashboardService`/`RequestsService` and render ngx-charts. Both services build their URLs from `environment.apiBaseUrl` (same pattern as `AuthService`): `${apiBaseUrl}/api/ServiceRequests/dashboard`, `${apiBaseUrl}/api/ServiceRequests` and `${apiBaseUrl}/api/ServiceRequests/trace`. Because those URLs start with `apiBaseUrl`, requests go through `authInterceptor` (Bearer token + 401 refresh/redirect).
+- `GET /api/ServiceRequests` is **paginated**: it accepts `page`/`pageSize` query params and returns `{ items, totalCount, page, pageSize }` (ASP.NET `PagedResult<T>`, **camelCase** JSON — the API serializes `ServiceRequest` properties in camelCase). It does **not** return `totalPages`; `RequestsService` computes it as `ceil(totalCount / pageSize)`. `ServiceRequestComponent` keeps `page`/`totalPages`/`totalCount` signals, requests the current page, and resets to page 1 when filters change.
+- Styling is **Tailwind CSS v4** (imported in `src/styles.css`); charts/templates in components use their own scoped CSS files.
+- **Permissions (backend RBAC)**: `services/permissions.service.ts` holds signal state (`profile`/`permissions`/`loaded`) plus the `PERMISSIONS` code map, which mirrors the backend's `Services/Permissions.cs` (`prompts.read`, `prompts.write`, `service-requests.read`, `dashboard.read`). Source: `GET /api/auth/me/permissions` (reads JWT claims). `AuthService` reloads permissions after `login()`/`refresh()` and in `initialize()`, and clears them in `clearSession()` — they live in memory only, never in localStorage.
+- Routes are gated with `permissionGuard(...codes)` from `auth/permission.guard.ts` (denied → `/sin-acceso`, `AccessDeniedComponent`); the empty child route renders `shell/home-redirect.component.ts`, which navigates to the first accessible module via the pure helper `firstAccessiblePath()` (sidebar order, fallback `cambiar-contrasena`). A guard-only route is not possible (Angular NG04014 requires component/redirectTo/children). Post-login/register navigation defaults to `/` so users land on their first permitted module. In templates, `*appHasPermission="PERMISSIONS.xxx"` (`auth/has-permission.directive.ts`) hides elements (shell nav, prompt create/edit buttons). This is **UX only** — the API enforces the same permissions via policies (403).
+- Specs: `auth.service`/`auth.interceptor` tests must flush the extra `GET /api/auth/me/permissions` after login/refresh; component tests touching `*appHasPermission` seed permissions by injecting `PermissionsService` and setting its signals in `beforeEach`.
+
+## Testing quirks
+
+- Specs use Vitest globals (no Jasmine/Karma). `tsconfig.spec.json` sets `types: ["vitest/globals"]`.
+- Dashboard tests use `provideHttpClientTesting()` + `HttpTestingController` to flush the API URL built from `environment.apiBaseUrl` and read/write `localStorage` (`veimen-web.hiddenStatuses` key). They clear `localStorage` in `beforeEach` and assert no outstanding requests in `afterEach`.
+
+## Conventions
+
+- Prettier (`.prettierrc`): `printWidth: 100`, `singleQuote: true`, Angular parser for `*.html`. Prefer formatting before committing.
+- Single quotes for JS/TS strings, 100-col width.
+- **API date filters (`start_date`, `end_date`) are always sent in `YYYYMMDD` format (no dashes).** UI/components work with `YYYY-MM-DD` (native date inputs) and services convert with a private `toApiDate()` helper (`date.replaceAll('-', '')`) before building `HttpParams`. Any new service method that accepts a date range must follow this same convention.

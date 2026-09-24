@@ -1,0 +1,18 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+
+/* Tokens Veimen (veimen.net): usados por tipografía, menú lateral y botones. */
+:root {
+  --veimen-bg: #06101d;
+  --veimen-bg2: #0c1d30;
+  --veimen-text: #f5f8fb;
+  --veimen-muted: #aebdca;
+  --veimen-accent: #42d4bd;
+  --veimen-blue: #69aaff;
+  --veimen-line: rgba(255, 255, 255, 0.12);
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+}

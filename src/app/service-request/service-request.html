@@ -1,0 +1,408 @@
+<div class="service-request">
+  <header class="service-request-header">
+    <div class="header-text">
+      <h1>Service Requests</h1>
+      @if (!isLoading() && !error()) {
+        <p class="subtitle">{{ formatNumber(totalCount()) }} Service Requests</p>
+      }
+    </div>
+
+    <div class="header-actions">
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="refresh()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Recargar"
+        aria-label="Recargar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+      @if (lastUpdated(); as updated) {
+        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+      }
+    </div>
+  </header>
+
+  <section class="date-filters">
+    <label class="date-field">
+      <span>Desde</span>
+      <input
+        type="date"
+        [value]="startDate() ?? ''"
+        (change)="setStartDate($any($event.target).value)"
+      />
+    </label>
+    <label class="date-field">
+      <span>Hasta</span>
+      <input
+        type="date"
+        [value]="endDate() ?? ''"
+        (change)="setEndDate($any($event.target).value)"
+      />
+    </label>
+
+    <div class="search-field">
+      <label class="search-input-wrap">
+        <span>Buscar</span>
+        <input
+          type="search"
+          placeholder="Buscar..."
+          [value]="search()"
+          (input)="setSearch($any($event.target).value)"
+          (keydown.enter)="applyDateRange()"
+        />
+        @if (search()) {
+          <button
+            class="search-clear"
+            type="button"
+            (click)="clearSearch()"
+            aria-label="Limpiar búsqueda"
+            title="Limpiar"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      </label>
+    </div>
+
+    <div class="status-filter" (click)="$event.stopPropagation()">
+      <button
+        class="status-filter-btn"
+        type="button"
+        aria-haspopup="listbox"
+        [attr.aria-expanded]="statusDropdownOpen()"
+        (click)="toggleStatusDropdown()"
+      >
+        <span class="status-filter-label">Estado:</span>
+        <span class="status-filter-value">{{ statusButtonLabel() }}</span>
+        <svg
+          class="icon status-filter-chevron"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      @if (statusDropdownOpen()) {
+        <div class="status-dropdown" role="listbox" aria-multiselectable="true">
+          <label class="status-option">
+            <input type="checkbox" [checked]="isAllStatuses()" (change)="toggleAllStatuses()" />
+            <span>Todas</span>
+          </label>
+          @for (status of statusOptions(); track status) {
+            <label class="status-option">
+              <input
+                type="checkbox"
+                [checked]="selectedStatuses().has(status)"
+                (change)="toggleStatusOption(status)"
+              />
+              <span>{{ status }}</span>
+            </label>
+          }
+        </div>
+      }
+    </div>
+
+    <button
+      class="refresh-btn btn-icon"
+      type="button"
+      (click)="applyDateRange()"
+      [disabled]="isRefreshing()"
+      data-tooltip="Filtrar"
+      aria-label="Filtrar"
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </svg>
+    </button>
+  </section>
+
+  @if (isLoading()) {
+    <div class="loading">
+      <span class="spinner spinner-large"></span>
+      Cargando datos…
+    </div>
+  } @else if (error(); as err) {
+    <div class="error">
+      <p>{{ err }}</p>
+      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    @if (visibleRequests().length) {
+      <div class="table-wrap">
+        <table class="requests-table">
+          <thead>
+            <tr>
+              <th class="col-number">N°</th>
+              <th class="col-date">Recepción</th>
+              <th class="col-from">De</th>
+              <th class="col-subject">Asunto</th>
+              <th class="col-status">Estado</th>
+              <th class="col-intent">Intención</th>
+              <th class="col-action">Auditoría</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of visibleRequests(); track item.requestNumber) {
+              <tr
+                class="clickable-row"
+                tabindex="0"
+                (click)="openDetail(item)"
+                (keydown.enter)="openDetail(item)"
+              >
+                <td class="col-number">{{ item.requestNumber }}</td>
+                <td class="col-date">{{ formatDateTime(item.receiptDate) }}</td>
+                <td class="col-from">{{ item.from }}</td>
+                <td class="col-subject">
+                  <span class="subject">{{ item.subject }}</span>
+                  @if (item.description) {
+                    <span class="description">{{ item.description }}</span>
+                  }
+                </td>
+                <td class="col-status">
+                  <span class="status-badge">{{ item.status }}</span>
+                </td>
+                <td class="col-intent">{{ item.detectedIntent }}</td>
+                <td class="col-action">
+                  <button
+                    class="audit-btn"
+                    type="button"
+                    (click)="$event.stopPropagation(); runAudit(item.requestNumber)"
+                    [disabled]="isAuditing(item.requestNumber)"
+                  >
+                    Informe de auditoría
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button
+          class="refresh-btn page-btn"
+          type="button"
+          (click)="prevPage()"
+          [disabled]="!hasPrevPage()"
+        >
+          ‹ Anterior
+        </button>
+        <span class="page-info">Página {{ page() }} de {{ totalPages() }}</span>
+        <button
+          class="refresh-btn page-btn"
+          type="button"
+          (click)="nextPage()"
+          [disabled]="!hasNextPage()"
+        >
+          Siguiente ›
+        </button>
+      </div>
+    } @else {
+      <div class="empty">No hay datos en el rango seleccionado.</div>
+    }
+  }
+</div>
+
+@if (selectedRequest(); as req) {
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && closeDetail()">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del Service Request">
+      <header class="modal-header">
+        <div class="modal-title">
+          <h2>Service Request #{{ req.requestNumber }}</h2>
+          <p class="modal-subtitle">{{ req.from }} · {{ formatDateTime(req.receiptDate) }}</p>
+        </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="audit-btn modal-audit-btn"
+            (click)="runAudit(req.requestNumber)"
+            [disabled]="isAuditing(req.requestNumber)"
+          >
+            Informe de auditoría
+          </button>
+          <button class="modal-close" type="button" (click)="closeDetail()" aria-label="Cerrar">
+            <svg
+              class="icon"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="modal-body">
+        <section class="detail-summary">
+          <dl class="summary-grid">
+            <div class="summary-item">
+              <dt>Asunto</dt>
+              <dd>{{ req.subject }}</dd>
+            </div>
+            <div class="summary-item">
+              <dt>Estado</dt>
+              <dd>
+                <span class="status-badge">{{ req.status }}</span>
+              </dd>
+            </div>
+            @if (req.priority) {
+              <div class="summary-item">
+                <dt>Prioridad</dt>
+                <dd>{{ req.priority }}</dd>
+              </div>
+            }
+            @if (req.channel) {
+              <div class="summary-item">
+                <dt>Canal</dt>
+                <dd>{{ req.channel }}</dd>
+              </div>
+            }
+            @if (req.detectedIntent) {
+              <div class="summary-item">
+                <dt>Intención</dt>
+                <dd>{{ req.detectedIntent }}</dd>
+              </div>
+            }
+            @if (req.description) {
+              <div class="summary-item">
+                <dt>Descripción</dt>
+                <dd>{{ req.description }}</dd>
+              </div>
+            }
+          </dl>
+          @if (req.originalMessage) {
+            <div class="message-block">
+              <h3>Mensaje original</h3>
+              <p>{{ req.originalMessage }}</p>
+            </div>
+          }
+        </section>
+
+        <section class="trace-section">
+          <h3>Traza</h3>
+          @if (isLoadingTrace()) {
+            <div class="trace-state">
+              <span class="spinner"></span>
+              Cargando trazabilidad…
+            </div>
+          } @else if (traceError(); as err) {
+            <div class="trace-state trace-error">{{ err }}</div>
+          } @else if (traceSteps().length) {
+            <ol class="timeline">
+              @for (step of traceSteps(); track step.traceId) {
+                <li class="trace-step">
+                  <div class="step-head">
+                    <span class="step-seq">{{ step.sequence }}</span>
+                    <div class="step-info">
+                      <span class="step-node">{{ step.node }}</span>
+                      <span class="step-meta">
+                        {{ step.nodeType }}
+                        @if (step.nodeType === 'LLM' && step.promptVersion) {
+                          · {{ step.llmModel ?? '—' }} · v{{ step.promptVersion }}
+                        }
+                      </span>
+                    </div>
+                    <span
+                      class="step-status"
+                      [class.step-status-error]="step.status !== 'completed'"
+                    >
+                      {{ step.status }}
+                    </span>
+                  </div>
+                  <div class="step-details">
+                    <dl class="summary-grid summary-grid-inline">
+                      @if (step.durationMs !== null) {
+                        <div class="summary-item">
+                          <dt>Duración</dt>
+                          <dd>{{ formatDuration(step.durationMs) }}</dd>
+                        </div>
+                      }
+                      @if (step.confidence) {
+                        <div class="summary-item">
+                          <dt>Confianza</dt>
+                          <dd>{{ formatConfidence(step.confidence) }}</dd>
+                        </div>
+                      }
+                      <div class="summary-item">
+                        <dt>Inicio</dt>
+                        <dd>{{ formatDateTime(step.startDate) }}</dd>
+                      </div>
+                      @if (step.endDate) {
+                        <div class="summary-item">
+                          <dt>Fin</dt>
+                          <dd>{{ formatDateTime(step.endDate) }}</dd>
+                        </div>
+                      }
+                    </dl>
+                    @if (step.observations) {
+                      <p class="step-observations">{{ step.observations }}</p>
+                    }
+                    @if (step.nodeType === 'LLM' && (step.inputJson || step.outputJson)) {
+                      <button type="button" class="json-toggle-btn" (click)="openJsonView(step)">
+                        Ver entrada / salida (JSON)
+                      </button>
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          } @else {
+            <div class="trace-state">Sin trazabilidad registrada.</div>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+}
+
+@if (toast(); as t) {
+  <div class="toast" [class.toast-error]="t.type === 'error'" role="status">
+    {{ t.message }}
+  </div>
+}

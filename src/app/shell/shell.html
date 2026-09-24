@@ -1,0 +1,106 @@
+<div class="app-shell" [class.menu-open]="isMenuOpen()">
+  <header class="topbar">
+    <button
+      type="button"
+      class="menu-toggle"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-controls="app-sidebar"
+    >
+      @if (isMenuOpen()) {
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M18 6 6 18M6 6l12 12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span class="sr-only">Cerrar menú</span>
+      } @else {
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3 6h18M3 12h18M3 18h18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span class="sr-only">Abrir menú</span>
+      }
+    </button>
+
+    <div class="topbar-brand">
+      <span class="brand-mark">C</span>
+      <span class="brand-name">Veimen Web</span>
+    </div>
+  </header>
+
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <aside id="app-sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="brand-mark">C</span>
+        <span class="brand-name">Veimen Web</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        *appHasPermission="PERMISSIONS.dashboardRead"
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-link"
+      >
+        Dashboard
+      </a>
+      <a
+        *appHasPermission="PERMISSIONS.serviceRequestsRead"
+        routerLink="/service-request"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Service Requests
+      </a>
+      <a
+        *appHasPermission="PERMISSIONS.promptsRead"
+        routerLink="/prompts"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Prompts
+      </a>
+      <a
+        *appHasPermission="PERMISSIONS.usersManage"
+        routerLink="/usuarios"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Usuarios
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      @if (currentUser(); as user) {
+        <div class="user-card">
+          <span class="user-avatar">{{ initials() }}</span>
+          <span class="user-meta">
+            <span class="user-name">{{ displayName() }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </span>
+        </div>
+      }
+
+      <a routerLink="/cambiar-contrasena" routerLinkActive="active" class="nav-link">
+        Cambiar contraseña
+      </a>
+      <button type="button" class="nav-link logout" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
