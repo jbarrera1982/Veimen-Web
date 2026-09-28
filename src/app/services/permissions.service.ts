@@ -9,6 +9,7 @@ export const PERMISSIONS = {
   promptsRead: 'prompts.read',
   promptsWrite: 'prompts.write',
   serviceRequestsRead: 'service-requests.read',
+  traceRead: 'trace.read',
   dashboardRead: 'dashboard.read',
   usersManage: 'users.manage',
   businessModelRead: 'businessModel.read',

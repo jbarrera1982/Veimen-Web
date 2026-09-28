@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ServiceRequestComponent } from './service-request.component';
 import { RequestsService, TraceStep } from '../services/requests.service';
+import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
@@ -54,6 +55,7 @@ describe('ServiceRequestComponent', () => {
   let component: ServiceRequestComponent;
   let fixture: any;
   let httpTesting: HttpTestingController;
+  let permissions: PermissionsService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -62,6 +64,9 @@ describe('ServiceRequestComponent', () => {
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
+    permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.serviceRequestsRead, PERMISSIONS.traceRead]);
+    permissions.loaded.set(true);
     fixture = TestBed.createComponent(ServiceRequestComponent);
     component = fixture.componentInstance;
   });
@@ -358,6 +363,31 @@ describe('ServiceRequestComponent', () => {
 
     expect(component.selectedRequest()).toBeNull();
     expect(component.traceSteps()).toHaveLength(0);
+  });
+
+  it('should render the trace section when the user has the trace.read permission', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.trace-section')).toBeTruthy();
+
+    flushTrace([rawTrace()]);
+  });
+
+  it('should not request or render the trace without the trace.read permission', () => {
+    permissions.permissions.set([PERMISSIONS.serviceRequestsRead]);
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    fixture.detectChanges();
+
+    expect(component.canSeeTrace()).toBe(false);
+    expect(component.selectedRequest()).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.trace-section')).toBeNull();
+    httpTesting.expectNone((r) => r.url === TRACE_URL);
   });
 
   it('should format duration and confidence', () => {

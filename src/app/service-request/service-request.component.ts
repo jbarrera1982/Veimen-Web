@@ -5,12 +5,15 @@ import {
   HostListener,
   computed,
   signal,
+  inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import { RequestsService, RequestItem, TraceStep } from '../services/requests.service';
 import { STATUS_LABELS } from '../services/dashboard.service';
+import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 function toDateInputValue(date: Date): string {
   const y = date.getFullYear();
@@ -22,7 +25,7 @@ function toDateInputValue(date: Date): string {
 @Component({
   selector: 'app-service-request',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HasPermissionDirective],
   templateUrl: './service-request.html',
   styleUrl: './service-request.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +86,13 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   private inFlight = false;
   private traceInFlight = false;
+
+  private readonly permissions = inject(PermissionsService);
+
+  readonly PERMISSIONS = PERMISSIONS;
+
+  // La sección de traza solo se muestra (y se pide al backend) con el permiso 'trace.read'.
+  readonly canSeeTrace = computed(() => this.permissions.has(PERMISSIONS.traceRead));
 
   constructor(private requestsService: RequestsService) {}
 
@@ -223,7 +233,10 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.selectedRequest.set(item);
     this.traceSteps.set([]);
     this.traceError.set(null);
-    this.loadTrace(item.requestNumber);
+    // Sin permiso de traza no se llama a la API: el modal abre sin la sección.
+    if (this.canSeeTrace()) {
+      this.loadTrace(item.requestNumber);
+    }
   }
 
   closeDetail(): void {
@@ -255,7 +268,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () =>
           this.showToast(
-            `Informe de auditoría solicitado del requerimiento ${requestNumber}.`,
+            `Informe de auditoría solicitado para el requerimiento ${requestNumber}.`,
             'success',
           ),
         error: () =>

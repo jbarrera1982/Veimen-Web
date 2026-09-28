@@ -324,78 +324,80 @@
           }
         </section>
 
-        <section class="trace-section">
-          <h3>Traza</h3>
-          @if (isLoadingTrace()) {
-            <div class="trace-state">
-              <span class="spinner"></span>
-              Cargando trazabilidad…
-            </div>
-          } @else if (traceError(); as err) {
-            <div class="trace-state trace-error">{{ err }}</div>
-          } @else if (traceSteps().length) {
-            <ol class="timeline">
-              @for (step of traceSteps(); track step.traceId) {
-                <li class="trace-step">
-                  <div class="step-head">
-                    <span class="step-seq">{{ step.sequence }}</span>
-                    <div class="step-info">
-                      <span class="step-node">{{ step.node }}</span>
-                      <span class="step-meta">
-                        {{ step.nodeType }}
-                        @if (step.nodeType === 'LLM' && step.promptVersion) {
-                          · {{ step.llmModel ?? '—' }} · v{{ step.promptVersion }}
-                        }
+        <ng-container *appHasPermission="PERMISSIONS.traceRead">
+          <section class="trace-section">
+            <h3>Traza</h3>
+            @if (isLoadingTrace()) {
+              <div class="trace-state">
+                <span class="spinner"></span>
+                Cargando trazabilidad…
+              </div>
+            } @else if (traceError(); as err) {
+              <div class="trace-state trace-error">{{ err }}</div>
+            } @else if (traceSteps().length) {
+              <ol class="timeline">
+                @for (step of traceSteps(); track step.traceId) {
+                  <li class="trace-step">
+                    <div class="step-head">
+                      <span class="step-seq">{{ step.sequence }}</span>
+                      <div class="step-info">
+                        <span class="step-node">{{ step.node }}</span>
+                        <span class="step-meta">
+                          {{ step.nodeType }}
+                          @if (step.nodeType === 'LLM' && step.promptVersion) {
+                            · {{ step.llmModel ?? '—' }} · v{{ step.promptVersion }}
+                          }
+                        </span>
+                      </div>
+                      <span
+                        class="step-status"
+                        [class.step-status-error]="step.status !== 'completed'"
+                      >
+                        {{ step.status }}
                       </span>
                     </div>
-                    <span
-                      class="step-status"
-                      [class.step-status-error]="step.status !== 'completed'"
-                    >
-                      {{ step.status }}
-                    </span>
-                  </div>
-                  <div class="step-details">
-                    <dl class="summary-grid summary-grid-inline">
-                      @if (step.durationMs !== null) {
+                    <div class="step-details">
+                      <dl class="summary-grid summary-grid-inline">
+                        @if (step.durationMs !== null) {
+                          <div class="summary-item">
+                            <dt>Duración</dt>
+                            <dd>{{ formatDuration(step.durationMs) }}</dd>
+                          </div>
+                        }
+                        @if (step.confidence) {
+                          <div class="summary-item">
+                            <dt>Confianza</dt>
+                            <dd>{{ formatConfidence(step.confidence) }}</dd>
+                          </div>
+                        }
                         <div class="summary-item">
-                          <dt>Duración</dt>
-                          <dd>{{ formatDuration(step.durationMs) }}</dd>
+                          <dt>Inicio</dt>
+                          <dd>{{ formatDateTime(step.startDate) }}</dd>
                         </div>
+                        @if (step.endDate) {
+                          <div class="summary-item">
+                            <dt>Fin</dt>
+                            <dd>{{ formatDateTime(step.endDate) }}</dd>
+                          </div>
+                        }
+                      </dl>
+                      @if (step.observations) {
+                        <p class="step-observations">{{ step.observations }}</p>
                       }
-                      @if (step.confidence) {
-                        <div class="summary-item">
-                          <dt>Confianza</dt>
-                          <dd>{{ formatConfidence(step.confidence) }}</dd>
-                        </div>
+                      @if (step.nodeType === 'LLM' && (step.inputJson || step.outputJson)) {
+                        <button type="button" class="json-toggle-btn" (click)="openJsonView(step)">
+                          Ver entrada / salida (JSON)
+                        </button>
                       }
-                      <div class="summary-item">
-                        <dt>Inicio</dt>
-                        <dd>{{ formatDateTime(step.startDate) }}</dd>
-                      </div>
-                      @if (step.endDate) {
-                        <div class="summary-item">
-                          <dt>Fin</dt>
-                          <dd>{{ formatDateTime(step.endDate) }}</dd>
-                        </div>
-                      }
-                    </dl>
-                    @if (step.observations) {
-                      <p class="step-observations">{{ step.observations }}</p>
-                    }
-                    @if (step.nodeType === 'LLM' && (step.inputJson || step.outputJson)) {
-                      <button type="button" class="json-toggle-btn" (click)="openJsonView(step)">
-                        Ver entrada / salida (JSON)
-                      </button>
-                    }
-                  </div>
-                </li>
-              }
-            </ol>
-          } @else {
-            <div class="trace-state">Sin trazabilidad registrada.</div>
-          }
-        </section>
+                    </div>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <div class="trace-state">Sin trazabilidad registrada.</div>
+            }
+          </section>
+        </ng-container>
       </div>
     </div>
   </div>
