@@ -106,6 +106,11 @@ describe('firstAccessiblePath', () => {
     expect(firstAccessiblePath(has)).toBe('/usuarios');
   });
 
+  it('should fall back to business-model when it is the only accessible module', () => {
+    const has = (code: string) => code === PERMISSIONS.businessModelRead;
+    expect(firstAccessiblePath(has)).toBe('/business-model');
+  });
+
   it('should fall back to cambiar-contrasena when there is no module access', () => {
     expect(firstAccessiblePath(() => false)).toBe('/cambiar-contrasena');
   });

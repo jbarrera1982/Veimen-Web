@@ -1,0 +1,70 @@
+.business-model-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #1f2937;
+}
+
+.page-heading .subtitle {
+  margin: 0.15rem 0 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--veimen-accent);
+  box-shadow: 0 0 0 3px rgba(66, 212, 189, 0.2);
+}
+
+.btn-secondary .icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.pdf-frame {
+  width: 100%;
+  height: calc(100vh - 13rem);
+  min-height: 30rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #f3f4f6;
+  box-sizing: border-box;
+}

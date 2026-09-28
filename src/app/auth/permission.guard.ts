@@ -46,5 +46,8 @@ export function firstAccessiblePath(has: (code: string) => boolean): string {
   if (has(PERMISSIONS.usersManage)) {
     return '/usuarios';
   }
+  if (has(PERMISSIONS.businessModelRead)) {
+    return '/business-model';
+  }
   return '/cambiar-contrasena';
 }

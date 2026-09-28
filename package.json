@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "pdf:set-title": "node scripts/set-pdf-title.mjs"
   },
   "private": true,
   "packageManager": "npm@11.19.1",

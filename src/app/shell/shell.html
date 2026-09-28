@@ -80,12 +80,10 @@
       >
         Usuarios
       </a>
-      <!-- Enlace externo: abre el PDF alojado en /public en una pestaña nueva. -->
       <a
         *appHasPermission="PERMISSIONS.businessModelRead"
-        href="TUCOOP_Gestion_de_Valor.pdf"
-        target="_blank"
-        rel="noopener"
+        routerLink="/business-model"
+        routerLinkActive="active"
         class="nav-link"
       >
         Modelo de negocios

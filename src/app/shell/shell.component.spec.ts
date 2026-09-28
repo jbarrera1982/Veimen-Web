@@ -54,13 +54,12 @@ describe('ShellComponent', () => {
     expect(links[4].textContent.trim()).toBe('Modelo de negocios');
   });
 
-  it('should open the business model PDF in a new tab', () => {
+  it('should link the business model entry to its own route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
     const link = links[4];
 
-    expect(link.getAttribute('href')).toBe('TUCOOP_Gestion_de_Valor.pdf');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link.getAttribute('href')).toBe('/business-model');
+    expect(link.hasAttribute('target')).toBe(false);
   });
 
   it('should hide the business model link without the businessModel.read permission', () => {

@@ -10,6 +10,7 @@ import { AccessDeniedComponent } from './auth/access-denied.component';
 import { UsersComponent } from './users/users.component';
 import { UserFormComponent } from './users/user-form.component';
 import { PromptFormComponent } from './prompts/prompt-form.component';
+import { BusinessModelComponent } from './business-model/business-model.component';
 import { permissionGuard } from './auth/permission.guard';
 import { PERMISSIONS } from './services/permissions.service';
 
@@ -68,6 +69,11 @@ export const routes: Routes = [
         path: 'usuarios/:id',
         component: UserFormComponent,
         canActivate: [permissionGuard(PERMISSIONS.usersManage)],
+      },
+      {
+        path: 'business-model',
+        component: BusinessModelComponent,
+        canActivate: [permissionGuard(PERMISSIONS.businessModelRead)],
       },
       { path: 'cambiar-contrasena', component: ChangePasswordComponent },
       { path: 'sin-acceso', component: AccessDeniedComponent },
