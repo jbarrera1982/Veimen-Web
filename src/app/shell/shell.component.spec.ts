@@ -12,6 +12,7 @@ const ALL_PERMISSIONS = [
   PERMISSIONS.promptsRead,
   PERMISSIONS.promptsWrite,
   PERMISSIONS.usersManage,
+  PERMISSIONS.businessModelRead,
 ];
 
 describe('ShellComponent', () => {
@@ -45,11 +46,32 @@ describe('ShellComponent', () => {
 
   it('should render the navigation links', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links.length).toBe(4);
+    expect(links.length).toBe(5);
     expect(links[0].textContent.trim()).toBe('Dashboard');
-    expect(links[1].textContent.trim()).toBe('Service Requests');
+    expect(links[1].textContent.trim()).toBe('Requerimientos');
     expect(links[2].textContent.trim()).toBe('Prompts');
     expect(links[3].textContent.trim()).toBe('Usuarios');
+    expect(links[4].textContent.trim()).toBe('Modelo de negocios');
+  });
+
+  it('should open the business model PDF in a new tab', () => {
+    const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
+    const link = links[4];
+
+    expect(link.getAttribute('href')).toBe('TUCOOP_Gestion_de_Valor.pdf');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('should hide the business model link without the businessModel.read permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.promptsRead]);
+    fixture.detectChanges();
+
+    const texts = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link'),
+    ).map((link) => link.textContent?.trim());
+    expect(texts).not.toContain('Modelo de negocios');
   });
 
   it('should hide the navigation links the user has no permission for', () => {

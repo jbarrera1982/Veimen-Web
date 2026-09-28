@@ -86,12 +86,4 @@ describe('UsersService', () => {
     expect(req.request.body).toEqual({ newPassword: 'newpass123' });
     req.flush(null);
   });
-
-  it('should delete a user', () => {
-    service.delete(1).subscribe();
-
-    const req = httpTesting.expectOne(`${API}/api/users/1`);
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
-  });
 });

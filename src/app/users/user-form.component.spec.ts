@@ -92,8 +92,13 @@ describe('UserFormComponent', () => {
       active: true,
     });
     req.flush({ ...user, userId: 2, username: 'alice' });
+    fixture.detectChanges();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/usuarios']);
+    expect(component.notFound()).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('El usuario no existe.');
+    expect(navigateSpy).toHaveBeenCalledWith(['/usuarios'], {
+      state: { notice: 'Usuario alice creado correctamente.' },
+    });
   });
 
   it('should load the user into the form', async () => {

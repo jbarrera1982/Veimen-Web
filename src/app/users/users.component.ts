@@ -33,6 +33,7 @@ export class UsersComponent {
   });
 
   constructor() {
+    this.notice.set(this.readNavigationNotice());
     this.load();
   }
 
@@ -42,7 +43,7 @@ export class UsersComponent {
 
     this.users.list().subscribe({
       next: (users) => {
-        this.usersList.set(users);
+        this.usersList.set(UserSort.byStatusThenUsername(users));
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -95,19 +96,27 @@ export class UsersComponent {
       });
   }
 
-  remove(user: ManagedUser): void {
+  toggleActive(user: ManagedUser): void {
+    const activate = !user.active;
     if (
-      !window.confirm(`¿Eliminar al usuario ${user.username}? Esta acción no se puede deshacer.`)
+      !window.confirm(
+        `¿${activate ? 'Activar' : 'Desactivar'} al usuario ${user.username}?` +
+          (activate ? '' : ' Se cerrarán sus sesiones activas.'),
+      )
     ) {
       return;
     }
     this.notice.set(null);
     this.error.set(null);
 
-    this.users.delete(user.userId).subscribe({
-      next: () => {
-        this.usersList.update((list) => list.filter((u) => u.userId !== user.userId));
-        this.notice.set(`Usuario ${user.username} eliminado.`);
+    this.users.update(user.userId, { active: activate }).subscribe({
+      next: (updated) => {
+        this.usersList.update((list) =>
+          UserSort.byStatusThenUsername(
+            list.map((u) => (u.userId === updated.userId ? updated : u)),
+          ),
+        );
+        this.notice.set(`Usuario ${updated.username} ${activate ? 'activado' : 'desactivado'}.`);
       },
       error: (err) => this.error.set(this.extractMessage(err)),
     });
@@ -115,6 +124,20 @@ export class UsersComponent {
 
   profileName(user: ManagedUser): string {
     return user.profileName ?? 'Sin perfil';
+  }
+
+  private readNavigationNotice(): string | null {
+    const fromNav = this.router.getCurrentNavigation()?.extras.state?.['notice'];
+    if (typeof fromNav === 'string' && fromNav) {
+      return fromNav;
+    }
+    if (typeof history !== 'undefined') {
+      const fromHistory = (history.state as { notice?: unknown } | null)?.notice;
+      if (typeof fromHistory === 'string' && fromHistory) {
+        return fromHistory;
+      }
+    }
+    return null;
   }
 
   private extractMessage(err: unknown): string {
@@ -130,3 +153,14 @@ export class UsersComponent {
     return 'Error inesperado. Inténtalo de nuevo.';
   }
 }
+
+const UserSort = {
+  byStatusThenUsername(users: ManagedUser[]): ManagedUser[] {
+    return [...users].sort((a, b) => {
+      if (a.active !== b.active) {
+        return a.active ? -1 : 1;
+      }
+      return a.username.localeCompare(b.username, 'es', { sensitivity: 'base' });
+    });
+  },
+};

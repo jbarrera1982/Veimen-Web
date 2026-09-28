@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:5249',
+  apiBaseUrl: 'https://api.veimen.net',
   auditWebhookUrl: 'https://capitalminds.app.n8n.cloud/webhook/auditar-solicitud',
 };

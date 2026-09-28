@@ -81,24 +81,69 @@ describe('UsersComponent', () => {
     expect(component.notice()).toContain('bob');
   });
 
-  it('should delete a user after confirmation', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('should sort active users first and then by username', () => {
+    const fixture = TestBed.createComponent(UsersComponent);
+    httpTesting.expectOne(`${API}/api/users`).flush([
+      { ...user, userId: 2, username: 'zara', active: false },
+      { ...user, userId: 3, username: 'ana', active: true },
+      { ...user, userId: 4, username: 'maria', active: false },
+      { ...user, userId: 1, username: 'bob', active: true },
+    ]);
+    fixture.detectChanges();
 
-    component.remove(component.usersList()[0]);
-
-    const req = httpTesting.expectOne(`${API}/api/users/1`);
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
-
-    expect(component.usersList().length).toBe(0);
+    const usernames = fixture.componentInstance.usersList().map((u) => u.username);
+    expect(usernames).toEqual(['ana', 'bob', 'maria', 'zara']);
   });
 
-  it('should not delete the user when confirmation is cancelled', () => {
+  it('should show the notice passed via navigation state', () => {
+    window.history.replaceState({ notice: 'Usuario alice creado correctamente.' }, '');
+    try {
+      const fixture = TestBed.createComponent(UsersComponent);
+      httpTesting.expectOne(`${API}/api/users`).flush([user]);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.notice()).toBe('Usuario alice creado correctamente.');
+      expect(fixture.nativeElement.textContent).toContain('Usuario alice creado correctamente.');
+    } finally {
+      window.history.replaceState({}, '');
+    }
+  });
+
+  it('should deactivate an active user after confirmation', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.toggleActive(component.usersList()[0]);
+
+    const req = httpTesting.expectOne(`${API}/api/users/1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ active: false });
+    req.flush({ ...user, active: false });
+
+    expect(component.usersList()[0].active).toBe(false);
+    expect(component.notice()).toContain('desactivado');
+  });
+
+  it('should activate an inactive user after confirmation', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.usersList.set([{ ...user, active: false }]);
+
+    component.toggleActive(component.usersList()[0]);
+
+    const req = httpTesting.expectOne(`${API}/api/users/1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ active: true });
+    req.flush({ ...user, active: true });
+
+    expect(component.usersList()[0].active).toBe(true);
+    expect(component.notice()).toContain('activado');
+  });
+
+  it('should not toggle the user when confirmation is cancelled', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-    component.remove(component.usersList()[0]);
+    component.toggleActive(component.usersList()[0]);
 
     expect(confirmSpy).toHaveBeenCalled();
-    expect(component.usersList().length).toBe(1);
+    expect(component.usersList()[0].active).toBe(true);
   });
 });

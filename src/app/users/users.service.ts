@@ -63,8 +63,4 @@ export class UsersService {
       newPassword,
     });
   }
-
-  delete(userId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiBaseUrl}/api/users/${userId}`);
-  }
 }

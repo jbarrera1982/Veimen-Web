@@ -24,6 +24,7 @@ export const routes: Routes = [
         PERMISSIONS.serviceRequestsRead,
         PERMISSIONS.promptsRead,
         PERMISSIONS.usersManage,
+        PERMISSIONS.businessModelRead,
       ),
     ],
     children: [

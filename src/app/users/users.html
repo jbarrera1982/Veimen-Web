@@ -50,8 +50,13 @@
                 <button type="button" class="row-btn" (click)="openPassword(user)">
                   Contraseña
                 </button>
-                <button type="button" class="row-btn row-btn-danger" (click)="remove(user)">
-                  Eliminar
+                <button
+                  type="button"
+                  class="row-btn"
+                  [class.row-btn-danger]="user.active"
+                  (click)="toggleActive(user)"
+                >
+                  {{ user.active ? 'Desactivar' : 'Activar' }}
                 </button>
               </td>
             </tr>

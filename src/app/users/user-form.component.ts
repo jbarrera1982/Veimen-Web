@@ -84,7 +84,7 @@ export class UserFormComponent {
           active: active ?? true,
         })
         .subscribe({
-          next: () => this.onSaved(),
+          next: (created) => this.onSaved(`Usuario ${created.username} creado correctamente.`),
           error: (err) => this.onError(err),
         });
       return;
@@ -111,9 +111,13 @@ export class UserFormComponent {
       });
   }
 
-  private onSaved(): void {
+  private onSaved(notice?: string): void {
     this.isSaving.set(false);
-    void this.router.navigate(['/usuarios']);
+    if (notice) {
+      void this.router.navigate(['/usuarios'], { state: { notice } });
+    } else {
+      void this.router.navigate(['/usuarios']);
+    }
   }
 
   private onError(err: unknown): void {

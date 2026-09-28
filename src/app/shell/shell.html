@@ -62,7 +62,7 @@
         routerLinkActive="active"
         class="nav-link"
       >
-        Service Requests
+        Requerimientos
       </a>
       <a
         *appHasPermission="PERMISSIONS.promptsRead"
@@ -79,6 +79,16 @@
         class="nav-link"
       >
         Usuarios
+      </a>
+      <!-- Enlace externo: abre el PDF alojado en /public en una pestaña nueva. -->
+      <a
+        *appHasPermission="PERMISSIONS.businessModelRead"
+        href="TUCOOP_Gestion_de_Valor.pdf"
+        target="_blank"
+        rel="noopener"
+        class="nav-link"
+      >
+        Modelo de negocios
       </a>
     </nav>
 

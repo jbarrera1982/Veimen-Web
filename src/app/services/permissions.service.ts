@@ -11,6 +11,7 @@ export const PERMISSIONS = {
   serviceRequestsRead: 'service-requests.read',
   dashboardRead: 'dashboard.read',
   usersManage: 'users.manage',
+  businessModelRead: 'businessModel.read',
 } as const;
 
 export interface UserPermissionsDto {

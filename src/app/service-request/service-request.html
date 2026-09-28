@@ -1,9 +1,9 @@
 <div class="service-request">
   <header class="service-request-header">
     <div class="header-text">
-      <h1>Service Requests</h1>
+      <h1>Requerimientos</h1>
       @if (!isLoading() && !error()) {
-        <p class="subtitle">{{ formatNumber(totalCount()) }} Service Requests</p>
+        <p class="subtitle">{{ formatNumber(totalCount()) }} Requerimientos</p>
       }
     </div>
 
@@ -247,10 +247,10 @@
 
 @if (selectedRequest(); as req) {
   <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && closeDetail()">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del Service Request">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del Requerimiento">
       <header class="modal-header">
         <div class="modal-title">
-          <h2>Service Request #{{ req.requestNumber }}</h2>
+          <h2>Requerimiento #{{ req.requestNumber }}</h2>
           <p class="modal-subtitle">{{ req.from }} · {{ formatDateTime(req.receiptDate) }}</p>
         </div>
         <div class="modal-actions">
