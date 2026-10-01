@@ -195,9 +195,21 @@ export class TokensDashboardComponent implements OnInit {
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
   });
 
-  // La API agrupa por día × agent × node. Como acá se descarta el agente, la
-  // misma fecha+nodo puede llegar repetida; se re-agrupa para que la tabla no
-  // muestre filas indistinguibles entre sí.
+  /** Totales por modelo LLM (llm_model); las trazas sin modelo caen en '—'. */
+  readonly byModel = computed<ChartDatum[]>(() => {
+    const totals = new Map<string, number>();
+    for (const r of this.rows()) {
+      const key = r.llmModel || '—';
+      totals.set(key, (totals.get(key) ?? 0) + r.totalTokens);
+    }
+    return [...totals.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
+  });
+
+  // La API agrupa por día × node × llm_model: un mismo nodo puede llegar
+  // repetido el mismo día con distintos modelos, así que la tabla (que muestra
+  // día × nodo) re-agrupa para no mostrar filas indistinguibles entre sí.
   readonly sortedDetail = computed<TokenUsage[]>(() => {
     const byDateNode = new Map<string, TokenUsage>();
 
@@ -291,4 +303,6 @@ export class TokensDashboardComponent implements OnInit {
   });
 
   readonly nodeScheme = computed<Color>(() => this.schemeFor(this.byNode().length));
+
+  readonly modelScheme = computed<Color>(() => this.schemeFor(this.byModel().length));
 }

@@ -31,6 +31,7 @@ describe('TokensService', () => {
       {
         date: '2026-09-01T00:00:00',
         node: 'Clasificador',
+        llmModel: 'GPT-5.5',
         inputTokens: 1200,
         outputTokens: 340,
         totalTokens: 1540,
@@ -41,11 +42,40 @@ describe('TokensService', () => {
       {
         date: '2026-09-01',
         node: 'Clasificador',
+        llmModel: 'GPT-5.5',
         inputTokens: 1200,
         outputTokens: 340,
         totalTokens: 1540,
       },
     ]);
+  });
+
+  it('should trim the llm_model and default it to an empty string when missing', () => {
+    let result: TokenUsage[] | undefined;
+    service.getTokenUsage().subscribe((items) => (result = items));
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    req.flush([
+      {
+        date: '2026-09-01T00:00:00',
+        node: 'Clasificador',
+        llmModel: '  GPT-5.5  ',
+        inputTokens: 1,
+        outputTokens: 1,
+        totalTokens: 2,
+      },
+      {
+        date: '2026-09-02T00:00:00',
+        node: 'Redactor',
+        llmModel: null,
+        inputTokens: 1,
+        outputTokens: 1,
+        totalTokens: 2,
+      },
+    ]);
+
+    expect(result?.[0].llmModel).toBe('GPT-5.5');
+    expect(result?.[1].llmModel).toBe('');
   });
 
   it('should send start_date/end_date in YYYYMMDD format', () => {

@@ -7,17 +7,19 @@ import type { DateRange } from './dashboard.service';
 export interface TokenUsage {
   date: string; // YYYY-MM-DD
   node: string;
+  llmModel: string;
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
 }
 
 // La API .NET serializa en camelCase (System.Text.Json por defecto). La API
-// agrupa por día × agent × node, pero acá se ignora 'agent' a propósito: el
-// detalle se re-agrupa por día × nodo en el componente.
+// agrupa por día × node × llm_model: el detalle se re-agrupa por día × nodo en
+// el componente y el gráfico por modelo usa llmModel directamente.
 interface RawTokenUsage {
   date: string;
   node: string;
+  llmModel: string | null;
   inputTokens: number | null;
   outputTokens: number | null;
   totalTokens: number | null;
@@ -47,6 +49,7 @@ export class TokensService {
             // La API devuelve un datetime ISO (ej: 2026-09-01T00:00:00); nos quedamos con la fecha.
             date: (item.date ?? '').slice(0, 10),
             node: item.node?.trim() || '',
+            llmModel: item.llmModel?.trim() || '',
             inputTokens: item.inputTokens ?? 0,
             outputTokens: item.outputTokens ?? 0,
             totalTokens: item.totalTokens ?? 0,

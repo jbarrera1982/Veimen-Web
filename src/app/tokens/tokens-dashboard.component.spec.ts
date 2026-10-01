@@ -13,23 +13,22 @@ function raw(
   input: number,
   output: number,
   total: number,
-  agent?: string,
+  llmModel?: string,
 ) {
   return {
     date: `${date}T00:00:00`,
     node,
+    llmModel: llmModel ?? null,
     inputTokens: input,
     outputTokens: output,
     totalTokens: total,
-    // El backend sigue separando por agente; el dashboard lo descarta.
-    agent: agent ?? null,
   };
 }
 
 const SAMPLE = [
-  raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'AgenteUno'),
-  raw('2026-09-01', 'Redactor', 2000, 400, 2400, 'AgenteDos'),
-  raw('2026-09-02', 'Clasificador', 500, 50, 550, 'AgenteUno'),
+  raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'GPT-5.5'),
+  raw('2026-09-01', 'Redactor', 2000, 400, 2400, 'GPT-4o'),
+  raw('2026-09-02', 'Clasificador', 500, 50, 550, 'GPT-5.5'),
 ];
 
 describe('TokensDashboardComponent', () => {
@@ -109,19 +108,35 @@ describe('TokensDashboardComponent', () => {
     ]);
   });
 
-  // La API agrupa por día × agent × node. Al descartar el agente, dos agentes
-  // que usaron el mismo nodo el mismo día llegan como filas separadas: la tabla
+  it('should aggregate totals by model, sorted descending', () => {
+    load();
+
+    expect(component.byModel()).toEqual([
+      { name: 'GPT-4o', value: 2400 },
+      { name: 'GPT-5.5', value: 1650 },
+    ]);
+  });
+
+  it('should bucket rows without a model under a placeholder', () => {
+    load([raw('2026-09-01', 'Clasificador', 10, 5, 15)]);
+
+    expect(component.byModel()).toEqual([{ name: '—', value: 15 }]);
+  });
+
+  // La API agrupa por día × node × llm_model: un mismo nodo que usó dos
+  // modelos el mismo día llega como filas separadas. La tabla (día × nodo)
   // tiene que sumarlas para no mostrar filas indistinguibles entre sí.
   it('should merge rows that share the same date and node', () => {
     load([
-      raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'AgenteUno'),
-      raw('2026-09-01', 'Clasificador', 300, 30, 330, 'AgenteDos'),
+      raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'GPT-5.5'),
+      raw('2026-09-01', 'Clasificador', 300, 30, 330, 'GPT-4o'),
     ]);
 
     expect(component.sortedDetail()).toEqual([
       {
         date: '2026-09-01',
         node: 'Clasificador',
+        llmModel: 'GPT-5.5',
         inputTokens: 1300,
         outputTokens: 130,
         totalTokens: 1430,
@@ -134,8 +149,8 @@ describe('TokensDashboardComponent', () => {
 
   it('should not mutate the source rows when merging', () => {
     load([
-      raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'AgenteUno'),
-      raw('2026-09-01', 'Clasificador', 300, 30, 330, 'AgenteDos'),
+      raw('2026-09-01', 'Clasificador', 1000, 100, 1100, 'GPT-5.5'),
+      raw('2026-09-01', 'Clasificador', 300, 30, 330, 'GPT-4o'),
     ]);
 
     expect(component.rows()[0].totalTokens).toBe(1100);
@@ -144,9 +159,9 @@ describe('TokensDashboardComponent', () => {
 
   it('should sort the detail rows by date descending then total', () => {
     load([
-      raw('2026-09-01', 'Chico', 10, 1, 11, 'AgenteUno'),
-      raw('2026-09-03', 'Grande', 5000, 500, 5500, 'AgenteUno'),
-      raw('2026-09-02', 'Medio', 500, 50, 550, 'AgenteUno'),
+      raw('2026-09-01', 'Chico', 10, 1, 11),
+      raw('2026-09-03', 'Grande', 5000, 500, 5500),
+      raw('2026-09-02', 'Medio', 500, 50, 550),
     ]);
 
     expect(component.sortedDetail().map((r) => r.node)).toEqual(['Grande', 'Medio', 'Chico']);
@@ -177,7 +192,7 @@ describe('TokensDashboardComponent', () => {
 
   it('should cap the detail table and grow it on demand', () => {
     const many = Array.from({ length: 60 }, (_, i) =>
-      raw(`2026-09-${String((i % 28) + 1).padStart(2, '0')}`, `Nodo${i}`, i, i, 2 * i, 'AgenteUno'),
+      raw(`2026-09-${String((i % 28) + 1).padStart(2, '0')}`, `Nodo${i}`, i, i, 2 * i),
     );
     load(many);
 
@@ -195,12 +210,21 @@ describe('TokensDashboardComponent', () => {
 
     // Más nodos que colores base: el dominio debe crecer, no reciclar tonos.
     const wide = Array.from({ length: 7 }, (_, i) =>
-      raw(`2026-09-0${(i % 9) + 1}`, `Nodo${i}`, 10, 5, 15, 'AgenteUno'),
+      raw(`2026-09-0${(i % 9) + 1}`, `Nodo${i}`, 10, 5, 15),
     );
     component.load();
     httpTesting.expectOne((r) => r.url === API_URL).flush(wide);
 
     expect(component.nodeScheme().domain?.length).toBe(7);
+  });
+
+  it('should extend the model color domain to cover every model', () => {
+    const wide = Array.from({ length: 7 }, (_, i) =>
+      raw(`2026-09-0${(i % 9) + 1}`, 'Nodo', 10, 5, 15, `Modelo${i}`),
+    );
+    load(wide);
+
+    expect(component.modelScheme().domain?.length).toBe(7);
   });
 
   it('should show an error message when the request fails', () => {
