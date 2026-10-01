@@ -306,7 +306,10 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
     this.requestsService.getRequestTrace(requestNumber).subscribe({
       next: (steps) => {
-        this.traceSteps.set([...steps].sort((a, b) => a.sequence - b.sequence));
+        // Orden por trace_id (orden de inserción en service_request_trace), no por
+        // 'sequence': ese campo es el orden lógico dentro del flujo y puede repetirse
+        // entre corridas, lo que dejaba pasos fuera de su orden real.
+        this.traceSteps.set([...steps].sort((a, b) => a.traceId - b.traceId));
       },
       error: () => {
         this.traceError.set('No se pudo cargar el detalle del requerimiento.');

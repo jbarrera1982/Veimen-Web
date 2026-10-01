@@ -81,7 +81,6 @@ export interface TraceStep {
   requestNumber: number;
   sequence: number;
   node: string;
-  agent: string;
   nodeType: string;
   llmModel: string | null;
   promptVersion: string | null;
@@ -100,12 +99,13 @@ export interface TraceStep {
 
 // La API .NET serializa en camelCase (System.Text.Json por defecto), igual que RawRequestItem.
 // Las columnas JSON (inputJson/outputJson) y confidence se devuelven como string, por convención del proyecto.
+// La API también devuelve 'agent', pero no se mapea: la vista de traza identifica cada
+// paso por 'node', así que el campo no se usa en ninguna pantalla.
 interface RawTraceStep {
   traceId: number;
   requestNumber: number;
   sequence: number;
   node: string;
-  agent: string;
   nodeType: string;
   llmModel: string | null;
   promptVersion: string | null;
@@ -195,7 +195,6 @@ export class RequestsService {
             requestNumber: item.requestNumber,
             sequence: item.sequence,
             node: item.node,
-            agent: item.agent,
             nodeType: item.nodeType,
             llmModel: item.llmModel,
             promptVersion: item.promptVersion,

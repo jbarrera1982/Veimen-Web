@@ -104,7 +104,6 @@ describe('ServiceRequestComponent', () => {
       requestNumber: 202,
       sequence: 2,
       node: 'Agente 2 - Inapropiados',
-      agent: 'Agente 2 - Inapropiados',
       nodeType: 'LLM',
       llmModel: 'GPT-5.5',
       promptVersion: '2.0.0',
@@ -253,7 +252,6 @@ describe('ServiceRequestComponent', () => {
       requestNumber: 202,
       sequence: 2,
       node: 'Agente 2 - Inapropiados',
-      agent: 'Agente 2 - Inapropiados',
       nodeType: 'LLM',
       llmModel: 'GPT-5.5',
       promptVersion: '2.0.0',
@@ -287,7 +285,6 @@ describe('ServiceRequestComponent', () => {
       requestNumber: 202,
       sequence: 1,
       node: 'Node <script>alert(1)</script>',
-      agent: 'Agent',
       nodeType: 'LLM',
       llmModel: 'GPT-5.5',
       promptVersion: null,
@@ -329,14 +326,16 @@ describe('ServiceRequestComponent', () => {
     expect(component.traceSteps()[0].node).toBe('Agente 2 - Inapropiados');
   });
 
-  it('should sort trace steps by sequence', () => {
+  it('should sort trace steps by traceId, not by sequence', () => {
     fixture.detectChanges();
     flushResponse([rawRequest({ requestNumber: 202 })]);
 
     component.openDetail(component.requests()[0]);
-    flushTrace([rawTrace({ traceId: 988, sequence: 3 }), rawTrace({ traceId: 986, sequence: 1 })]);
+    // 'sequence' va a propósito en sentido inverso a 'traceId': este test falla si
+    // alguien vuelve a ordenar por sequence.
+    flushTrace([rawTrace({ traceId: 988, sequence: 1 }), rawTrace({ traceId: 986, sequence: 3 })]);
 
-    expect(component.traceSteps().map((s) => s.sequence)).toEqual([1, 3]);
+    expect(component.traceSteps().map((s) => s.traceId)).toEqual([986, 988]);
   });
 
   it('should set a trace error when the detail request fails', () => {

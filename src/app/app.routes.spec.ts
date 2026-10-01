@@ -55,4 +55,17 @@ describe('app.routes wiring', () => {
 
     expect(router.url).toBe('/business-model');
   });
+
+  it('should redirect /tokens to /sin-acceso without the tokens.read permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/tokens');
+
+    expect(router.url).toContain('/sin-acceso');
+  });
 });

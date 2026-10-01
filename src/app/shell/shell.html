@@ -57,6 +57,14 @@
         Dashboard
       </a>
       <a
+        *appHasPermission="PERMISSIONS.tokensRead"
+        routerLink="/tokens"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Consumo de tokens
+      </a>
+      <a
         *appHasPermission="PERMISSIONS.serviceRequestsRead"
         routerLink="/service-request"
         routerLinkActive="active"
