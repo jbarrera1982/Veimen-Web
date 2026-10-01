@@ -11,6 +11,14 @@ interface ChartDatum {
   value: number;
 }
 
+// Fila del detalle: totales de un modelo LLM en todo el rango seleccionado.
+interface ModelDetailRow {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
 const DEFAULT_RANGE_DAYS = 30;
 // Tope de filas visibles en la tabla de detalle: un rango de 30 días puede traer
 // cientos de combinaciones día × nodo y no queremos inflar el DOM.
@@ -195,47 +203,44 @@ export class TokensDashboardComponent implements OnInit {
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
   });
 
-  /** Totales por modelo LLM (llm_model); las trazas sin modelo caen en '—'. */
-  readonly byModel = computed<ChartDatum[]>(() => {
-    const totals = new Map<string, number>();
+  // El detalle agrupa por modelo (llm_model) en todo el rango; las trazas sin
+  // modelo caen en '—'. Ordenado por total descendente.
+  readonly modelDetail = computed<ModelDetailRow[]>(() => {
+    const byModel = new Map<string, ModelDetailRow>();
+
     for (const r of this.rows()) {
       const key = r.llmModel || '—';
-      totals.set(key, (totals.get(key) ?? 0) + r.totalTokens);
-    }
-    return [...totals.entries()]
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-  });
-
-  // La API agrupa por día × node × llm_model: un mismo nodo puede llegar
-  // repetido el mismo día con distintos modelos, así que la tabla (que muestra
-  // día × nodo) re-agrupa para no mostrar filas indistinguibles entre sí.
-  readonly sortedDetail = computed<TokenUsage[]>(() => {
-    const byDateNode = new Map<string, TokenUsage>();
-
-    for (const r of this.rows()) {
-      const key = `${r.date}|${r.node}`;
-      const current = byDateNode.get(key);
+      const current = byModel.get(key);
       if (current) {
         current.inputTokens += r.inputTokens;
         current.outputTokens += r.outputTokens;
         current.totalTokens += r.totalTokens;
       } else {
-        byDateNode.set(key, { ...r });
+        byModel.set(key, {
+          model: key,
+          inputTokens: r.inputTokens,
+          outputTokens: r.outputTokens,
+          totalTokens: r.totalTokens,
+        });
       }
     }
 
-    return [...byDateNode.values()].sort(
-      (a, b) => b.date.localeCompare(a.date) || b.totalTokens - a.totalTokens,
+    return [...byModel.values()].sort(
+      (a, b) => b.totalTokens - a.totalTokens || a.model.localeCompare(b.model),
     );
   });
 
-  readonly detailRows = computed<TokenUsage[]>(() =>
-    this.sortedDetail().slice(0, this.tableLimit()),
+  /** Totales por modelo para el gráfico, derivados del detalle. */
+  readonly byModel = computed<ChartDatum[]>(() =>
+    this.modelDetail().map((r) => ({ name: r.model, value: r.totalTokens })),
+  );
+
+  readonly detailRows = computed<ModelDetailRow[]>(() =>
+    this.modelDetail().slice(0, this.tableLimit()),
   );
 
   readonly hasMoreRows = computed<boolean>(
-    () => this.sortedDetail().length > this.detailRows().length,
+    () => this.modelDetail().length > this.detailRows().length,
   );
 
   showMore(): void {

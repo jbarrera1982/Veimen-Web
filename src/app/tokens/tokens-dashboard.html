@@ -205,38 +205,46 @@
       </section>
 
       <section class="detail-card">
-        <h2>Detalle</h2>
+        <h2>Detalle por modelo</h2>
         <div class="table-scroll">
           <table class="detail-table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Nodo</th>
+                <th>Modelo</th>
                 <th class="num">Input</th>
                 <th class="num">Output</th>
                 <th class="num">Total</th>
               </tr>
             </thead>
             <tbody>
-              @for (row of detailRows(); track row.date + '|' + row.node) {
+              @for (row of detailRows(); track row.model) {
                 <tr>
-                  <td>{{ row.date }}</td>
-                  <td>{{ row.node }}</td>
+                  <td>{{ row.model }}</td>
                   <td class="num">{{ formatNumber(row.inputTokens) }}</td>
                   <td class="num">{{ formatNumber(row.outputTokens) }}</td>
                   <td class="num strong">{{ formatNumber(row.totalTokens) }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="table-empty">No hay filas para el rango seleccionado.</td>
+                  <td colspan="4" class="table-empty">No hay filas para el rango seleccionado.</td>
                 </tr>
               }
             </tbody>
+            @if (detailRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num strong">{{ formatNumber(totals().input) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().output) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().total) }}</td>
+                </tr>
+              </tfoot>
+            }
           </table>
         </div>
         @if (hasMoreRows()) {
           <button class="more-btn" type="button" (click)="showMore()">
-            Ver más ({{ formatNumber(sortedDetail().length - detailRows().length) }} restantes)
+            Ver más ({{ formatNumber(modelDetail().length - detailRows().length) }} restantes)
           </button>
         }
       </section>

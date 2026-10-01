@@ -406,6 +406,12 @@
   color: #1f2937;
 }
 
+.detail-table tfoot td {
+  border-top: 2px solid #e5e7eb;
+  border-bottom: none;
+  background: #fafafa;
+}
+
 .table-empty {
   padding: 1.5rem 0.5rem;
   text-align: center;
