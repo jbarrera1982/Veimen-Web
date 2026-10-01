@@ -385,9 +385,34 @@
                         <p class="step-observations">{{ step.observations }}</p>
                       }
                       @if (step.nodeType === 'LLM' && (step.inputJson || step.outputJson)) {
-                        <button type="button" class="json-toggle-btn" (click)="openJsonView(step)">
-                          Ver entrada / salida (JSON)
+                        <button
+                          type="button"
+                          class="json-toggle-btn"
+                          [attr.aria-expanded]="isJsonExpanded(step)"
+                          (click)="toggleJson(step)"
+                        >
+                          {{
+                            isJsonExpanded(step)
+                              ? 'Ocultar entrada / salida (JSON)'
+                              : 'Ver entrada / salida (JSON)'
+                          }}
                         </button>
+                        @if (isJsonExpanded(step)) {
+                          <div class="json-panel">
+                            <section class="json-pane">
+                              <header class="json-pane-header">Entrada</header>
+                              <pre>{{
+                                step.inputJson ? formatJson(step.inputJson) : 'Sin datos'
+                              }}</pre>
+                            </section>
+                            <section class="json-pane">
+                              <header class="json-pane-header">Salida</header>
+                              <pre>{{
+                                step.outputJson ? formatJson(step.outputJson) : 'Sin datos'
+                              }}</pre>
+                            </section>
+                          </div>
+                        }
                       }
                     </div>
                   </li>

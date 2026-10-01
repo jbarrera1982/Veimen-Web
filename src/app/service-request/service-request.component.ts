@@ -79,6 +79,9 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   readonly isLoadingTrace = signal(false);
   readonly traceError = signal<string | null>(null);
 
+  // traceIds de los pasos con el panel de entrada/salida desplegado inline.
+  readonly expandedJsonSteps = signal<Set<number>>(new Set());
+
   // Solicitudes en proceso de auditoría (request_number) y notificación toast.
   readonly auditing = signal<Set<number>>(new Set());
   readonly toast = signal<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -233,6 +236,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.selectedRequest.set(item);
     this.traceSteps.set([]);
     this.traceError.set(null);
+    this.expandedJsonSteps.set(new Set());
     // Sin permiso de traza no se llama a la API: el modal abre sin la sección.
     if (this.canSeeTrace()) {
       this.loadTrace(item.requestNumber);
@@ -243,8 +247,25 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.selectedRequest.set(null);
     this.traceSteps.set([]);
     this.traceError.set(null);
+    this.expandedJsonSteps.set(new Set());
     this.isLoadingTrace.set(false);
     this.traceInFlight = false;
+  }
+
+  isJsonExpanded(step: TraceStep): boolean {
+    return this.expandedJsonSteps().has(step.traceId);
+  }
+
+  toggleJson(step: TraceStep): void {
+    this.expandedJsonSteps.update((current) => {
+      const next = new Set(current);
+      if (next.has(step.traceId)) {
+        next.delete(step.traceId);
+      } else {
+        next.add(step.traceId);
+      }
+      return next;
+    });
   }
 
   isAuditing(requestNumber: number): boolean {
@@ -404,87 +425,5 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   // para que los textos largos del LLM se lean con sus saltos de línea.
   private prettifyText(text: string): string {
     return text.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
-  }
-
-  openJsonView(step: TraceStep): void {
-    const html = this.buildJsonTabHtml(step);
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-    const win = window.open(url, '_blank');
-    if (!win) {
-      return; // Si el bloqueador de pop-ups lo impide, no hacemos nada más.
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  }
-
-  private buildJsonTabHtml(step: TraceStep): string {
-    const input = step.inputJson ? this.formatJson(step.inputJson) : 'Sin datos';
-    const output = step.outputJson ? this.formatJson(step.outputJson) : 'Sin datos';
-    return `<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>Entrada / Salida · ${this.escapeHtml(step.node)}</title>
-    <style>
-      * { box-sizing: border-box; }
-      html, body { height: 100%; margin: 0; }
-      body {
-        display: flex;
-        flex-direction: row;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-        background: #111827;
-        color: #e5e7eb;
-      }
-      .pane {
-        flex: 1 1 50%;
-        min-width: 0;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        border-left: 1px solid #1f2937;
-      }
-      .pane:first-child { border-left: none; }
-      .pane-header {
-        flex: 0 0 auto;
-        padding: 0.5rem 1rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #9ca3af;
-        background: #1f2937;
-      }
-      pre {
-        flex: 1 1 auto;
-        min-height: 0;
-        margin: 0;
-        padding: 1rem;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: 0.8rem;
-        line-height: 1.5;
-      }
-    </style>
-  </head>
-  <body>
-    <section class="pane">
-      <header class="pane-header">Entrada</header>
-      <pre>${this.escapeHtml(input)}</pre>
-    </section>
-    <section class="pane">
-      <header class="pane-header">Salida</header>
-      <pre>${this.escapeHtml(output)}</pre>
-    </section>
-  </body>
-</html>`;
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
   }
 }

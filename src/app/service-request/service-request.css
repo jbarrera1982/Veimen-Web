@@ -759,6 +759,55 @@
   color: #1d4ed8;
 }
 
+/* Panel inline de entrada/salida: reemplaza a la pestaña que abría window.open().
+   Dos columnas lado a lado (colapsan a una en pantallas angostas), con el mismo
+   esquema oscuro que usaba esa pestaña para distinguir el payload del resto. */
+.json-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 0.25rem;
+  background: #1f2937;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.json-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #111827;
+}
+
+.json-pane-header {
+  padding: 0.4rem 0.75rem;
+  background: #1f2937;
+  color: #9ca3af;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.json-pane pre {
+  margin: 0;
+  padding: 0.75rem;
+  max-height: 22rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #e5e7eb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .json-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .toast {
   position: fixed;
   right: 1rem;

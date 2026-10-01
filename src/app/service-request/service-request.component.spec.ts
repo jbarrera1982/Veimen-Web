@@ -122,6 +122,30 @@ describe('ServiceRequestComponent', () => {
     };
   }
 
+  function traceStep(partial: Partial<TraceStep> = {}): TraceStep {
+    return {
+      traceId: 987,
+      requestNumber: 202,
+      sequence: 2,
+      node: 'Agente 2 - Inapropiados',
+      nodeType: 'LLM',
+      llmModel: 'GPT-5.5',
+      promptVersion: '2.0.0',
+      startDate: '2026-09-04 13:51:25',
+      endDate: '2026-09-04 13:51:33',
+      durationMs: 8386,
+      status: 'completed',
+      confidence: '0.9800',
+      inputJson: '{"texto":"Hola"}',
+      outputJson: '{"texto":"ok"}',
+      observations: 'Continuar con el flujo: true',
+      createdAt: '2026-09-04 13:51:33',
+      promptId: 203,
+      promptResult: '[...]',
+      ...partial,
+    };
+  }
+
   function flushTrace(data: Record<string, unknown>[]): void {
     const req = httpTesting.expectOne((r) => r.url === TRACE_URL);
     expect(req.request.method).toBe('GET');
@@ -246,67 +270,78 @@ describe('ServiceRequestComponent', () => {
     );
   });
 
-  it('should build a tab page with entrada and salida side by side', () => {
-    const step: TraceStep = {
-      traceId: 987,
-      requestNumber: 202,
-      sequence: 2,
-      node: 'Agente 2 - Inapropiados',
-      nodeType: 'LLM',
-      llmModel: 'GPT-5.5',
-      promptVersion: '2.0.0',
-      startDate: '2026-09-04 13:51:25',
-      endDate: '2026-09-04 13:51:33',
-      durationMs: 8386,
-      status: 'completed',
-      confidence: '0.9800',
-      inputJson: '{"texto":"Línea 1\\nLínea 2"}',
-      outputJson: '{"texto":"ok"}',
-      observations: 'Continuar con el flujo: true',
-      createdAt: '2026-09-04 13:51:33',
-      promptId: 203,
-      promptResult: '[...]',
-    };
-    const tabHtml = (
-      component as unknown as { buildJsonTabHtml: (step: TraceStep) => string }
-    ).buildJsonTabHtml(step);
+  it('should toggle the inline JSON panel per step', () => {
+    const first = traceStep({ traceId: 1 });
+    const second = traceStep({ traceId: 2 });
 
-    expect(tabHtml).toContain('flex-direction: row');
-    expect(tabHtml).toContain('flex: 1 1 50%');
-    expect(tabHtml).toContain('Entrada');
-    expect(tabHtml).toContain('Salida');
-    expect(tabHtml).toContain('&quot;texto&quot;: &quot;Línea 1\nLínea 2&quot;');
-    expect(tabHtml).toContain('&quot;texto&quot;: &quot;ok&quot;');
+    expect(component.isJsonExpanded(first)).toBeFalsy();
+    expect(component.isJsonExpanded(second)).toBeFalsy();
+
+    component.toggleJson(first);
+
+    expect(component.isJsonExpanded(first)).toBeTruthy();
+    expect(component.isJsonExpanded(second)).toBeFalsy();
+
+    component.toggleJson(first);
+    expect(component.isJsonExpanded(first)).toBeFalsy();
   });
 
-  it('should escape HTML entities in the tab page', () => {
-    const step: TraceStep = {
-      traceId: 1,
-      requestNumber: 202,
-      sequence: 1,
-      node: 'Node <script>alert(1)</script>',
-      nodeType: 'LLM',
-      llmModel: 'GPT-5.5',
-      promptVersion: null,
-      startDate: '2026-09-04 13:51:25',
-      endDate: null,
-      durationMs: 10,
-      status: 'completed',
-      confidence: null,
-      inputJson: '{"a":"<b>&"}',
-      outputJson: null,
-      observations: null,
-      createdAt: '2026-09-04 13:51:33',
-      promptId: null,
-      promptResult: null,
-    };
-    const tabHtml = (
-      component as unknown as { buildJsonTabHtml: (step: TraceStep) => string }
-    ).buildJsonTabHtml(step);
+  it('should render the JSON inline instead of opening a new tab', () => {
+    const openSpy = vi.spyOn(window, 'open');
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
 
-    expect(tabHtml).toContain('&lt;script&gt;');
-    expect(tabHtml).not.toContain('<script>');
-    expect(tabHtml).toContain('Sin datos');
+    component.openDetail(component.requests()[0]);
+    flushTrace([
+      rawTrace({
+        traceId: 987,
+        inputJson: '{"a":"<b>&"}',
+        outputJson: '{"b":"ok"}',
+      }),
+    ]);
+    fixture.detectChanges();
+
+    // Antes de expandir no hay panel.
+    expect(fixture.nativeElement.querySelector('.json-panel')).toBeNull();
+
+    const button = fixture.nativeElement.querySelector('.json-toggle-btn') as HTMLButtonElement;
+    expect(button.textContent).toContain('Ver entrada / salida');
+
+    button.click();
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.json-panel');
+    expect(panel).not.toBeNull();
+    const panes = panel.querySelectorAll('.json-pane pre');
+    expect(panes).toHaveLength(2);
+    expect(panes[0].textContent).toContain('"a": "<b>&"');
+    expect(panes[1].textContent).toContain('"b": "ok"');
+    // La interpolación de Angular escapa el HTML: no se inyecta ningún script.
+    expect(panel.querySelector('script')).toBeNull();
+
+    expect(button.textContent).toContain('Ocultar entrada / salida');
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    // El clic nunca abre una pestaña nueva.
+    expect(openSpy).not.toHaveBeenCalled();
+
+    openSpy.mockRestore();
+  });
+
+  it('should show "Sin datos" in the inline panel for a missing side', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([rawTrace({ traceId: 987, inputJson: null, outputJson: '{"b":"ok"}' })]);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.json-toggle-btn') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+
+    const panes = fixture.nativeElement.querySelectorAll('.json-pane pre');
+    expect(panes[0].textContent).toContain('Sin datos');
+    expect(panes[1].textContent).toContain('"b": "ok"');
   });
 
   it('should open the detail modal and load the trace for the clicked request', () => {
