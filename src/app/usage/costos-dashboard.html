@@ -1,0 +1,233 @@
+<div class="usage-dashboard">
+  <header class="dashboard-topbar">
+    <div class="topbar-title">
+      <h1>Costos</h1>
+      <p class="subtitle">Costos de la organización de OpenAI por día y concepto</p>
+      @if (lastUpdated(); as updated) {
+        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+      }
+    </div>
+
+    <div class="topbar-dates date-filters">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [value]="startDate()"
+          (change)="setStartDate($any($event.target).value)"
+        />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input type="date" [value]="endDate()" (change)="setEndDate($any($event.target).value)" />
+      </label>
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="applyDateRange()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Filtrar"
+        aria-label="Filtrar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="refresh()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Recargar"
+        aria-label="Recargar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">
+      <span class="spinner spinner-large"></span>
+      Cargando datos…
+    </div>
+  } @else if (error(); as err) {
+    <div class="error">
+      <p>{{ err }}</p>
+      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    <section class="stats-row">
+      <div class="stat-card">
+        <span>Costo total ({{ primaryCurrency() }})</span>
+        <strong class="stat-value">{{ formatAmount(totals().amount) }}</strong>
+        <small class="stat-hint">{{ totals().dayCount }} días con costo</small>
+      </div>
+      <div class="stat-card">
+        <span>Promedio por día activo</span>
+        <strong class="stat-value">{{ formatAmount(totals().avgPerDay) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Costo máximo del día</span>
+        <strong class="stat-value">{{ formatAmount(totals().max) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Conceptos</span>
+        <strong class="stat-value">{{ formatNumber(lineItemDetail().length) }}</strong>
+        <small class="stat-hint">Líneas de costo en el rango</small>
+      </div>
+    </section>
+
+    @if (otherCurrencies().length) {
+      <p class="notice">
+        Los importes no se suman entre monedas: se muestra
+        <strong>{{ primaryCurrency() }}</strong
+        >. Además:
+        @for (c of otherCurrencies(); track c.currency; let last = $last) {
+          <span>{{ c.currency.toUpperCase() }} {{ formatAmount(c.amount) }}</span>
+          @if (!last) {
+            ,
+          }
+        }
+      </p>
+    }
+
+    @if (rows().length === 0) {
+      <div class="chart-empty-empty">No se registraron costos en el rango seleccionado.</div>
+    } @else {
+      <section class="charts-grid">
+        <div class="chart-card chart-card-wide">
+          <h2>Evolución diaria ({{ primaryCurrency() }})</h2>
+          @if (hasTimelineData()) {
+            <div class="chart-canvas" chartView #lineView="chartView">
+              @if (lineView.dims(); as view) {
+                <ngx-charts-line-chart
+                  [results]="timelineSeries()"
+                  [scheme]="seriesScheme"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatXAxis"
+                  [yAxisTickFormatting]="formatYAxis"
+                  [xAxisTicks]="timelineTicks()"
+                  [rotateXAxisTicks]="true"
+                  [maxXAxisTickLength]="12"
+                  [trimXAxisTicks]="false"
+                >
+                </ngx-charts-line-chart>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h2>Costo por concepto ({{ primaryCurrency() }})</h2>
+          @if (byLineItem().length) {
+            <div class="chart-canvas" chartView #itemView="chartView">
+              @if (itemView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="byLineItem()"
+                  [scheme]="lineItemScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatYAxis"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle por concepto ({{ primaryCurrency() }})</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th class="num">Cantidad</th>
+                <th>Unidad</th>
+                <th class="num">Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of detailRows(); track row.lineItem) {
+                <tr>
+                  <td>{{ row.lineItem }}</td>
+                  <td class="num">
+                    @if (row.quantity === null) {
+                      —
+                    } @else {
+                      {{ formatNumber(row.quantity) }}
+                    }
+                  </td>
+                  <td>{{ row.quantityUnit || '—' }}</td>
+                  <td class="num strong">{{ formatAmount(row.amount) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="table-empty">No hay filas para el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (detailRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num"></td>
+                  <td></td>
+                  <td class="num strong">{{ formatAmount(totals().amount) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreRows()) {
+          <button class="more-btn" type="button" (click)="showMore()">
+            Ver más ({{ formatNumber(lineItemDetail().length - detailRows().length) }} restantes)
+          </button>
+        }
+      </section>
+    }
+  }
+</div>

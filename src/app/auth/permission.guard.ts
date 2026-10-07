@@ -40,6 +40,9 @@ export function firstAccessiblePath(has: (code: string) => boolean): string {
   if (has(PERMISSIONS.tokensRead)) {
     return '/tokens';
   }
+  if (has(PERMISSIONS.usageRead)) {
+    return '/consumo';
+  }
   if (has(PERMISSIONS.serviceRequestsRead)) {
     return '/service-request';
   }

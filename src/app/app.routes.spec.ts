@@ -68,4 +68,38 @@ describe('app.routes wiring', () => {
 
     expect(router.url).toContain('/sin-acceso');
   });
+
+  // /consumo y /costos comparten el permiso usage.read (uno solo para las dos
+  // pantallas de uso de OpenAI), distinto de tokens.read del dashboard de tokens.
+  it.each(['/consumo', '/costos'])(
+    'should redirect %s to /sin-acceso without the usage.read permission',
+    async (path) => {
+      const auth = TestBed.inject(AuthService);
+      auth.currentUser.set(user);
+      const permissions = TestBed.inject(PermissionsService);
+      permissions.permissions.set([PERMISSIONS.dashboardRead]);
+      permissions.loaded.set(true);
+
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(path);
+
+      expect(router.url).toContain('/sin-acceso');
+    },
+  );
+
+  it.each(['/consumo', '/costos'])(
+    'should allow %s with the usage.read permission',
+    async (path) => {
+      const auth = TestBed.inject(AuthService);
+      auth.currentUser.set(user);
+      const permissions = TestBed.inject(PermissionsService);
+      permissions.permissions.set([PERMISSIONS.usageRead]);
+      permissions.loaded.set(true);
+
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(path);
+
+      expect(router.url).toBe(path);
+    },
+  );
 });

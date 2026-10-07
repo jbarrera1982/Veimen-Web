@@ -96,6 +96,27 @@ describe('firstAccessiblePath', () => {
     expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/service-request');
   });
 
+  // El orden debe seguir al del sidebar: /tokens antes que /consumo, y /consumo
+  // antes que /costos (que además no es destino de primer nivel).
+  it('should prefer tokens over consumo when both are readable', () => {
+    const readable: string[] = [PERMISSIONS.tokensRead, PERMISSIONS.usageRead];
+    expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/tokens');
+  });
+
+  it('should fall back to consumo when only usage.read is readable', () => {
+    const has = (code: string) => code === PERMISSIONS.usageRead;
+    expect(firstAccessiblePath(has)).toBe('/consumo');
+  });
+
+  it('should fall back to service-request when neither tokens nor consumo is readable', () => {
+    const readable: string[] = [PERMISSIONS.usageRead, PERMISSIONS.serviceRequestsRead];
+    // tokens.read no está, así que el siguiente del sidebar es el consumo.
+    expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/consumo');
+
+    const onlyRequests: string[] = [PERMISSIONS.serviceRequestsRead];
+    expect(firstAccessiblePath((code) => onlyRequests.includes(code))).toBe('/service-request');
+  });
+
   it('should fall back to prompts when it is the only accessible module', () => {
     const has = (code: string) => code === PERMISSIONS.promptsRead;
     expect(firstAccessiblePath(has)).toBe('/prompts');

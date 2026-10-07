@@ -12,6 +12,8 @@ import { UserFormComponent } from './users/user-form.component';
 import { PromptFormComponent } from './prompts/prompt-form.component';
 import { BusinessModelComponent } from './business-model/business-model.component';
 import { TokensDashboardComponent } from './tokens/tokens-dashboard.component';
+import { ConsumoDashboardComponent } from './usage/consumo-dashboard.component';
+import { CostosDashboardComponent } from './usage/costos-dashboard.component';
 import { permissionGuard } from './auth/permission.guard';
 import { PERMISSIONS } from './services/permissions.service';
 
@@ -24,6 +26,7 @@ export const routes: Routes = [
       permissionGuard(
         PERMISSIONS.dashboardRead,
         PERMISSIONS.tokensRead,
+        PERMISSIONS.usageRead,
         PERMISSIONS.serviceRequestsRead,
         PERMISSIONS.promptsRead,
         PERMISSIONS.usersManage,
@@ -41,6 +44,16 @@ export const routes: Routes = [
         path: 'tokens',
         component: TokensDashboardComponent,
         canActivate: [permissionGuard(PERMISSIONS.tokensRead)],
+      },
+      {
+        path: 'consumo',
+        component: ConsumoDashboardComponent,
+        canActivate: [permissionGuard(PERMISSIONS.usageRead)],
+      },
+      {
+        path: 'costos',
+        component: CostosDashboardComponent,
+        canActivate: [permissionGuard(PERMISSIONS.usageRead)],
       },
       {
         path: 'service-request',

@@ -51,6 +51,16 @@ describe('HomeRedirectComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith('/service-request');
   });
 
+  it('should navigate to consumo when the user only has usage.read', async () => {
+    permissions.permissions.set([PERMISSIONS.usageRead]);
+    permissions.loaded.set(true);
+
+    create();
+    await fixture.whenStable();
+
+    expect(navigateSpy).toHaveBeenCalledWith('/consumo');
+  });
+
   it('should navigate to the business model when it is the only accessible module', async () => {
     permissions.permissions.set([PERMISSIONS.businessModelRead]);
     permissions.loaded.set(true);

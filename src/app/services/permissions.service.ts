@@ -12,6 +12,7 @@ export const PERMISSIONS = {
   traceRead: 'trace.read',
   dashboardRead: 'dashboard.read',
   tokensRead: 'tokens.read',
+  usageRead: 'usage.read',
   usersManage: 'users.manage',
   businessModelRead: 'businessModel.read',
 } as const;

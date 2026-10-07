@@ -9,6 +9,7 @@ import { PERMISSIONS, PermissionsService } from '../services/permissions.service
 const ALL_PERMISSIONS = [
   PERMISSIONS.dashboardRead,
   PERMISSIONS.tokensRead,
+  PERMISSIONS.usageRead,
   PERMISSIONS.serviceRequestsRead,
   PERMISSIONS.promptsRead,
   PERMISSIONS.promptsWrite,
@@ -47,21 +48,40 @@ describe('ShellComponent', () => {
 
   it('should render the navigation links', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links.length).toBe(6);
+    expect(links.length).toBe(8);
     expect(links[0].textContent.trim()).toBe('Dashboard');
     expect(links[1].textContent.trim()).toBe('Consumo de tokens');
-    expect(links[2].textContent.trim()).toBe('Requerimientos');
-    expect(links[3].textContent.trim()).toBe('Prompts');
-    expect(links[4].textContent.trim()).toBe('Usuarios');
-    expect(links[5].textContent.trim()).toBe('Modelo de negocios');
+    expect(links[2].textContent.trim()).toBe('Consumo');
+    expect(links[3].textContent.trim()).toBe('Costos');
+    expect(links[4].textContent.trim()).toBe('Requerimientos');
+    expect(links[5].textContent.trim()).toBe('Prompts');
+    expect(links[6].textContent.trim()).toBe('Usuarios');
+    expect(links[7].textContent.trim()).toBe('Modelo de negocios');
   });
 
   it('should link the business model entry to its own route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    const link = links[5];
+    const link = links[7];
 
     expect(link.getAttribute('href')).toBe('/business-model');
     expect(link.hasAttribute('target')).toBe(false);
+  });
+
+  it('should link the Consumo and Costos entries to the usage routes', () => {
+    const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
+    expect(links[2].getAttribute('href')).toBe('/consumo');
+    expect(links[3].getAttribute('href')).toBe('/costos');
+  });
+
+  it('should hide the Consumo and Costos links without the usage.read permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.promptsRead]);
+    fixture.detectChanges();
+
+    const texts = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link'),
+    ).map((link) => link.textContent?.trim());
+    expect(texts).toEqual(['Prompts']);
   });
 
   it('should hide the token usage link without the tokens.read permission', () => {

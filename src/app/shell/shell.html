@@ -65,6 +65,22 @@
         Consumo de tokens
       </a>
       <a
+        *appHasPermission="PERMISSIONS.usageRead"
+        routerLink="/consumo"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Consumo
+      </a>
+      <a
+        *appHasPermission="PERMISSIONS.usageRead"
+        routerLink="/costos"
+        routerLinkActive="active"
+        class="nav-link"
+      >
+        Costos
+      </a>
+      <a
         *appHasPermission="PERMISSIONS.serviceRequestsRead"
         routerLink="/service-request"
         routerLinkActive="active"
