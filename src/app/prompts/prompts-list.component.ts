@@ -18,7 +18,6 @@ type SortColumn =
   | 'code'
   | 'name'
   | 'description'
-  | 'agent'
   | 'agentGroup'
   | 'type'
   | 'llmModel'
@@ -58,7 +57,6 @@ export class PromptsListComponent implements OnInit {
     { value: 'code', label: 'Código' },
     { value: 'name', label: 'Nombre' },
     { value: 'description', label: 'Descripción' },
-    { value: 'agent', label: 'Agente' },
     { value: 'agentGroup', label: 'Grupo' },
     { value: 'type', label: 'Tipo' },
     { value: 'llmModel', label: 'Modelo' },
@@ -78,7 +76,7 @@ export class PromptsListComponent implements OnInit {
       if (status === 'inactive' && p.active) return false;
       if (term) {
         const haystack =
-          `${p.code} ${p.name} ${p.description} ${p.agent} ${p.agentGroup} ${p.type} ${p.llmModel} ${p.version}`.toLowerCase();
+          `${p.code} ${p.name} ${p.description} ${p.agentGroup} ${p.type} ${p.llmModel} ${p.version}`.toLowerCase();
         if (!haystack.includes(term)) return false;
       }
       return true;
@@ -166,7 +164,7 @@ export class PromptsListComponent implements OnInit {
     this.promptsService.getPrompts().subscribe({
       next: (data) => this.prompts.set(data),
       error: () => {
-        this.error.set('No se pudieron cargar los prompts. Verifica la conexión con el webhook.');
+        this.error.set('No se pudieron cargar los prompts. Verifica la conexión con el servidor.');
         this.isLoading.set(false);
         this.isRefreshing.set(false);
         this.inFlight = false;

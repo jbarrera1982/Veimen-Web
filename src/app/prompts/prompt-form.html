@@ -12,7 +12,7 @@
       Cargando prompt…
     </div>
   } @else {
-    <form class="prompt-form-grid" [formGroup]="form" novalidate>
+    <form class="prompt-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <input type="hidden" formControlName="promptId" />
 
       <label class="field field-full field-readonly">
@@ -36,12 +36,7 @@
       </label>
 
       <label class="field">
-        <span>Agente *</span>
-        <input formControlName="agent" type="text" />
-      </label>
-
-      <label class="field">
-        <span>Grupo de agente</span>
+        <span>Grupo de agente *</span>
         <input formControlName="agentGroup" type="text" />
       </label>
 
@@ -121,6 +116,28 @@
           </label>
         </div>
       </fieldset>
+
+      @if (saveError(); as saveErr) {
+        <p class="form-error save-error" role="alert">{{ saveErr }}</p>
+      }
+
+      <div class="form-actions field-full">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="form.invalid || isSaving() || isLoading()"
+        >
+          @if (isSaving()) {
+            <span class="spinner"></span>
+            Guardando…
+          } @else {
+            {{ isEdit() ? 'Guardar cambios' : 'Crear prompt' }}
+          }
+        </button>
+      </div>
     </form>
   }
 </div>

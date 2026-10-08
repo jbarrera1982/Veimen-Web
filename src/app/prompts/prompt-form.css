@@ -126,3 +126,70 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
 }
+
+.save-error {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 14px 21px;
+  border: 1px solid var(--veimen-accent);
+  border-radius: 10px;
+  background: var(--veimen-accent);
+  color: #031219;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* El spinner del botón hereda el color del texto: sobre el acento, azul no se lee. */
+.btn-primary .spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-color: currentColor;
+  border-top-color: transparent;
+}
+
+.btn-secondary {
+  padding: 14px 21px;
+  border: 1px solid rgba(6, 16, 29, 0.28);
+  border-radius: 10px;
+  background: transparent;
+  color: #0c1d30;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--veimen-accent);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

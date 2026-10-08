@@ -3,7 +3,7 @@
 $raw_mail = file_get_contents("php://stdin");
 
 // URL de tu webhook de destino en n8n
-$webhook_url = "https://n8n.veimen.net/webhook/email-agent";//"https://capitalminds.app.n8n.cloud/webhook/email-agent";
+$webhook_url = "https://n8n.veimen.net/webhook/email-agent";
 
 
 // --- FUNCIONES PARA EXTRAER LOS CAMPOS ---

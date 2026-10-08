@@ -8,7 +8,7 @@ import { AuthResponse, UserDto } from './auth.service';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiBaseUrl;
-const WEBHOOK = 'https://capitalminds.app.n8n.cloud/webhook/dashboard-by-status';
+const WEBHOOK = 'https://veimen.app.n8n.cloud/webhook/dashboard-by-status';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 

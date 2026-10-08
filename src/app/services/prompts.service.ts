@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Prompt {
   promptId: number;
@@ -8,7 +9,6 @@ export interface Prompt {
   code: string;
   name: string;
   description: string;
-  agent: string;
   agentGroup: string;
   type: string;
   llmModel: string;
@@ -26,72 +26,132 @@ export interface Prompt {
   schemaOutput: string;
 }
 
-interface RawPrompt {
-  prompt_id: number;
-  secuence: number;
-  code: string;
-  name: string;
-  description: string;
-  agent: string;
-  agent_group: string;
-  type: string;
-  llm_model: string;
-  version: string;
-  system_prompt?: string;
-  user_prompt?: string;
-  temperature?: number;
-  max_tokens?: number;
-  active?: boolean;
-  observations?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_by?: string;
-  updated_at?: string;
-  schema_output?: string;
+/**
+ * Cuerpo que envía el formulario al guardar (POST/PUT). Todos los campos pueden venir
+ * null: así lo infiere el FormBuilder por defecto y así lo acepta el modelo del backend
+ * (solo code, name, agentGroup, version y systemPrompt son obligatorios).
+ */
+export interface PromptPayload {
+  promptId: number | null;
+  secuence: number | null;
+  code: string | null;
+  name: string | null;
+  description: string | null;
+  agentGroup: string | null;
+  type: string | null;
+  llmModel: string | null;
+  version: string | null;
+  systemPrompt: string | null;
+  userPrompt: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
+  active: boolean | null;
+  observations: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+  updatedBy: string | null;
+  updatedAt: string | null;
+  schemaOutput: string | null;
 }
 
-function mapPrompt(raw: RawPrompt): Prompt {
+/**
+ * Forma camelCase en la que la API serializa el modelo Prompt. Casi todos los campos del
+ * backend son anulables (son columnas opcionales de la tabla `prompt`).
+ */
+interface ApiPrompt {
+  promptId: number;
+  secuence?: number | null;
+  code?: string | null;
+  name?: string | null;
+  description?: string | null;
+  agentGroup?: string | null;
+  type?: string | null;
+  llmModel?: string | null;
+  version?: string | null;
+  systemPrompt?: string | null;
+  userPrompt?: string | null;
+  temperature?: number | null;
+  maxTokens?: number | null;
+  active?: boolean | null;
+  observations?: string | null;
+  createdBy?: string | null;
+  createdAt?: string | null;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
+  schemaOutput?: string | null;
+}
+
+// La API devuelve campos anulables; el resto de la app trabaja con el Prompt no anulable
+// de arriba, así que aquí se aplican los mismos defaults que tenía el webhook de n8n.
+function normalizePrompt(raw: ApiPrompt): Prompt {
   return {
-    promptId: raw.prompt_id,
-    secuence: raw.secuence,
-    code: raw.code,
-    name: raw.name,
-    description: raw.description,
-    agent: raw.agent,
-    agentGroup: raw.agent_group,
-    type: raw.type,
-    llmModel: raw.llm_model,
-    version: raw.version,
-    systemPrompt: raw.system_prompt ?? '',
-    userPrompt: raw.user_prompt ?? '',
+    promptId: raw.promptId,
+    secuence: raw.secuence ?? 0,
+    code: raw.code ?? '',
+    name: raw.name ?? '',
+    description: raw.description ?? '',
+    agentGroup: raw.agentGroup ?? '',
+    type: raw.type ?? '',
+    llmModel: raw.llmModel ?? '',
+    version: raw.version ?? '',
+    systemPrompt: raw.systemPrompt ?? '',
+    userPrompt: raw.userPrompt ?? '',
     temperature: raw.temperature ?? 0,
-    maxTokens: raw.max_tokens ?? 0,
+    maxTokens: raw.maxTokens ?? 0,
     active: raw.active ?? true,
     observations: raw.observations ?? '',
-    createdBy: raw.created_by ?? '',
-    createdAt: raw.created_at ?? '',
-    updatedBy: raw.updated_by ?? '',
-    updatedAt: raw.updated_at ?? '',
-    schemaOutput: raw.schema_output ?? '',
+    createdBy: raw.createdBy ?? '',
+    createdAt: raw.createdAt ?? '',
+    updatedBy: raw.updatedBy ?? '',
+    updatedAt: raw.updatedAt ?? '',
+    schemaOutput: raw.schemaOutput ?? '',
+  };
+}
+
+// System.Text.Json solo acepta fechas ISO 8601 (con 'T'); 'YYYY-MM-DD HH:mm:ss' daría 400
+// y un valor vacío rompería el bind de DateTime?.
+function toIso(value: string | null): string | null {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return null;
+  return trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
+}
+
+function toRequestBody(payload: PromptPayload): PromptPayload {
+  return {
+    ...payload,
+    promptId: payload.promptId ?? 0,
+    active: payload.active ?? true,
+    createdAt: toIso(payload.createdAt),
+    updatedAt: toIso(payload.updatedAt),
   };
 }
 
 @Injectable({ providedIn: 'root' })
 export class PromptsService {
-  private readonly listUrl = 'https://capitalminds.app.n8n.cloud/webhook/prompts-list';
-  private readonly detailUrl = 'https://capitalminds.app.n8n.cloud/webhook/prompt-detail';
+  private readonly baseUrl = `${environment.apiBaseUrl}/api/prompts`;
 
   constructor(private http: HttpClient) {}
 
   getPrompts(): Observable<Prompt[]> {
-    return this.http.get<RawPrompt[]>(this.listUrl).pipe(map((items) => items.map(mapPrompt)));
+    return this.http
+      .get<ApiPrompt[]>(this.baseUrl)
+      .pipe(map((items) => items.map(normalizePrompt)));
   }
 
   getPrompt(promptId: number): Observable<Prompt> {
-    const params = new HttpParams().set('prompt_id', String(promptId));
-    return this.http.get<RawPrompt | RawPrompt[]>(this.detailUrl, { params }).pipe(
-      map((res) => (Array.isArray(res) ? res[0] : res)),
-      map((raw) => mapPrompt(raw)),
-    );
+    return this.http.get<ApiPrompt>(`${this.baseUrl}/${promptId}`).pipe(map(normalizePrompt));
+  }
+
+  // Requiere el permiso prompts.write. Devuelve el prompt recién creado (201).
+  createPrompt(payload: PromptPayload): Observable<Prompt> {
+    return this.http
+      .post<ApiPrompt>(this.baseUrl, toRequestBody(payload))
+      .pipe(map(normalizePrompt));
+  }
+
+  // Requiere el permiso prompts.write. El id de la ruta debe coincidir con el del cuerpo (204).
+  updatePrompt(promptId: number, payload: PromptPayload): Observable<void> {
+    const body = toRequestBody({ ...payload, promptId });
+    return this.http.put<void>(`${this.baseUrl}/${promptId}`, body);
   }
 }

@@ -6,44 +6,17 @@ import { Router } from '@angular/router';
 import { PromptsListComponent } from './prompts-list.component';
 import { PromptsService, Prompt } from '../services/prompts.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { environment } from '../../environments/environment';
 
-const API_URL = 'https://capitalminds.app.n8n.cloud/webhook/prompts-list';
+const API_URL = `${environment.apiBaseUrl}/api/prompts`;
 
 function rawPrompt(partial: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    prompt_id: 1,
-    secuence: 1,
-    code: 'P-001',
-    name: 'Extracto de intención',
-    description: 'Extrae la intención',
-    agent: 'Agente 1 - Intención',
-    agent_group: 'Intake',
-    type: 'System',
-    llm_model: 'GPT-5.5',
-    version: '1.0.0',
-    system_prompt: 'Eres un agente.',
-    user_prompt: 'Analiza.',
-    temperature: 0.2,
-    max_tokens: 2048,
-    active: true,
-    observations: 'Principal',
-    created_by: 'admin',
-    created_at: '2026-09-01 10:00:00',
-    updated_by: 'admin',
-    updated_at: '2026-09-02 11:00:00',
-    schema_output: '{}',
-    ...partial,
-  };
-}
-
-function mappedPrompt(partial: Partial<Prompt> = {}): Prompt {
   return {
     promptId: 1,
     secuence: 1,
     code: 'P-001',
     name: 'Extracto de intención',
     description: 'Extrae la intención',
-    agent: 'Agente 1 - Intención',
     agentGroup: 'Intake',
     type: 'System',
     llmModel: 'GPT-5.5',
@@ -55,9 +28,35 @@ function mappedPrompt(partial: Partial<Prompt> = {}): Prompt {
     active: true,
     observations: 'Principal',
     createdBy: 'admin',
-    createdAt: '2026-09-01 10:00:00',
+    createdAt: '2026-09-01T10:00:00',
     updatedBy: 'admin',
-    updatedAt: '2026-09-02 11:00:00',
+    updatedAt: '2026-09-02T11:00:00',
+    schemaOutput: '{}',
+    ...partial,
+  };
+}
+
+function mappedPrompt(partial: Partial<Prompt> = {}): Prompt {
+  return {
+    promptId: 1,
+    secuence: 1,
+    code: 'P-001',
+    name: 'Extracto de intención',
+    description: 'Extrae la intención',
+    agentGroup: 'Intake',
+    type: 'System',
+    llmModel: 'GPT-5.5',
+    version: '1.0.0',
+    systemPrompt: 'Eres un agente.',
+    userPrompt: 'Analiza.',
+    temperature: 0.2,
+    maxTokens: 2048,
+    active: true,
+    observations: 'Principal',
+    createdBy: 'admin',
+    createdAt: '2026-09-01T10:00:00',
+    updatedBy: 'admin',
+    updatedAt: '2026-09-02T11:00:00',
     schemaOutput: '{}',
     ...partial,
   };
@@ -123,7 +122,7 @@ describe('PromptsListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load prompts from the webhook', () => {
+  it('should load prompts from the API', () => {
     fixture.detectChanges();
     flushResponse([rawPrompt()]);
 
@@ -135,10 +134,10 @@ describe('PromptsListComponent', () => {
   it('should sort by group, then secuence, then active first by default', () => {
     fixture.detectChanges();
     flushResponse([
-      rawPrompt({ prompt_id: 1, agent_group: 'Intake', secuence: 2 }),
-      rawPrompt({ prompt_id: 2, agent_group: 'Ventas', secuence: 1 }),
-      rawPrompt({ prompt_id: 3, agent_group: 'Intake', secuence: 1 }),
-      rawPrompt({ prompt_id: 4, agent_group: 'Intake', secuence: 1, active: false }),
+      rawPrompt({ promptId: 1, agentGroup: 'Intake', secuence: 2 }),
+      rawPrompt({ promptId: 2, agentGroup: 'Ventas', secuence: 1 }),
+      rawPrompt({ promptId: 3, agentGroup: 'Intake', secuence: 1 }),
+      rawPrompt({ promptId: 4, agentGroup: 'Intake', secuence: 1, active: false }),
     ]);
 
     expect(component.sortColumn()).toBe('agentGroup');
@@ -155,7 +154,7 @@ describe('PromptsListComponent', () => {
 
   it('should render a table row for each prompt', () => {
     fixture.detectChanges();
-    flushResponse([rawPrompt(), rawPrompt({ prompt_id: 2 })]);
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2 })]);
     fixture.detectChanges();
 
     const rows = fixture.debugElement.queryAll(By.css('.prompts-table tbody tr'));
@@ -196,7 +195,7 @@ describe('PromptsListComponent', () => {
 
   it('should filter by search text (name or code)', () => {
     fixture.detectChanges();
-    flushResponse([rawPrompt(), rawPrompt({ prompt_id: 2, code: 'P-002', name: 'Respuesta' })]);
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta' })]);
 
     setSearch('Respuesta');
     expect(component.sortedPrompts().length).toBe(1);
@@ -211,7 +210,7 @@ describe('PromptsListComponent', () => {
     fixture.detectChanges();
     flushResponse([
       rawPrompt(),
-      rawPrompt({ prompt_id: 2, code: 'P-002', name: 'Respuesta', type: 'User' }),
+      rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta', type: 'User' }),
     ]);
 
     selectFilter(0, 'User');
@@ -222,7 +221,7 @@ describe('PromptsListComponent', () => {
     fixture.detectChanges();
     flushResponse([
       rawPrompt(),
-      rawPrompt({ prompt_id: 2, code: 'P-002', name: 'Respuesta', active: false }),
+      rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta', active: false }),
     ]);
 
     selectFilter(2, 'active');
@@ -236,7 +235,7 @@ describe('PromptsListComponent', () => {
     fixture.detectChanges();
     flushResponse([
       rawPrompt(),
-      rawPrompt({ prompt_id: 2, code: 'P-002', name: 'Respuesta', active: false }),
+      rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta', active: false }),
     ]);
 
     expect(component.statusFilter()).toBe('active');
@@ -245,7 +244,7 @@ describe('PromptsListComponent', () => {
 
   it('should clear filters and restore all results', () => {
     fixture.detectChanges();
-    flushResponse([rawPrompt(), rawPrompt({ prompt_id: 2, code: 'P-002', name: 'Respuesta' })]);
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta' })]);
 
     setSearch('Respuesta');
     expect(component.sortedPrompts().length).toBe(1);
@@ -258,7 +257,7 @@ describe('PromptsListComponent', () => {
 
   it('should change the sort column and toggle the direction', () => {
     fixture.detectChanges();
-    flushResponse([rawPrompt(), rawPrompt({ prompt_id: 2, name: 'Respuesta' })]);
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2, name: 'Respuesta' })]);
     fixture.detectChanges();
 
     const sortSelect = fixture.nativeElement.querySelector('.sort-bar select');
@@ -281,7 +280,7 @@ describe('PromptsListComponent', () => {
 
   it('should paginate results and navigate between pages', () => {
     fixture.detectChanges();
-    flushResponse(Array.from({ length: 12 }, (_, i) => rawPrompt({ prompt_id: i + 1 })));
+    flushResponse(Array.from({ length: 12 }, (_, i) => rawPrompt({ promptId: i + 1 })));
     fixture.detectChanges();
 
     expect(component.totalPages()).toBe(2);
