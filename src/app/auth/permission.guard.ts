@@ -46,11 +46,14 @@ export function firstAccessiblePath(has: (code: string) => boolean): string {
   if (has(PERMISSIONS.serviceRequestsRead)) {
     return '/service-request';
   }
-  if (has(PERMISSIONS.promptsRead)) {
-    return '/prompts';
+  if (has(PERMISSIONS.clientsRead)) {
+    return '/clientes';
   }
   if (has(PERMISSIONS.usersManage)) {
     return '/usuarios';
+  }
+  if (has(PERMISSIONS.promptsRead)) {
+    return '/prompts';
   }
   if (has(PERMISSIONS.businessModelRead)) {
     return '/business-model';

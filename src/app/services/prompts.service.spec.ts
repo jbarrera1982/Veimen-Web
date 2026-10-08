@@ -196,4 +196,15 @@ describe('PromptsService', () => {
 
     expect(completed).toBe(true);
   });
+
+  it('should delete a prompt with DELETE /api/prompts/{id}', () => {
+    let completed = false;
+    service.deletePrompt(7).subscribe(() => (completed = true));
+
+    const req = httpTesting.expectOne(`${LIST_URL}/7`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(completed).toBe(true);
+  });
 });

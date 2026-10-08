@@ -298,6 +298,24 @@ describe('PromptsListComponent', () => {
     expect(component.page()).toBe(1);
   });
 
+  it('should show pagination controls only when there is more than one page', () => {
+    fixture.detectChanges();
+    flushResponse([rawPrompt()]);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.pagination'))).toBeNull();
+
+    component.prompts.set(
+      Array.from({ length: 12 }, (_, i) =>
+        mappedPrompt({ promptId: i + 1, name: `Prompt ${i + 1}` }),
+      ),
+    );
+    fixture.detectChanges();
+
+    expect(component.totalPages()).toBe(2);
+    expect(fixture.debugElement.query(By.css('.pagination'))).not.toBeNull();
+  });
+
   it('should navigate to the prompt form when creating a new prompt', () => {
     fixture.detectChanges();
     flushResponse([]);
@@ -331,5 +349,31 @@ describe('PromptsListComponent', () => {
 
     expect(navigate).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith(['/prompts', 1]);
+  });
+
+  it('should delete a prompt (soft delete) after confirmation', () => {
+    fixture.detectChanges();
+    flushResponse([rawPrompt()]);
+    fixture.detectChanges();
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.removePrompt(component.prompts()[0]);
+
+    const req = httpTesting.expectOne((r) => r.url === `${API_URL}/1` && r.method === 'DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(component.prompts().length).toBe(0);
+  });
+
+  it('should not delete a prompt when confirmation is cancelled', () => {
+    fixture.detectChanges();
+    flushResponse([rawPrompt()]);
+    fixture.detectChanges();
+
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    component.removePrompt(component.prompts()[0]);
+
+    httpTesting.expectNone((r) => r.method === 'DELETE');
+    expect(component.prompts().length).toBe(1);
   });
 });

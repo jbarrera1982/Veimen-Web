@@ -11,6 +11,8 @@ const ALL_PERMISSIONS = [
   PERMISSIONS.tokensRead,
   PERMISSIONS.usageRead,
   PERMISSIONS.serviceRequestsRead,
+  PERMISSIONS.clientsRead,
+  PERMISSIONS.clientsWrite,
   PERMISSIONS.promptsRead,
   PERMISSIONS.promptsWrite,
   PERMISSIONS.usersManage,
@@ -46,25 +48,36 @@ describe('ShellComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render the navigation links', () => {
+  it('should render the navigation links grouped by category', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links.length).toBe(8);
+    expect(links.length).toBe(9);
     expect(links[0].textContent.trim()).toBe('Dashboard');
     expect(links[1].textContent.trim()).toBe('Consumo de tokens');
     expect(links[2].textContent.trim()).toBe('Consumo');
     expect(links[3].textContent.trim()).toBe('Costos');
     expect(links[4].textContent.trim()).toBe('Requerimientos');
-    expect(links[5].textContent.trim()).toBe('Prompts');
+    expect(links[5].textContent.trim()).toBe('Clientes');
     expect(links[6].textContent.trim()).toBe('Usuarios');
-    expect(links[7].textContent.trim()).toBe('Modelo de negocios');
+    expect(links[7].textContent.trim()).toBe('Prompts');
+    expect(links[8].textContent.trim()).toBe('Modelo de negocios');
+
+    const titles = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-group-title'),
+    ).map((title) => title.textContent?.trim());
+    expect(titles).toEqual(['Monitorear', 'Administrar']);
   });
 
   it('should link the business model entry to its own route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    const link = links[7];
+    const link = links[8];
 
     expect(link.getAttribute('href')).toBe('/business-model');
     expect(link.hasAttribute('target')).toBe(false);
+  });
+
+  it('should link the Clientes entry to its route', () => {
+    const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
+    expect(links[5].getAttribute('href')).toBe('/clientes');
   });
 
   it('should link the Consumo and Costos entries to the usage routes', () => {
@@ -118,7 +131,41 @@ describe('ShellComponent', () => {
     permissions.permissions.set([]);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link').length).toBe(0);
+    const remaining = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
+    expect(remaining.length).toBe(0);
+  });
+
+  it('should hide the Clientes link without the clients.read permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.promptsRead]);
+    fixture.detectChanges();
+
+    const texts = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link'),
+    ).map((link) => link.textContent?.trim());
+    expect(texts).not.toContain('Clientes');
+  });
+
+  it('should hide the Administrar category when the user has no manage permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    fixture.detectChanges();
+
+    const titles = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-group-title'),
+    ).map((title) => title.textContent?.trim());
+    expect(titles).toEqual(['Monitorear']);
+  });
+
+  it('should hide the Monitorear category and its links without any monitoring permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.promptsRead]);
+    fixture.detectChanges();
+
+    const titles = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-group-title'),
+    ).map((title) => title.textContent?.trim());
+    expect(titles).toEqual(['Administrar']);
   });
 
   it('should start with the menu closed', () => {

@@ -47,63 +47,83 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a
-        *appHasPermission="PERMISSIONS.dashboardRead"
-        routerLink="/dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="nav-link"
-      >
-        Dashboard
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.tokensRead"
-        routerLink="/tokens"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Consumo de tokens
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.usageRead"
-        routerLink="/consumo"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Consumo
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.usageRead"
-        routerLink="/costos"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Costos
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.serviceRequestsRead"
-        routerLink="/service-request"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Requerimientos
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.promptsRead"
-        routerLink="/prompts"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Prompts
-      </a>
-      <a
-        *appHasPermission="PERMISSIONS.usersManage"
-        routerLink="/usuarios"
-        routerLinkActive="active"
-        class="nav-link"
-      >
-        Usuarios
-      </a>
+      @if (canMonitor()) {
+        <div class="nav-group">
+          <p class="nav-group-title">Monitorear</p>
+          <a
+            *appHasPermission="PERMISSIONS.dashboardRead"
+            routerLink="/dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-link"
+          >
+            Dashboard
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.tokensRead"
+            routerLink="/tokens"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Consumo de tokens
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.usageRead"
+            routerLink="/consumo"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Consumo
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.usageRead"
+            routerLink="/costos"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Costos
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.serviceRequestsRead"
+            routerLink="/service-request"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Requerimientos
+          </a>
+        </div>
+      }
+
+      @if (canManage()) {
+        <div class="nav-group">
+          <p class="nav-group-title">Administrar</p>
+          <a
+            *appHasPermission="PERMISSIONS.clientsRead"
+            routerLink="/clientes"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Clientes
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.usersManage"
+            routerLink="/usuarios"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Usuarios
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.promptsRead"
+            routerLink="/prompts"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Prompts
+          </a>
+        </div>
+      }
+
       <a
         *appHasPermission="PERMISSIONS.businessModelRead"
         routerLink="/business-model"

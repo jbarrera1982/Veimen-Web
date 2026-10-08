@@ -1,0 +1,69 @@
+<div class="client-form">
+  <header class="client-form-header">
+    <h1>{{ isEdit() ? 'Editar cliente' : 'Nuevo cliente' }}</h1>
+    @if (error(); as err) {
+      <p class="form-error">{{ err }}</p>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="form-state">
+      <span class="spinner"></span>
+      Cargando cliente…
+    </div>
+  } @else {
+    <form class="client-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <label class="field field-full">
+        <span>Nombre *</span>
+        <input formControlName="name" type="text" maxlength="100" />
+      </label>
+
+      <label class="field">
+        <span>Email entrante</span>
+        <input formControlName="inboundEmail" type="email" maxlength="100" />
+      </label>
+
+      <label class="field">
+        <span>Email saliente</span>
+        <input formControlName="outboundEmail" type="email" maxlength="100" />
+      </label>
+
+      <label class="field">
+        <span>Email analista</span>
+        <input formControlName="analystEmail" type="email" maxlength="100" />
+      </label>
+
+      <label class="field">
+        <span>OpenAI API key</span>
+        <input formControlName="openAIApiKey" type="text" maxlength="100" autocomplete="off" />
+      </label>
+
+      <label class="field field-check">
+        <span>Activo</span>
+        <input formControlName="active" type="checkbox" />
+      </label>
+
+      @if (saveError(); as saveErr) {
+        <p class="form-error save-error" role="alert">{{ saveErr }}</p>
+      }
+
+      <div class="form-actions field-full">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="form.invalid || isSaving() || isLoading()"
+        >
+          @if (isSaving()) {
+            <span class="spinner"></span>
+            Guardando…
+          } @else {
+            {{ isEdit() ? 'Guardar cambios' : 'Crear cliente' }}
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

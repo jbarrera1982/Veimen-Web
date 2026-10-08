@@ -102,4 +102,30 @@ describe('app.routes wiring', () => {
       expect(router.url).toBe(path);
     },
   );
+
+  it('should redirect /clientes to /sin-acceso without the clients.read permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/clientes');
+
+    expect(router.url).toContain('/sin-acceso');
+  });
+
+  it('should allow /clientes with the clients.read permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.clientsRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/clientes');
+
+    expect(router.url).toBe('/clientes');
+  });
 });

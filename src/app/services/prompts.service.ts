@@ -154,4 +154,9 @@ export class PromptsService {
     const body = toRequestBody({ ...payload, promptId });
     return this.http.put<void>(`${this.baseUrl}/${promptId}`, body);
   }
+
+  // Requiere prompts.write. Borrado lógico: el backend marca deleted = 1 (204).
+  deletePrompt(promptId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${promptId}`);
+  }
 }

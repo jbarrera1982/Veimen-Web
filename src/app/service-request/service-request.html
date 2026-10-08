@@ -220,25 +220,27 @@
           </tbody>
         </table>
       </div>
-      <div class="pagination">
-        <button
-          class="refresh-btn page-btn"
-          type="button"
-          (click)="prevPage()"
-          [disabled]="!hasPrevPage()"
-        >
-          ‹ Anterior
-        </button>
-        <span class="page-info">Página {{ page() }} de {{ totalPages() }}</span>
-        <button
-          class="refresh-btn page-btn"
-          type="button"
-          (click)="nextPage()"
-          [disabled]="!hasNextPage()"
-        >
-          Siguiente ›
-        </button>
-      </div>
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button
+            class="refresh-btn page-btn"
+            type="button"
+            (click)="prevPage()"
+            [disabled]="!hasPrevPage()"
+          >
+            ‹ Anterior
+          </button>
+          <span class="page-info">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            class="refresh-btn page-btn"
+            type="button"
+            (click)="nextPage()"
+            [disabled]="!hasNextPage()"
+          >
+            Siguiente ›
+          </button>
+        </div>
+      }
     } @else {
       <div class="empty">No hay datos en el rango seleccionado.</div>
     }

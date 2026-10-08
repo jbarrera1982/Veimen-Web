@@ -8,6 +8,8 @@ import { LoginComponent } from './auth/login.component';
 import { ChangePasswordComponent } from './auth/change-password.component';
 import { AccessDeniedComponent } from './auth/access-denied.component';
 import { UsersComponent } from './users/users.component';
+import { ClientsListComponent } from './clients/clients-list.component';
+import { ClientFormComponent } from './clients/client-form.component';
 import { UserFormComponent } from './users/user-form.component';
 import { PromptFormComponent } from './prompts/prompt-form.component';
 import { BusinessModelComponent } from './business-model/business-model.component';
@@ -59,6 +61,21 @@ export const routes: Routes = [
         path: 'service-request',
         component: ServiceRequestComponent,
         canActivate: [permissionGuard(PERMISSIONS.serviceRequestsRead)],
+      },
+      {
+        path: 'clientes',
+        component: ClientsListComponent,
+        canActivate: [permissionGuard(PERMISSIONS.clientsRead)],
+      },
+      {
+        path: 'clientes/nuevo',
+        component: ClientFormComponent,
+        canActivate: [permissionGuard(PERMISSIONS.clientsWrite)],
+      },
+      {
+        path: 'clientes/:id',
+        component: ClientFormComponent,
+        canActivate: [permissionGuard(PERMISSIONS.clientsWrite)],
       },
       {
         path: 'prompts',

@@ -15,6 +15,8 @@ export const PERMISSIONS = {
   usageRead: 'usage.read',
   usersManage: 'users.manage',
   businessModelRead: 'businessModel.read',
+  clientsRead: 'clients.read',
+  clientsWrite: 'clients.write',
 } as const;
 
 export interface UserPermissionsDto {

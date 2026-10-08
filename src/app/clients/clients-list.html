@@ -1,0 +1,146 @@
+<div class="clients">
+  <header class="clients-header">
+    <div>
+      <h1>Clientes</h1>
+      <p class="clients-subtitle">Administra parámetros del cliente.</p>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+    </div>
+    <button
+      *appHasPermission="PERMISSIONS.clientsWrite"
+      class="btn-new"
+      type="button"
+      (click)="newClient()"
+    >
+      Nuevo cliente
+    </button>
+  </header>
+
+  @if (notice(); as notice) {
+    <div class="clients-message clients-notice" role="status">{{ notice }}</div>
+  }
+  @if (error(); as error) {
+    <div class="clients-message clients-error" role="alert">{{ error }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="state">
+      <span class="spinner spinner-large"></span>
+      Cargando clientes…
+    </div>
+  } @else {
+    <div class="filters-bar">
+      <input
+        class="search-input"
+        type="search"
+        placeholder="Buscar por nombre…"
+        [value]="searchText()"
+        (input)="onSearch($event)"
+      />
+      <select class="filter-select" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="all">Todos los estados</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="resetFilters()"
+        [disabled]="!hasActiveFilters()"
+      >
+        Limpiar filtros
+      </button>
+      <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="isRefreshing()">
+        ↩ Refrescar
+      </button>
+    </div>
+
+    @if (clients().length === 0) {
+      <div class="state">
+        <p>No hay clientes registrados.</p>
+      </div>
+    } @else if (sortedClients().length === 0) {
+      <div class="state">
+        <p>No hay clientes que coincidan con los filtros.</p>
+        <button class="btn-secondary" type="button" (click)="resetFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="clients-table">
+          <thead>
+            <tr>
+              <th class="col-name">Nombre</th>
+              <th class="col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (client of pagedClients(); track client.clientId) {
+              <tr
+                class="clickable-row"
+                tabindex="0"
+                (click)="openClient(client)"
+                (keydown.enter)="openClient(client)"
+              >
+                <td class="col-name">{{ client.name }}</td>
+                <td class="col-actions">
+                  @if (canWriteClients()) {
+                    <button
+                      class="row-btn"
+                      type="button"
+                      (click)="openClient(client); $event.stopPropagation()"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="row-btn"
+                      type="button"
+                      (click)="toggleActive(client); $event.stopPropagation()"
+                    >
+                      {{ client.active ? 'Desactivar' : 'Activar' }}
+                    </button>
+                    <button
+                      class="row-btn row-btn-danger"
+                      type="button"
+                      (click)="removeClient(client); $event.stopPropagation()"
+                    >
+                      Eliminar
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (sortedClients().length > 0 && totalPages() > 1) {
+        <div class="pagination">
+          <span class="page-info">{{ pageInfo() }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="prevPage()"
+            [disabled]="page() === 1"
+          >
+            « Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="nextPage()"
+            [disabled]="page() === totalPages()"
+          >
+            Siguiente »
+          </button>
+        </div>
+      }
+    }
+  }
+</div>

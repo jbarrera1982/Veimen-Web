@@ -1,4 +1,4 @@
-.prompts {
+.clients {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -8,7 +8,7 @@
   box-sizing: border-box;
 }
 
-.prompts-header {
+.clients-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,10 +16,16 @@
   flex-wrap: wrap;
 }
 
-.prompts-header h1 {
+.clients-header h1 {
   margin: 0;
   font-size: 1.35rem;
   color: #1f2937;
+}
+
+.clients-subtitle {
+  margin: 0.15rem 0 0;
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 
 .refreshing-badge {
@@ -95,6 +101,25 @@
   cursor: not-allowed;
 }
 
+.clients-message {
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.clients-notice {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.clients-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
 .filters-bar {
   display: flex;
   align-items: center;
@@ -157,11 +182,6 @@
   margin: 0;
 }
 
-.state-error {
-  color: #b91c1c;
-  background: #fef2f2;
-}
-
 .table-wrap {
   overflow-x: auto;
   border: 1px solid #e5e7eb;
@@ -170,13 +190,13 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.prompts-table {
+.clients-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
 
-.prompts-table th {
+.clients-table th {
   text-align: left;
   padding: 0.6rem 0.75rem;
   background: #f9fafb;
@@ -189,26 +209,24 @@
   white-space: nowrap;
 }
 
-.prompts-table td {
+/* El título "Acciones" queda alineado con la columna de botones (derecha). */
+.clients-table th.col-actions {
+  text-align: right;
+}
+
+.clients-table td {
   padding: 0.6rem 0.75rem;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: top;
   color: #1f2937;
 }
 
-.prompts-table tbody tr:last-child td {
+.clients-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.prompts-table tbody tr:hover {
+.clients-table tbody tr:hover {
   background: #f9fafb;
-}
-
-.col-group,
-.col-secuence,
-.col-code,
-.col-version {
-  white-space: nowrap;
 }
 
 .col-actions {
@@ -235,6 +253,7 @@
   line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
+  margin-left: 0.35rem;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -245,10 +264,6 @@
   background: #f3f4f6;
   border-color: #9ca3af;
   color: #111827;
-}
-
-.row-btn + .row-btn {
-  margin-left: 0.35rem;
 }
 
 .row-btn-danger {

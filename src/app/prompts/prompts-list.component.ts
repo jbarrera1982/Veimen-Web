@@ -238,4 +238,17 @@ export class PromptsListComponent implements OnInit {
     }
     void this.router.navigate(['/prompts', prompt.promptId]);
   }
+
+  removePrompt(prompt: Prompt): void {
+    if (!window.confirm(`¿Eliminar el prompt ${prompt.name}?`)) {
+      return;
+    }
+
+    this.error.set(null);
+    this.promptsService.deletePrompt(prompt.promptId).subscribe({
+      next: () => this.prompts.update((list) => list.filter((p) => p.promptId !== prompt.promptId)),
+      error: () =>
+        this.error.set(`No se pudo eliminar el prompt ${prompt.name}. Inténtalo de nuevo.`),
+    });
+  }
 }

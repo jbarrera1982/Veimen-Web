@@ -128,6 +128,14 @@
                   >
                     Editar
                   </button>
+                  <button
+                    *appHasPermission="PERMISSIONS.promptsWrite"
+                    class="row-btn row-btn-danger"
+                    type="button"
+                    (click)="removePrompt(prompt); $event.stopPropagation()"
+                  >
+                    Eliminar
+                  </button>
                 </td>
               </tr>
             }
@@ -135,7 +143,7 @@
         </table>
       </div>
 
-      @if (sortedPrompts().length > 0) {
+      @if (sortedPrompts().length > 0 && totalPages() > 1) {
         <div class="pagination">
           <span class="page-info">{{ pageInfo() }}</span>
           <button
