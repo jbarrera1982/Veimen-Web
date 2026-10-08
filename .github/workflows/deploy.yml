@@ -1,0 +1,44 @@
+name: Deploy Angular to DirectAdmin
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular
+        run: npm run build
+
+      - name: Show build output
+        run: |
+          echo "Build completed."
+          find dist/veimen-web/browser -maxdepth 2 -type f | head -100
+
+      - name: Deploy to DirectAdmin
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_TARGET }}
+          local-dir: ./dist/veimen-web/browser/
+          exclude: |
+            **/.htaccess
+            **/.git*
+            **/.git*/**
