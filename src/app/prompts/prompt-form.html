@@ -1,8 +1,40 @@
 <div class="prompt-form">
   <header class="prompt-form-header">
-    <h1>{{ isEdit() ? 'Editar prompt' : 'Nuevo prompt' }}</h1>
-    @if (error(); as err) {
-      <p class="form-error">{{ err }}</p>
+    <div class="prompt-form-heading">
+      <h1>{{ isEdit() ? 'Editar prompt' : isClone() ? 'Clonar prompt' : 'Nuevo prompt' }}</h1>
+      @if (error(); as err) {
+        <p class="form-error">{{ err }}</p>
+      }
+    </div>
+    @if (!isLoading()) {
+      <div class="form-actions">
+        @if (isEdit()) {
+          <button
+            type="button"
+            class="btn-secondary btn-clone"
+            (click)="clone()"
+            [disabled]="isSaving()"
+          >
+            Clonar
+          </button>
+        }
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          form="promptForm"
+          class="btn-primary"
+          [disabled]="form.invalid || isSaving() || isLoading()"
+        >
+          @if (isSaving()) {
+            <span class="spinner"></span>
+            Guardando…
+          } @else {
+            {{ isEdit() ? 'Guardar cambios' : isClone() ? 'Crear clon' : 'Crear prompt' }}
+          }
+        </button>
+      </div>
     }
   </header>
 
@@ -12,7 +44,13 @@
       Cargando prompt…
     </div>
   } @else {
-    <form class="prompt-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <form
+      id="promptForm"
+      class="prompt-form-grid"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      novalidate
+    >
       <input type="hidden" formControlName="promptId" />
 
       <label class="field field-full field-readonly">
@@ -120,24 +158,6 @@
       @if (saveError(); as saveErr) {
         <p class="form-error save-error" role="alert">{{ saveErr }}</p>
       }
-
-      <div class="form-actions field-full">
-        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="form.invalid || isSaving() || isLoading()"
-        >
-          @if (isSaving()) {
-            <span class="spinner"></span>
-            Guardando…
-          } @else {
-            {{ isEdit() ? 'Guardar cambios' : 'Crear prompt' }}
-          }
-        </button>
-      </div>
     </form>
   }
 </div>

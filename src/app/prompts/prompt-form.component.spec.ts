@@ -172,6 +172,53 @@ describe('PromptFormComponent', () => {
     httpTesting.expectNone(() => true);
   });
 
+  it('should hide the clone button when creating a prompt', async () => {
+    const fixture = await setup(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.btn-clone')).toBeNull();
+  });
+
+  it('should clone the edited prompt and insert it as a new one on save', async () => {
+    const fixture = await setup('5');
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    httpTesting.expectOne(detailUrl(5)).flush(apiPrompt());
+    fixture.detectChanges();
+
+    const cloneButton: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-clone');
+    expect(cloneButton).toBeTruthy();
+
+    cloneButton.click();
+    fixture.detectChanges();
+
+    expect(component.isEdit()).toBeFalsy();
+    expect(component.isClone()).toBeTruthy();
+    expect(component.form.get('promptId')?.value).toBe(0);
+    // Los datos del prompt original se conservan; solo se limpia la auditoría.
+    expect(component.form.get('name')?.value).toBe('Extracto de intención');
+    expect(component.form.get('createdAt')?.value).toBe('');
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    component.save();
+
+    const req = httpTesting.expectOne((r) => r.url === LIST_URL && r.method === 'POST');
+    expect(req.request.body).toMatchObject({
+      promptId: 0,
+      name: 'Extracto de intención',
+      createdBy: 'tester',
+      createdAt: null,
+      updatedBy: 'tester',
+      updatedAt: null,
+    });
+    req.flush(apiPrompt({ promptId: 10 }));
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/prompts']);
+  });
+
   it('should set an error when loading the prompt fails', async () => {
     const fixture = await setup('9');
     const component = fixture.componentInstance;

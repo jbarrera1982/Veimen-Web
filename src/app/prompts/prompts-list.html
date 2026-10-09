@@ -2,6 +2,7 @@
   <header class="prompts-header">
     <div>
       <h1>Prompts</h1>
+      <p class="prompts-subtitle">Administra los prompts de los agentes.</p>
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
@@ -98,9 +99,9 @@
         <table class="prompts-table">
           <thead>
             <tr>
-              <th class="col-group">Grupo agente</th>
               <th class="col-secuence">Secuencia</th>
               <th class="col-name">Nombre</th>
+              <th class="col-group">Grupo agente</th>
               <th class="col-code">Código</th>
               <th class="col-version">Versión</th>
               <th class="col-actions">Acciones</th>
@@ -114,9 +115,9 @@
                 (click)="openPrompt(prompt)"
                 (keydown.enter)="openPrompt(prompt)"
               >
-                <td class="col-group">{{ prompt.agentGroup || '—' }}</td>
                 <td class="col-secuence">{{ prompt.secuence }}</td>
                 <td class="col-name">{{ prompt.name }}</td>
+                <td class="col-group">{{ prompt.agentGroup || '—' }}</td>
                 <td class="col-code">{{ prompt.code }}</td>
                 <td class="col-version">{{ prompt.version }}</td>
                 <td class="col-actions">

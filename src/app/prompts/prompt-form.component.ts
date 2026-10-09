@@ -21,6 +21,7 @@ export class PromptFormComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly saveError = signal<string | null>(null);
   readonly isEdit = signal(false);
+  readonly isClone = signal(false);
 
   private readonly fb = inject(FormBuilder);
 
@@ -100,6 +101,26 @@ export class PromptFormComponent implements OnInit {
         this.isSaving.set(false);
       },
     });
+  }
+
+  // Convierte el prompt editado en uno nuevo: deja el id en 0 y limpia la auditoría, de
+  // modo que al guardar se haga un POST (inserción) en lugar del PUT de edición.
+  clone(): void {
+    if (!this.isEdit()) {
+      return;
+    }
+
+    this.form.patchValue({
+      promptId: 0,
+      createdBy: '',
+      createdAt: '',
+      updatedBy: '',
+      updatedAt: '',
+    });
+    this.isEdit.set(false);
+    this.isClone.set(true);
+    this.saveError.set(null);
+    this.error.set(null);
   }
 
   cancel(): void {
