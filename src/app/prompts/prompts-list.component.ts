@@ -28,6 +28,17 @@ const NUMERIC_COLUMNS: ReadonlySet<SortColumn> = new Set(['promptId', 'secuence'
 
 const PAGE_SIZE = 10;
 
+// El texto de búsqueda se recuerda entre visitas a la pantalla (se hidrata en ngOnInit).
+const SEARCH_STORAGE_KEY = 'veimen-web.prompts.searchText';
+
+function readStoredSearch(): string {
+  try {
+    return localStorage.getItem(SEARCH_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
 @Component({
   selector: 'app-prompts-list',
   standalone: true,
@@ -42,7 +53,7 @@ export class PromptsListComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly prompts = signal<Prompt[]>([]);
 
-  readonly searchText = signal('');
+  readonly searchText = signal(readStoredSearch());
   readonly typeFilter = signal('all');
   readonly groupFilter = signal('all');
   readonly statusFilter = signal('active');
@@ -182,7 +193,9 @@ export class PromptsListComponent implements OnInit {
   }
 
   onSearch(event: Event): void {
-    this.searchText.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.searchText.set(value);
+    this.persistSearch(value);
     this.page.set(1);
   }
 
@@ -207,6 +220,20 @@ export class PromptsListComponent implements OnInit {
     this.groupFilter.set('all');
     this.statusFilter.set('active');
     this.page.set(1);
+    this.persistSearch('');
+  }
+
+  // Guarda (o borra) el texto de búsqueda para restaurarlo al volver a la pantalla.
+  private persistSearch(value: string): void {
+    try {
+      if (value) {
+        localStorage.setItem(SEARCH_STORAGE_KEY, value);
+      } else {
+        localStorage.removeItem(SEARCH_STORAGE_KEY);
+      }
+    } catch {
+      // localStorage no disponible (p. ej. modo privado): la búsqueda sigue en memoria.
+    }
   }
 
   onSortChange(event: Event): void {

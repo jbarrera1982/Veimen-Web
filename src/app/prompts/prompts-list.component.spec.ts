@@ -70,6 +70,7 @@ describe('PromptsListComponent', () => {
 
   beforeEach(async () => {
     navigate.mockClear();
+    localStorage.clear();
 
     await TestBed.configureTestingModule({
       imports: [PromptsListComponent],
@@ -253,6 +254,34 @@ describe('PromptsListComponent', () => {
     expect(component.searchText()).toBe('');
     expect(component.sortedPrompts().length).toBe(2);
     expect(component.hasActiveFilters()).toBeFalsy();
+  });
+
+  it('should persist the search text and clear it when filters are reset', () => {
+    fixture.detectChanges();
+    flushResponse([rawPrompt()]);
+
+    setSearch('Respuesta');
+    expect(localStorage.getItem('veimen-web.prompts.searchText')).toBe('Respuesta');
+
+    component.resetFilters();
+    expect(localStorage.getItem('veimen-web.prompts.searchText')).toBeNull();
+  });
+
+  it('should restore and apply the stored search text when the screen is recreated', () => {
+    fixture.detectChanges();
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta' })]);
+
+    setSearch('Respuesta');
+
+    // Simula volver al listado: el componente se recrea y debe hidratar la búsqueda.
+    const recreated = TestBed.createComponent(PromptsListComponent);
+    const recreatedComponent = recreated.componentInstance;
+    expect(recreatedComponent.searchText()).toBe('Respuesta');
+
+    recreated.detectChanges();
+    flushResponse([rawPrompt(), rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta' })]);
+
+    expect(recreatedComponent.sortedPrompts().map((p) => p.promptId)).toEqual([2]);
   });
 
   it('should change the sort column and toggle the direction', () => {
