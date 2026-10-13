@@ -70,26 +70,37 @@ describe('app.routes wiring', () => {
     expect(router.url).toContain('/sin-acceso');
   });
 
-  // /consumo y /costos comparten el permiso usage.read (uno solo para las dos
-  // pantallas de uso de OpenAI), distinto de tokens.read del dashboard de tokens.
+  // /uso-openai usa el permiso usage.read (el consumo y los costos de OpenAI
+  // unificados en una sola pantalla), distinto de tokens.read del dashboard de tokens.
+  it('should redirect /uso-openai to /sin-acceso without the usage.read permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/uso-openai');
+
+    expect(router.url).toContain('/sin-acceso');
+  });
+
+  it('should allow /uso-openai with the usage.read permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.usageRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/uso-openai');
+
+    expect(router.url).toBe('/uso-openai');
+  });
+
+  // Las rutas antiguas /consumo y /costos redirigen al módulo unificado.
   it.each(['/consumo', '/costos'])(
-    'should redirect %s to /sin-acceso without the usage.read permission',
-    async (path) => {
-      const auth = TestBed.inject(AuthService);
-      auth.currentUser.set(user);
-      const permissions = TestBed.inject(PermissionsService);
-      permissions.permissions.set([PERMISSIONS.dashboardRead]);
-      permissions.loaded.set(true);
-
-      const router = TestBed.inject(Router);
-      await router.navigateByUrl(path);
-
-      expect(router.url).toContain('/sin-acceso');
-    },
-  );
-
-  it.each(['/consumo', '/costos'])(
-    'should allow %s with the usage.read permission',
+    'should redirect %s to /uso-openai with the usage.read permission',
     async (path) => {
       const auth = TestBed.inject(AuthService);
       auth.currentUser.set(user);
@@ -100,7 +111,7 @@ describe('app.routes wiring', () => {
       const router = TestBed.inject(Router);
       await router.navigateByUrl(path);
 
-      expect(router.url).toBe(path);
+      expect(router.url).toBe('/uso-openai');
     },
   );
 

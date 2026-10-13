@@ -97,22 +97,22 @@ describe('firstAccessiblePath', () => {
     expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/service-request');
   });
 
-  // El orden debe seguir al del sidebar: /tokens antes que /consumo, y /consumo
-  // antes que /costos (que además no es destino de primer nivel).
-  it('should prefer tokens over consumo when both are readable', () => {
+  // El orden debe seguir al del sidebar: /tokens antes que /uso-openai (el módulo
+  // unificado de uso de OpenAI).
+  it('should prefer tokens over uso-openai when both are readable', () => {
     const readable: string[] = [PERMISSIONS.tokensRead, PERMISSIONS.usageRead];
     expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/tokens');
   });
 
-  it('should fall back to consumo when only usage.read is readable', () => {
+  it('should fall back to uso-openai when only usage.read is readable', () => {
     const has = (code: string) => code === PERMISSIONS.usageRead;
-    expect(firstAccessiblePath(has)).toBe('/consumo');
+    expect(firstAccessiblePath(has)).toBe('/uso-openai');
   });
 
-  it('should fall back to service-request when neither tokens nor consumo is readable', () => {
+  it('should fall back to service-request when neither tokens nor uso-openai is readable', () => {
     const readable: string[] = [PERMISSIONS.usageRead, PERMISSIONS.serviceRequestsRead];
-    // tokens.read no está, así que el siguiente del sidebar es el consumo.
-    expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/consumo');
+    // tokens.read no está, así que el siguiente del sidebar es el uso de OpenAI.
+    expect(firstAccessiblePath((code) => readable.includes(code))).toBe('/uso-openai');
 
     const onlyRequests: string[] = [PERMISSIONS.serviceRequestsRead];
     expect(firstAccessiblePath((code) => onlyRequests.includes(code))).toBe('/service-request');

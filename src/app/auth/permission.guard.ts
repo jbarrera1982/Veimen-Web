@@ -41,7 +41,7 @@ export function firstAccessiblePath(has: (code: string) => boolean): string {
     return '/tokens';
   }
   if (has(PERMISSIONS.usageRead)) {
-    return '/consumo';
+    return '/uso-openai';
   }
   if (has(PERMISSIONS.serviceRequestsRead)) {
     return '/service-request';

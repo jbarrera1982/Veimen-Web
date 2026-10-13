@@ -14,8 +14,7 @@ import { UserFormComponent } from './users/user-form.component';
 import { PromptFormComponent } from './prompts/prompt-form.component';
 import { BusinessModelComponent } from './business-model/business-model.component';
 import { TokensDashboardComponent } from './tokens/tokens-dashboard.component';
-import { ConsumoDashboardComponent } from './usage/consumo-dashboard.component';
-import { CostosDashboardComponent } from './usage/costos-dashboard.component';
+import { UsoOpenAiComponent } from './usage/uso-openai.component';
 import { permissionGuard } from './auth/permission.guard';
 import { PERMISSIONS } from './services/permissions.service';
 
@@ -48,15 +47,13 @@ export const routes: Routes = [
         canActivate: [permissionGuard(PERMISSIONS.tokensRead)],
       },
       {
-        path: 'consumo',
-        component: ConsumoDashboardComponent,
+        path: 'uso-openai',
+        component: UsoOpenAiComponent,
         canActivate: [permissionGuard(PERMISSIONS.usageRead)],
       },
-      {
-        path: 'costos',
-        component: CostosDashboardComponent,
-        canActivate: [permissionGuard(PERMISSIONS.usageRead)],
-      },
+      // Rutas antiguas: el consumo y los costos se unificaron en /uso-openai.
+      { path: 'consumo', redirectTo: 'uso-openai', pathMatch: 'full' },
+      { path: 'costos', redirectTo: 'uso-openai', pathMatch: 'full' },
       {
         path: 'service-request',
         component: ServiceRequestComponent,

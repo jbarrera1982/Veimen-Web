@@ -63,6 +63,7 @@ describe('UsageService', () => {
         {
           date: '2026-09-01',
           model: 'gpt-5',
+          projectId: '',
           inputTokens: 100,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -74,6 +75,7 @@ describe('UsageService', () => {
         {
           date: '2026-09-01',
           model: 'gpt-4o',
+          projectId: '',
           inputTokens: 50,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -85,6 +87,7 @@ describe('UsageService', () => {
         {
           date: '2026-09-02',
           model: 'gpt-5',
+          projectId: '',
           inputTokens: 10,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -211,6 +214,7 @@ describe('UsageService', () => {
         });
 
       expect(result?.[0]).not.toHaveProperty('project_id');
+      expect(result?.[0].projectId).toBe('proj_1');
       expect(result?.[0]).not.toHaveProperty('user_id');
       expect(result?.[0]).not.toHaveProperty('api_key_id');
       expect(result?.[0]).not.toHaveProperty('batch');
@@ -263,6 +267,7 @@ describe('UsageService', () => {
         {
           date: '2026-09-01',
           lineItem: 'gpt-5',
+          projectId: 'proj_1',
           amount: 12.34,
           currency: 'usd',
           quantity: 1000,
@@ -271,6 +276,7 @@ describe('UsageService', () => {
         {
           date: '2026-09-01',
           lineItem: '',
+          projectId: '',
           amount: 0,
           currency: '',
           quantity: 0,

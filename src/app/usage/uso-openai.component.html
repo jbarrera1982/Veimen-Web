@@ -1,0 +1,556 @@
+<div class="usage-dashboard">
+  <header class="dashboard-topbar">
+    <div class="topbar-title">
+      <h1>Uso OpenAI</h1>
+      <p class="subtitle">
+        Consumo de completions y costos de la organización de OpenAI
+      </p>
+      @if (lastUpdated(); as updated) {
+        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+      }
+    </div>
+
+    <div class="topbar-dates date-filters">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [value]="startDate()"
+          (change)="setStartDate($any($event.target).value)"
+        />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input type="date" [value]="endDate()" (change)="setEndDate($any($event.target).value)" />
+      </label>
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="applyDateRange()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Filtrar"
+        aria-label="Filtrar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="refresh()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Recargar"
+        aria-label="Recargar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">
+      <span class="spinner spinner-large"></span>
+      Cargando datos…
+    </div>
+  } @else if (allFailed()) {
+    <div class="error">
+      <p>{{ usageError() }}</p>
+      <p>{{ costError() }}</p>
+      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    @if (usageError()) {
+      <p class="warning">{{ usageError() }} Las secciones de consumo pueden estar incompletas.</p>
+    }
+    @if (costError()) {
+      <p class="warning">{{ costError() }} Las secciones de costo pueden estar incompletas.</p>
+    }
+
+    <section class="stats-row">
+      <div class="stat-card">
+        <span>Total de tokens</span>
+        <strong class="stat-value">{{ formatNumber(totals().total) }}</strong>
+        <small class="stat-hint">{{ totals().dayCount }} días con consumo</small>
+      </div>
+      <div class="stat-card">
+        <span>Tokens de entrada</span>
+        <strong class="stat-value">{{ formatNumber(totals().input) }}</strong>
+        @if (totals().cached > 0) {
+          <small class="stat-hint">{{ formatNumber(totals().cached) }} en caché</small>
+        }
+      </div>
+      <div class="stat-card">
+        <span>Tokens de salida</span>
+        <strong class="stat-value">{{ formatNumber(totals().output) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Solicitudes</span>
+        <strong class="stat-value">{{ formatNumber(totals().requests) }}</strong>
+        <small class="stat-hint">Promedio {{ formatNumber(totals().avgPerDay) }} tokens/día</small>
+      </div>
+    </section>
+
+    <section class="stats-row">
+      <div class="stat-card">
+        <span>Costo total ({{ primaryCurrency() }})</span>
+        <strong class="stat-value">{{ formatAmount(costTotals().amount) }}</strong>
+        <small class="stat-hint">{{ costTotals().dayCount }} días con costo</small>
+      </div>
+      <div class="stat-card">
+        <span>Promedio por día activo</span>
+        <strong class="stat-value">{{ formatAmount(costTotals().avgPerDay) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Costo máximo del día</span>
+        <strong class="stat-value">{{ formatAmount(costTotals().max) }}</strong>
+      </div>
+      <div class="stat-card">
+        <span>Proyectos</span>
+        <strong class="stat-value">{{ formatNumber(costTotals().projectCount) }}</strong>
+        <small class="stat-hint">{{ lineItemDetail().length }} conceptos de costo</small>
+      </div>
+    </section>
+
+    @if (otherCurrencies().length) {
+      <p class="notice">
+        Los importes no se suman entre monedas: se muestra
+        <strong>{{ primaryCurrency() }}</strong
+        >. Además:
+        @for (c of otherCurrencies(); track c.currency; let last = $last) {
+          <span>{{ c.currency.toUpperCase() }} {{ formatAmount(c.amount) }}</span>
+          @if (!last) {
+            ,
+          }
+        }
+      </p>
+    }
+
+    @if (usageRows().length === 0 && costRows().length === 0) {
+      <div class="chart-empty-empty">No se registró uso de OpenAI en el rango seleccionado.</div>
+    } @else {
+      <section class="charts-grid">
+        <div class="chart-card chart-card-wide">
+          <div class="chart-card-head">
+            <h2>Evolución diaria de consumo (entrada vs salida)</h2>
+            <ul class="mini-legend">
+              @for (item of legendItems(); track item.name) {
+                <li>
+                  <span class="swatch" [style.background]="item.color"></span>
+                  {{ item.name }}
+                </li>
+              }
+            </ul>
+          </div>
+          @if (hasTimelineData()) {
+            <div class="chart-canvas" chartView #consumoView="chartView">
+              @if (consumoView.dims(); as view) {
+                <ngx-charts-line-chart
+                  [results]="dailyUsageSeries()"
+                  [scheme]="usageSeriesScheme"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatXAxis"
+                  [yAxisTickFormatting]="formatYAxis"
+                  [xAxisTicks]="timelineTicks()"
+                  [rotateXAxisTicks]="true"
+                  [maxXAxisTickLength]="12"
+                  [trimXAxisTicks]="false"
+                >
+                </ngx-charts-line-chart>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay consumo en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h2>Evolución diaria de costo ({{ primaryCurrency() }})</h2>
+          @if (hasCostTimelineData()) {
+            <div class="chart-canvas" chartView #costoView="chartView">
+              @if (costoView.dims(); as view) {
+                <ngx-charts-line-chart
+                  [results]="dailyCostSeries()"
+                  [scheme]="costSeriesScheme"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatXAxis"
+                  [yAxisTickFormatting]="formatYAxis"
+                  [xAxisTicks]="timelineTicks()"
+                  [rotateXAxisTicks]="true"
+                  [maxXAxisTickLength]="12"
+                  [trimXAxisTicks]="false"
+                >
+                </ngx-charts-line-chart>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay costos en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h2>Tokens por proyecto</h2>
+          @if (byProjectTokens().length) {
+            <div class="chart-canvas" chartView #projTokensView="chartView">
+              @if (projTokensView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="byProjectTokens()"
+                  [scheme]="projectTokenScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatYAxis"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h2>Costo por proyecto ({{ primaryCurrency() }})</h2>
+          @if (byProjectCost().length) {
+            <div class="chart-canvas" chartView #projCostView="chartView">
+              @if (projCostView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="byProjectCost()"
+                  [scheme]="projectCostScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatYAxis"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h2>Tokens por modelo</h2>
+          @if (byModel().length) {
+            <div class="chart-canvas" chartView #modelView="chartView">
+              @if (modelView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="byModel()"
+                  [scheme]="modelScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatYAxis"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+
+        @if (requestsByModel().length) {
+          <div class="chart-card chart-card-wide">
+            <h2>Solicitudes por modelo</h2>
+            <div class="chart-canvas" chartView #reqView="chartView">
+              @if (reqView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="requestsByModel()"
+                  [scheme]="requestScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="chart-card chart-card-wide">
+          <h2>Costo por concepto ({{ primaryCurrency() }})</h2>
+          @if (byLineItem().length) {
+            <div class="chart-canvas" chartView #itemView="chartView">
+              @if (itemView.dims(); as view) {
+                <ngx-charts-bar-horizontal
+                  [results]="byLineItem()"
+                  [scheme]="lineItemScheme()"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [showDataLabel]="true"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatYAxis"
+                >
+                </ngx-charts-bar-horizontal>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle diario (consumo + costo en {{ primaryCurrency() }})</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th class="num">Entrada</th>
+                <th class="num">Salida</th>
+                <th class="num">Total</th>
+                <th class="num">Solicitudes</th>
+                <th class="num">Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of dailyRows(); track row.date) {
+                <tr>
+                  <td>{{ row.date }}</td>
+                  <td class="num">{{ formatNumber(row.inputTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.outputTokens) }}</td>
+                  <td class="num strong">{{ formatNumber(row.totalTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.requests) }}</td>
+                  <td class="num">{{ formatAmount(row.cost) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="table-empty">No hay consumo en el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (dailyRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num strong">{{ formatNumber(totals().input) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().output) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().total) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().requests) }}</td>
+                  <td class="num strong">{{ formatAmount(costTotals().amount) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreDaily()) {
+          <button class="more-btn" type="button" (click)="showMoreDaily()">
+            Ver más ({{ formatNumber(dailyDetail().length - dailyRows().length) }} restantes)
+          </button>
+        }
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle por proyecto (consumo + costo en {{ primaryCurrency() }})</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Proyecto</th>
+                <th class="num">Entrada</th>
+                <th class="num">Salida</th>
+                <th class="num">Total</th>
+                <th class="num">Solicitudes</th>
+                <th class="num">Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of projectRows(); track row.project) {
+                <tr>
+                  <td>{{ row.project }}</td>
+                  <td class="num">{{ formatNumber(row.inputTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.outputTokens) }}</td>
+                  <td class="num strong">{{ formatNumber(row.totalTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.requests) }}</td>
+                  <td class="num">{{ formatAmount(row.cost) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="table-empty">No hay datos en el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (projectRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num strong">{{ formatNumber(totals().input) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().output) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().total) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().requests) }}</td>
+                  <td class="num strong">{{ formatAmount(costTotals().amount) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreProjects()) {
+          <button class="more-btn" type="button" (click)="showMoreProjects()">
+            Ver más ({{ formatNumber(projectDetail().length - projectRows().length) }} restantes)
+          </button>
+        }
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle por modelo</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Modelo</th>
+                <th class="num">Entrada</th>
+                <th class="num">De caché</th>
+                <th class="num">Salida</th>
+                <th class="num">Total</th>
+                <th class="num">Solicitudes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of modelRows(); track row.model) {
+                <tr>
+                  <td>{{ row.model }}</td>
+                  <td class="num">{{ formatNumber(row.inputTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.cachedInputTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.outputTokens) }}</td>
+                  <td class="num strong">{{ formatNumber(row.totalTokens) }}</td>
+                  <td class="num">{{ formatNumber(row.requests) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="table-empty">No hay filas para el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (modelRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num strong">{{ formatNumber(totals().input) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().cached) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().output) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().total) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().requests) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreModels()) {
+          <button class="more-btn" type="button" (click)="showMoreModels()">
+            Ver más ({{ formatNumber(modelDetail().length - modelRows().length) }} restantes)
+          </button>
+        }
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle por concepto ({{ primaryCurrency() }})</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th class="num">Cantidad</th>
+                <th>Unidad</th>
+                <th class="num">Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of lineItemRows(); track row.lineItem) {
+                <tr>
+                  <td>{{ row.lineItem }}</td>
+                  <td class="num">
+                    @if (row.quantity === null) {
+                      —
+                    } @else {
+                      {{ formatNumber(row.quantity) }}
+                    }
+                  </td>
+                  <td>{{ row.quantityUnit || '—' }}</td>
+                  <td class="num strong">{{ formatAmount(row.amount) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="table-empty">No hay filas para el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (lineItemRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num"></td>
+                  <td></td>
+                  <td class="num strong">{{ formatAmount(costTotals().amount) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreLineItems()) {
+          <button class="more-btn" type="button" (click)="showMoreLineItems()">
+            Ver más ({{ formatNumber(lineItemDetail().length - lineItemRows().length) }} restantes)
+          </button>
+        }
+      </section>
+    }
+  }
+</div>

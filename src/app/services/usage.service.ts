@@ -20,6 +20,7 @@ export interface UsageDateRange {
 export interface CompletionUsage {
   date: string; // YYYY-MM-DD (día UTC del bucket)
   model: string; // '' si el resultado no trae modelo
+  projectId: string; // '' si el resultado no trae proyecto
   inputTokens: number;
   cachedInputTokens: number; // subconjunto de inputTokens, no se suma aparte
   audioInputTokens: number; // subconjunto de inputTokens, no se suma aparte
@@ -33,6 +34,7 @@ export interface CompletionUsage {
 export interface CostEntry {
   date: string; // YYYY-MM-DD (día UTC del bucket)
   lineItem: string; // '' si el resultado no trae line_item
+  projectId: string; // '' si el resultado no trae proyecto
   amount: number; // amount.value
   currency: string; // amount.currency, '' si no viene
   quantity: number;
@@ -104,6 +106,7 @@ export class UsageService {
             return {
               date,
               model: result.model?.trim() || '',
+              projectId: result.project_id?.trim() || '',
               inputTokens,
               cachedInputTokens: result.input_cached_tokens ?? 0,
               audioInputTokens: result.input_audio_tokens ?? 0,
@@ -136,6 +139,7 @@ export class UsageService {
           this.flatten(page).map(({ date, result }) => ({
             date,
             lineItem: result.line_item?.trim() || '',
+            projectId: result.project_id?.trim() || '',
             amount: result.amount?.value ?? 0,
             currency: result.amount?.currency?.trim() || '',
             quantity: result.quantity ?? 0,

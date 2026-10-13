@@ -50,16 +50,15 @@ describe('ShellComponent', () => {
 
   it('should render the navigation links grouped by category', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links.length).toBe(9);
+    expect(links.length).toBe(8);
     expect(links[0].textContent.trim()).toBe('Dashboard');
     expect(links[1].textContent.trim()).toBe('Consumo de tokens');
-    expect(links[2].textContent.trim()).toBe('Consumo');
-    expect(links[3].textContent.trim()).toBe('Costos');
-    expect(links[4].textContent.trim()).toBe('Requerimientos');
-    expect(links[5].textContent.trim()).toBe('Clientes');
-    expect(links[6].textContent.trim()).toBe('Usuarios');
-    expect(links[7].textContent.trim()).toBe('Prompts');
-    expect(links[8].textContent.trim()).toBe('Modelo de negocios');
+    expect(links[2].textContent.trim()).toBe('Uso OpenAI');
+    expect(links[3].textContent.trim()).toBe('Requerimientos');
+    expect(links[4].textContent.trim()).toBe('Clientes');
+    expect(links[5].textContent.trim()).toBe('Usuarios');
+    expect(links[6].textContent.trim()).toBe('Prompts');
+    expect(links[7].textContent.trim()).toBe('Modelo de negocios');
 
     const titles = Array.from<Element>(
       fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-group-title'),
@@ -69,7 +68,7 @@ describe('ShellComponent', () => {
 
   it('should link the business model entry to its own route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    const link = links[8];
+    const link = links[7];
 
     expect(link.getAttribute('href')).toBe('/business-model');
     expect(link.hasAttribute('target')).toBe(false);
@@ -77,16 +76,15 @@ describe('ShellComponent', () => {
 
   it('should link the Clientes entry to its route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links[5].getAttribute('href')).toBe('/clientes');
+    expect(links[4].getAttribute('href')).toBe('/clientes');
   });
 
-  it('should link the Consumo and Costos entries to the usage routes', () => {
+  it('should link the Uso OpenAI entry to the unified usage route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links[2].getAttribute('href')).toBe('/consumo');
-    expect(links[3].getAttribute('href')).toBe('/costos');
+    expect(links[2].getAttribute('href')).toBe('/uso-openai');
   });
 
-  it('should hide the Consumo and Costos links without the usage.read permission', () => {
+  it('should hide the Uso OpenAI link without the usage.read permission', () => {
     const permissions = TestBed.inject(PermissionsService);
     permissions.permissions.set([PERMISSIONS.promptsRead]);
     fixture.detectChanges();

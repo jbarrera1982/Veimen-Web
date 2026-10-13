@@ -1,9 +1,7 @@
-/* Estilos compartidos por las pantallas de uso de OpenAI (/consumo y /costos).
+/* Estilos de la pantalla unificada de uso de OpenAI (/uso-openai).
    Mismo esqueleto que tokens/tokens-dashboard.css (topbar, filtros de fecha,
-   stat cards, chart cards y tabla de detalle) y se mantiene aparte a propósito:
-   tokens/dashboard.css no se toca para no modificar pantallas que ya funcionan.
-   Ambos componentes referencian este archivo con styleUrl, así que hay una sola
-   fuente que editar. La clase raíz es .usage-dashboard en los dos templates. */
+   stat cards, chart cards y tablas de detalle) y se mantiene aparte a propósito:
+   tokens/dashboard.css no se toca para no modificar pantallas que ya funcionan. */
 
 .usage-dashboard {
   display: flex;
@@ -248,6 +246,17 @@
   border-radius: 0.75rem;
   background: #fffbeb;
   color: #92400e;
+  font-size: 0.8125rem;
+}
+
+/* Error parcial: una de las dos fuentes (consumo o costo) falló y la otra cargó. */
+.warning {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  background: #fef2f2;
+  color: #b91c1c;
   font-size: 0.8125rem;
 }
 
