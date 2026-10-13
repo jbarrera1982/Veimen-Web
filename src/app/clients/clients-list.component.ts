@@ -223,7 +223,7 @@ export class ClientsListComponent implements OnInit {
       inboundEmail: client.inboundEmail,
       outboundEmail: client.outboundEmail,
       analystEmail: client.analystEmail,
-      openAIApiKey: client.openAIApiKey,
+      projectId: client.projectId,
       active: client.active,
     };
   }

@@ -16,7 +16,7 @@ function rawClient(partial: Record<string, unknown> = {}): Record<string, unknow
     inboundEmail: 'entrada@uno.com',
     outboundEmail: 'salida@uno.com',
     analystEmail: 'analista@veimen.net',
-    openAIApiKey: 'sk-uno',
+    projectId: 'proj-uno',
     active: true,
     ...partial,
   };
@@ -182,7 +182,7 @@ describe('ClientsListComponent', () => {
         inboundEmail: '',
         outboundEmail: '',
         analystEmail: '',
-        openAIApiKey: '',
+        projectId: '',
         active: true,
       })),
     );

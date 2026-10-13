@@ -9,7 +9,7 @@ export interface Client {
   inboundEmail: string;
   outboundEmail: string;
   analystEmail: string;
-  openAIApiKey: string;
+  projectId: string;
   active: boolean;
 }
 
@@ -23,7 +23,7 @@ export interface ClientPayload {
   inboundEmail: string | null;
   outboundEmail: string | null;
   analystEmail: string | null;
-  openAIApiKey: string | null;
+  projectId: string | null;
   active: boolean | null;
 }
 
@@ -34,7 +34,7 @@ interface ApiClient {
   inboundEmail?: string | null;
   outboundEmail?: string | null;
   analystEmail?: string | null;
-  openAIApiKey?: string | null;
+  projectId?: string | null;
   active?: boolean | null;
 }
 
@@ -46,7 +46,7 @@ function normalizeClient(raw: ApiClient): Client {
     inboundEmail: raw.inboundEmail ?? '',
     outboundEmail: raw.outboundEmail ?? '',
     analystEmail: raw.analystEmail ?? '',
-    openAIApiKey: raw.openAIApiKey ?? '',
+    projectId: raw.projectId ?? '',
     active: raw.active ?? true,
   };
 }
@@ -65,7 +65,7 @@ function toRequestBody(payload: ClientPayload): ClientPayload {
     inboundEmail: optional(payload.inboundEmail),
     outboundEmail: optional(payload.outboundEmail),
     analystEmail: optional(payload.analystEmail),
-    openAIApiKey: optional(payload.openAIApiKey),
+    projectId: optional(payload.projectId),
     active: payload.active ?? true,
   };
 }

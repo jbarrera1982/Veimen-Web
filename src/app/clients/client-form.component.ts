@@ -29,7 +29,7 @@ export class ClientFormComponent implements OnInit {
     inboundEmail: ['', [Validators.email, Validators.maxLength(100)]],
     outboundEmail: ['', [Validators.email, Validators.maxLength(100)]],
     analystEmail: ['', [Validators.email, Validators.maxLength(100)]],
-    openAIApiKey: ['', Validators.maxLength(100)],
+    projectId: ['', Validators.maxLength(100)],
     active: [true],
   });
 
@@ -67,7 +67,7 @@ export class ClientFormComponent implements OnInit {
       inboundEmail: raw.inboundEmail,
       outboundEmail: raw.outboundEmail,
       analystEmail: raw.analystEmail,
-      openAIApiKey: raw.openAIApiKey,
+      projectId: raw.projectId,
       active: raw.active,
     };
 
@@ -106,7 +106,7 @@ export class ClientFormComponent implements OnInit {
           inboundEmail: client.inboundEmail,
           outboundEmail: client.outboundEmail,
           analystEmail: client.analystEmail,
-          openAIApiKey: client.openAIApiKey,
+          projectId: client.projectId,
           active: client.active,
         });
       },

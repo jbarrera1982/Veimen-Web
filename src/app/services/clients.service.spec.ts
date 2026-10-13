@@ -14,7 +14,7 @@ function apiClient(partial: Record<string, unknown> = {}): Record<string, unknow
     inboundEmail: 'entrada@cliente.com',
     outboundEmail: 'salida@cliente.com',
     analystEmail: 'analista@veimen.net',
-    openAIApiKey: 'sk-demo',
+    projectId: 'proj-demo',
     active: true,
     ...partial,
   };
@@ -27,7 +27,7 @@ function mappedClient(partial: Partial<Client> = {}): Client {
     inboundEmail: 'entrada@cliente.com',
     outboundEmail: 'salida@cliente.com',
     analystEmail: 'analista@veimen.net',
-    openAIApiKey: 'sk-demo',
+    projectId: 'proj-demo',
     active: true,
     ...partial,
   };
@@ -40,7 +40,7 @@ function payload(partial: Partial<ClientPayload> = {}): ClientPayload {
     inboundEmail: '',
     outboundEmail: 'salida@cliente.com',
     analystEmail: '',
-    openAIApiKey: '',
+    projectId: '',
     active: true,
     ...partial,
   };
@@ -84,7 +84,7 @@ describe('ClientsService', () => {
       inboundEmail: '',
       outboundEmail: '',
       analystEmail: '',
-      openAIApiKey: '',
+      projectId: '',
       active: true,
     });
   });
@@ -113,7 +113,7 @@ describe('ClientsService', () => {
       inboundEmail: null,
       outboundEmail: 'salida@cliente.com',
       analystEmail: null,
-      openAIApiKey: null,
+      projectId: null,
       active: true,
     });
     req.flush(apiClient({ clientId: 9 }));
@@ -131,7 +131,7 @@ describe('ClientsService', () => {
       clientId: 7,
       name: 'Cliente Demo',
       inboundEmail: null,
-      openAIApiKey: null,
+      projectId: null,
     });
     req.flush(null, { status: 204, statusText: 'No Content' });
 

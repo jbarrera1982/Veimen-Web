@@ -16,7 +16,7 @@ function apiClient(partial: Record<string, unknown> = {}): Record<string, unknow
     inboundEmail: 'entrada@uno.com',
     outboundEmail: 'salida@uno.com',
     analystEmail: 'analista@veimen.net',
-    openAIApiKey: 'sk-uno',
+    projectId: 'proj-uno',
     active: true,
     ...partial,
   };
@@ -88,7 +88,7 @@ describe('ClientFormComponent', () => {
     expect(component.isEdit()).toBeTruthy();
     expect(component.clientId()).toBe(5);
     expect(component.form.get('name')?.value).toBe('Cliente Uno');
-    expect(component.form.get('openAIApiKey')?.value).toBe('sk-uno');
+    expect(component.form.get('projectId')?.value).toBe('proj-uno');
   });
 
   it('should not call the API for the "nuevo" route', async () => {
@@ -148,7 +148,7 @@ describe('ClientFormComponent', () => {
     expect(req.request.body).toMatchObject({
       clientId: 5,
       name: 'Cliente Editado',
-      openAIApiKey: 'sk-uno',
+      projectId: 'proj-uno',
     });
     req.flush(null, { status: 204, statusText: 'No Content' });
 

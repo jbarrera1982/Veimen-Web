@@ -30,7 +30,7 @@ const clients = [
     inboundEmail: '',
     outboundEmail: '',
     analystEmail: '',
-    openAIApiKey: '',
+    projectId: '',
     active: true,
   },
   {
@@ -39,7 +39,7 @@ const clients = [
     inboundEmail: '',
     outboundEmail: '',
     analystEmail: '',
-    openAIApiKey: '',
+    projectId: '',
     active: false,
   },
 ];
