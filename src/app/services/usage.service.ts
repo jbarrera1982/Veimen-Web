@@ -10,6 +10,9 @@ import { environment } from '../../environments/environment';
 export interface UsageDateRange {
   startDate: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
+  // Proyectos de OpenAI por los que filtrar (project_ids, repetido en el query).
+  // Vacío/ausente = toda la organización.
+  projectIds?: string[];
 }
 
 /**
@@ -162,6 +165,13 @@ export class UsageService {
     let params = new HttpParams().set('start_date', this.toApiDate(range.startDate));
     if (range.endDate) {
       params = params.set('end_date', this.toApiDate(range.endDate));
+    }
+    // project_ids es un array: se repite un parámetro por proyecto no vacío.
+    for (const projectId of range.projectIds ?? []) {
+      const trimmed = projectId?.trim();
+      if (trimmed) {
+        params = params.append('project_ids', trimmed);
+      }
     }
     return params;
   }

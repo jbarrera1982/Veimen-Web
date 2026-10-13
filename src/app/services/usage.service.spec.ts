@@ -312,5 +312,22 @@ describe('UsageService', () => {
       expect(req.request.params.get('start_date')).toBe('20260901');
       expect(req.request.params.get('end_date')).toBe('20260930');
     });
+
+    // project_ids es un array: un parámetro repetido por proyecto, en ambos endpoints.
+    it('should send one project_ids param per selected project', () => {
+      service
+        .getCompletionsUsage({ startDate: '2026-09-01', projectIds: ['proj_a', 'proj_b'] })
+        .subscribe(() => {});
+
+      const req = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
+      expect(req.request.params.getAll('project_ids')).toEqual(['proj_a', 'proj_b']);
+    });
+
+    it('should not send project_ids when the selection is empty', () => {
+      service.getCosts({ startDate: '2026-09-01', projectIds: [] }).subscribe(() => {});
+
+      const req = httpTesting.expectOne((r) => r.url === COSTS_URL);
+      expect(req.request.params.has('project_ids')).toBe(false);
+    });
   });
 });

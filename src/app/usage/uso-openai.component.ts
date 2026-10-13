@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  HostListener,
   signal,
   computed,
   inject,
@@ -13,6 +14,8 @@ import type { Color } from '@swimlane/ngx-charts';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { UsageService, type CompletionUsage, type CostEntry } from '../services/usage.service';
+import { ClientsService, type Client } from '../services/clients.service';
+import { AuthService } from '../services/auth.service';
 
 interface ChartDatum {
   name: string;
@@ -100,6 +103,8 @@ function toDateInputValue(date: Date): string {
 })
 export class UsoOpenAiComponent implements OnInit {
   private readonly usageService = inject(UsageService);
+  private readonly clientsService = inject(ClientsService);
+  private readonly auth = inject(AuthService);
 
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
@@ -114,6 +119,14 @@ export class UsoOpenAiComponent implements OnInit {
   readonly startDate = signal<string>('');
   readonly endDate = signal<string>('');
 
+  // Filtro por cliente (proyectos de OpenAI). El usuario solo puede elegir proyectos si NO
+  // tiene un cliente asociado; con cliente asociado el backend restringe el acceso, así que
+  // el filtro no se muestra ni se envían project_ids.
+  readonly clients = signal<Client[]>([]);
+  readonly selectedProjectIds = signal<Set<string>>(new Set());
+  readonly projectDropdownOpen = signal(false);
+  readonly hasAssociatedClient = signal(false);
+
   // Un tope de filas independiente por tabla.
   readonly dailyLimit = signal(TABLE_PAGE_SIZE);
   readonly projectLimit = signal(TABLE_PAGE_SIZE);
@@ -124,7 +137,82 @@ export class UsoOpenAiComponent implements OnInit {
 
   ngOnInit(): void {
     this.applyDefaultRange();
-    this.load();
+    this.initProjectFilter();
+  }
+
+  /**
+   * Si el usuario tiene un cliente asociado (client_id) el backend ya restringe el acceso a su
+   * proyecto, por lo que no se muestra el filtro ni se envían project_ids. Sin cliente asociado
+   * se listan los clientes activos con proyecto para poder filtrar; si la carga falla (p. ej.
+   * sin permiso clients.read) el filtro se oculta sin romper la pantalla.
+   */
+  private initProjectFilter(): void {
+    const clientId = this.auth.currentUser()?.clientId ?? null;
+    if (clientId !== null) {
+      this.hasAssociatedClient.set(true);
+      this.load();
+      return;
+    }
+
+    this.clientsService.getClients().subscribe({
+      next: (clients) => {
+        this.clients.set(clients);
+        this.load();
+      },
+      error: () => {
+        this.clients.set([]);
+        this.load();
+      },
+    });
+  }
+
+  /** Clientes que aportan un proyecto de OpenAI (activos y con project_id no vacío). */
+  readonly projectOptions = computed<Client[]>(() =>
+    this.clients().filter((c) => c.active && c.projectId.trim().length > 0),
+  );
+
+  /** El filtro solo se muestra sin cliente asociado y con al menos un cliente seleccionable. */
+  readonly showProjectFilter = computed<boolean>(
+    () => !this.hasAssociatedClient() && this.projectOptions().length > 0,
+  );
+
+  readonly projectButtonLabel = computed<string>(() => {
+    const selected = this.selectedProjectIds();
+    if (selected.size === 0) return 'Todos';
+    if (selected.size === 1) {
+      const id = [...selected][0];
+      return this.projectOptions().find((c) => c.projectId === id)?.name || '1 cliente';
+    }
+    return `${selected.size} clientes`;
+  });
+
+  isAllProjects(): boolean {
+    return this.selectedProjectIds().size === 0;
+  }
+
+  toggleProjectDropdown(): void {
+    this.projectDropdownOpen.update((v) => !v);
+  }
+
+  toggleAllProjects(): void {
+    this.selectedProjectIds.set(new Set());
+  }
+
+  toggleProjectOption(projectId: string): void {
+    this.selectedProjectIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.projectDropdownOpen.set(false);
   }
 
   private applyDefaultRange(): void {
@@ -162,7 +250,12 @@ export class UsoOpenAiComponent implements OnInit {
     this.usageError.set(null);
     this.costError.set(null);
 
-    const range = { startDate: this.startDate(), endDate: this.endDate() || undefined };
+    const range = {
+      startDate: this.startDate(),
+      endDate: this.endDate() || undefined,
+      // Con cliente asociado el backend impone el proyecto: no se envía project_ids.
+      projectIds: this.hasAssociatedClient() ? undefined : [...this.selectedProjectIds()],
+    };
 
     // Ambas peticiones en paralelo; cada una captura su error por separado para
     // poder renderizar un resultado parcial si la otra falla.
@@ -202,7 +295,9 @@ export class UsoOpenAiComponent implements OnInit {
   }
 
   /** true cuando fallaron las dos fuentes: no hay nada que mostrar, solo el error. */
-  readonly allFailed = computed<boolean>(() => this.usageError() !== null && this.costError() !== null);
+  readonly allFailed = computed<boolean>(
+    () => this.usageError() !== null && this.costError() !== null,
+  );
 
   // -----------------------
   // Consumo (completions)
@@ -566,7 +661,9 @@ export class UsoOpenAiComponent implements OnInit {
   readonly dailyRows = computed<DayDetailRow[]>(() =>
     this.dailyDetail().slice(0, this.dailyLimit()),
   );
-  readonly hasMoreDaily = computed<boolean>(() => this.dailyDetail().length > this.dailyRows().length);
+  readonly hasMoreDaily = computed<boolean>(
+    () => this.dailyDetail().length > this.dailyRows().length,
+  );
 
   readonly projectRows = computed<ProjectDetailRow[]>(() =>
     this.projectDetail().slice(0, this.projectLimit()),
@@ -578,7 +675,9 @@ export class UsoOpenAiComponent implements OnInit {
   readonly modelRows = computed<ModelDetailRow[]>(() =>
     this.modelDetail().slice(0, this.modelLimit()),
   );
-  readonly hasMoreModels = computed<boolean>(() => this.modelDetail().length > this.modelRows().length);
+  readonly hasMoreModels = computed<boolean>(
+    () => this.modelDetail().length > this.modelRows().length,
+  );
 
   readonly lineItemRows = computed<LineItemDetailRow[]>(() =>
     this.lineItemDetail().slice(0, this.lineItemLimit()),
@@ -689,6 +788,8 @@ export class UsoOpenAiComponent implements OnInit {
   readonly modelScheme = computed<Color>(() => this.schemeFor(this.byModel().length));
   readonly requestScheme = computed<Color>(() => this.schemeFor(this.requestsByModel().length));
   readonly lineItemScheme = computed<Color>(() => this.schemeFor(this.byLineItem().length));
-  readonly projectTokenScheme = computed<Color>(() => this.schemeFor(this.byProjectTokens().length));
+  readonly projectTokenScheme = computed<Color>(() =>
+    this.schemeFor(this.byProjectTokens().length),
+  );
   readonly projectCostScheme = computed<Color>(() => this.schemeFor(this.byProjectCost().length));
 }
