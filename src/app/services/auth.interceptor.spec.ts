@@ -18,6 +18,7 @@ const user: UserDto = {
   email: 'alice@example.com',
   fullName: null,
   active: true,
+  clientId: null,
   lastLoginAt: null,
 };
 

@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ManagedUser, UsersService, Profile } from './users.service';
+import { Client, ClientsService } from '../services/clients.service';
 
 @Component({
   selector: 'app-user-form',
@@ -16,6 +17,7 @@ import { ManagedUser, UsersService, Profile } from './users.service';
 export class UserFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly users = inject(UsersService);
+  private readonly clientsService = inject(ClientsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -23,6 +25,7 @@ export class UserFormComponent {
   readonly user = signal<ManagedUser | null>(null);
   readonly notFound = signal(false);
   readonly profiles = signal<Profile[]>([]);
+  readonly clients = signal<Client[]>([]);
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly error = signal<string | null>(null);
@@ -33,6 +36,7 @@ export class UserFormComponent {
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     fullName: ['', [Validators.maxLength(150)]],
     profileId: [0 as number, [Validators.required, Validators.min(1)]],
+    clientId: [0 as number],
     active: [true],
   });
 
@@ -43,6 +47,7 @@ export class UserFormComponent {
       // Modo creación.
       this.isEdit.set(false);
       this.loadProfiles();
+      this.loadClients();
       this.isLoading.set(false);
       return;
     }
@@ -61,6 +66,7 @@ export class UserFormComponent {
     }
 
     this.loadProfiles();
+    this.loadClients();
     this.loadUser(userId);
   }
 
@@ -73,7 +79,8 @@ export class UserFormComponent {
 
     if (!this.isEdit()) {
       // Crear usuario nuevo.
-      const { username, password, email, fullName, profileId, active } = this.form.value;
+      const { username, password, email, fullName, profileId, clientId, active } = this.form.value;
+      const selectedClient = Number(clientId ?? 0);
       this.users
         .create({
           username: (username ?? '').trim(),
@@ -81,6 +88,7 @@ export class UserFormComponent {
           password: (password ?? '').trim(),
           fullName: (fullName ?? '').trim() || null,
           profileId: Number(profileId),
+          clientId: selectedClient > 0 ? selectedClient : null,
           active: active ?? true,
         })
         .subscribe({
@@ -97,12 +105,14 @@ export class UserFormComponent {
       return;
     }
 
-    const { email, fullName, profileId, active } = this.form.value;
+    const { email, fullName, profileId, clientId, active } = this.form.value;
     this.users
       .update(current.userId, {
         email: (email ?? '').trim(),
         fullName: (fullName ?? '').trim() || null,
         profileId: Number(profileId),
+        // 0 = quitar el cliente ("Todos"); > 0 = asignar.
+        clientId: Number(clientId ?? 0),
         active: active ?? true,
       })
       .subscribe({
@@ -132,6 +142,22 @@ export class UserFormComponent {
     });
   }
 
+  // Carga los clientes (no borrados) desde GET /api/clients y deja solo los activos.
+  // Requiere el permiso clients.read; si falla, el selector queda vacío sin romper el formulario.
+  private loadClients(): void {
+    this.clientsService.getClients().subscribe({
+      next: (clients) => this.clients.set(clients),
+      error: () => this.clients.set([]),
+    });
+  }
+
+  // Opciones del selector: clientes activos y, en edición, el cliente ya asociado
+  // aunque esté inactivo (para no perder la asociación al guardar).
+  clientOptions(): Client[] {
+    const current = Number(this.form.controls.clientId.value ?? 0);
+    return this.clients().filter((c) => c.active || c.clientId === current);
+  }
+
   private loadUser(userId: number): void {
     this.isLoading.set(true);
 
@@ -146,6 +172,7 @@ export class UserFormComponent {
             password: '',
             fullName: found.fullName ?? '',
             profileId: found.profileId ?? 0,
+            clientId: found.clientId ?? 0,
             active: found.active,
           });
         } else {

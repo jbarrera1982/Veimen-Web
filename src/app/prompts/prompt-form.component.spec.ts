@@ -55,6 +55,7 @@ describe('PromptFormComponent', () => {
       email: 'tester@veimen.net',
       fullName: null,
       active: true,
+      clientId: null,
       lastLoginAt: null,
     });
 

@@ -15,6 +15,8 @@ const user = {
   active: true,
   profileId: 1,
   profileName: 'Admin',
+  clientId: null,
+  clientName: null,
   lastLoginAt: null,
   createdAt: '2026-09-01T10:00:00Z',
 };

@@ -11,6 +11,8 @@ export interface ManagedUser {
   active: boolean;
   profileId: number | null;
   profileName: string | null;
+  clientId: number | null;
+  clientName: string | null;
   lastLoginAt: string | null;
   createdAt: string;
 }
@@ -28,6 +30,7 @@ export interface CreateUserPayload {
   fullName?: string | null;
   profileId: number;
   active?: boolean;
+  clientId?: number | null;
 }
 
 export interface UpdateUserPayload {
@@ -35,6 +38,8 @@ export interface UpdateUserPayload {
   fullName?: string | null;
   profileId?: number;
   active?: boolean;
+  // 0 = quitar el cliente ("Todos"); > 0 = asignar; ausente = no cambiar.
+  clientId?: number;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -13,6 +13,7 @@ const user: UserDto = {
   email: 'alice@example.com',
   fullName: 'Alice Wonder',
   active: true,
+  clientId: null,
   lastLoginAt: '2026-09-15T10:00:00Z',
 };
 

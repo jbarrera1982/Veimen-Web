@@ -126,6 +126,10 @@ export class UsersComponent {
     return user.profileName ?? 'Sin perfil';
   }
 
+  clientName(user: ManagedUser): string {
+    return user.clientName ?? 'Todos';
+  }
+
   private readNavigationNotice(): string | null {
     const fromNav = this.router.getCurrentNavigation()?.extras.state?.['notice'];
     if (typeof fromNav === 'string' && fromNav) {

@@ -21,6 +21,7 @@ export interface UserDto {
   email: string;
   fullName: string | null;
   active: boolean;
+  clientId: number | null;
   lastLoginAt: string | null;
 }
 

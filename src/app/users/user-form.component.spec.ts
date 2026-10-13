@@ -15,11 +15,34 @@ const user = {
   active: true,
   profileId: 1,
   profileName: 'Admin',
+  clientId: null,
+  clientName: null,
   lastLoginAt: null,
   createdAt: '2026-09-01T10:00:00Z',
 };
 
 const profiles = [{ profileId: 1, name: 'Admin', description: null }];
+
+const clients = [
+  {
+    clientId: 1,
+    name: 'Cliente Uno',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    openAIApiKey: '',
+    active: true,
+  },
+  {
+    clientId: 2,
+    name: 'Cliente Dos',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    openAIApiKey: '',
+    active: false,
+  },
+];
 
 describe('UserFormComponent', () => {
   let httpTesting: HttpTestingController;
@@ -41,10 +64,12 @@ describe('UserFormComponent', () => {
 
   function flushCreateLoad() {
     httpTesting.expectOne(`${API}/api/users/profiles`).flush(profiles);
+    httpTesting.expectOne(`${API}/api/clients`).flush(clients);
   }
 
   function flushEditLoad(users = [user]) {
     httpTesting.expectOne(`${API}/api/users/profiles`).flush(profiles);
+    httpTesting.expectOne(`${API}/api/clients`).flush(clients);
     httpTesting.expectOne(`${API}/api/users`).flush(users);
   }
 
@@ -89,6 +114,7 @@ describe('UserFormComponent', () => {
       password: 'password123',
       fullName: 'Alice',
       profileId: 1,
+      clientId: null,
       active: true,
     });
     req.flush({ ...user, userId: 2, username: 'alice' });
@@ -131,9 +157,40 @@ describe('UserFormComponent', () => {
       email: 'nuevo@example.com',
       fullName: 'Bobby',
       profileId: 1,
+      clientId: 0,
       active: true,
     });
     req.flush({ ...user, email: 'nuevo@example.com' });
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/usuarios']);
+  });
+
+  it('should list only active clients plus the currently selected one', async () => {
+    const fixture = await setup('1');
+    flushEditLoad();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    // El cliente 2 está inactivo y no es el actual: no debe aparecer.
+    expect(component.clientOptions().map((c) => c.clientId)).toEqual([1]);
+  });
+
+  it('should associate the selected client when editing', async () => {
+    const fixture = await setup('1');
+    flushEditLoad();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    component.form.patchValue({ clientId: 1 });
+    component.submit();
+
+    const req = httpTesting.expectOne(`${API}/api/users/1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body.clientId).toBe(1);
+    req.flush({ ...user, clientId: 1, clientName: 'Cliente Uno' });
 
     expect(navigateSpy).toHaveBeenCalledWith(['/usuarios']);
   });

@@ -27,6 +27,7 @@
             <th>Correo</th>
             <th>Nombre</th>
             <th>Perfil</th>
+            <th>Cliente</th>
             <th>Estado</th>
             <th>Último acceso</th>
             <th class="col-actions">Acciones</th>
@@ -39,6 +40,7 @@
               <td>{{ user.email }}</td>
               <td>{{ user.fullName ?? '—' }}</td>
               <td>{{ profileName(user) }}</td>
+              <td>{{ clientName(user) }}</td>
               <td>
                 <span class="badge" [class.badge-inactive]="!user.active">
                   {{ user.active ? 'Activo' : 'Inactivo' }}

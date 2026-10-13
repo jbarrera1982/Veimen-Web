@@ -147,6 +147,7 @@ describe('RequestsService', () => {
       email: 'bob@example.com',
       fullName: 'Bob',
       active: true,
+      clientId: null,
       lastLoginAt: null,
     });
 
