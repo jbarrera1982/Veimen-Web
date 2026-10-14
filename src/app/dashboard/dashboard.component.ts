@@ -45,7 +45,7 @@ export class DashboardComponent implements OnInit {
     name: 'veimen-web',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#2196F3', '#F44336', '#4CAF50', '#FF9800', '#9C27B0'],
+    domain: ['#3d7dd8', '#d95f5a', '#2bb8a3', '#d99a2b', '#8b7bc7'],
   };
 
   private inFlight = false;

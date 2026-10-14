@@ -2,17 +2,74 @@
 
 @import 'tailwindcss';
 
-/* Tokens Veimen (veimen.net): usados por tipografía, menú lateral y botones. */
+/* ---------------------------------------------------------------------------
+   Sistema de tokens Veimen — "consola de señal".
+   Todo deriva del navy de marca (#06101d/#0c1d30) y del teal #42d4bd:
+   nada de grises neutros ni azules ajenos. Las superficies claras son tintes
+   fríos del navy; el teal es escaso (nav activo, primarios, foco, dato clave).
+   IBM Plex Sans = UI · IBM Plex Mono = datos (cifras, fechas, IDs, JSON).
+--------------------------------------------------------------------------- */
 :root {
-  --veimen-bg: #06101d;
-  --veimen-bg2: #0c1d30;
-  --veimen-text: #f5f8fb;
-  --veimen-muted: #aebdca;
-  --veimen-accent: #42d4bd;
+  /* Marca (superficies oscuras: sidebar, login, paneles de código) */
+  --vm-abyss: #06101d;
+  --vm-deep: #0c1d30;
+  --vm-teal: #42d4bd;
+  --vm-teal-bright: #7deddb;
+  --vm-on-dark: #f5f8fb;
+  --vm-on-dark-muted: #9db4c6;
+  --vm-line-dark: rgba(255, 255, 255, 0.12);
+
+  /* Contenido (superficies claras, tintes fríos del navy) */
+  --vm-paper: #eef3f7;
+  --vm-surface: #ffffff;
+  --vm-wash: #e7eef4;
+  --vm-ink: #132a40;
+  --vm-muted: #55718a;
+  --vm-faint: #75899b;
+  --vm-line: #d9e3ec;
+  --vm-line-strong: #b8c9d8;
+
+  /* Acentos sobre claro (el teal puro #42d4bd no pasa AA como texto) */
+  --vm-teal-ink: #0c7d6d;
+  --vm-teal-wash: #def5ef;
+  --vm-teal-line: #abe3d6;
+  --vm-blue: #3d7dd8;
+  --vm-blue-ink: #2f5ea8;
+  --vm-blue-wash: #e8f0fb;
+
+  /* Semánticos */
+  --vm-danger: #c13b3b;
+  --vm-danger-wash: #faeeee;
+  --vm-danger-line: #efc3c3;
+  --vm-warn: #9a6a10;
+  --vm-warn-wash: #faf3e3;
+  --vm-warn-line: #ecd9a8;
+
+  --vm-sans: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --vm-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Aliases heredados (sidebar y login ya los usaban) */
+  --veimen-bg: var(--vm-abyss);
+  --veimen-bg2: var(--vm-deep);
+  --veimen-text: var(--vm-on-dark);
+  --veimen-muted: var(--vm-on-dark-muted);
+  --veimen-accent: var(--vm-teal);
   --veimen-blue: #69aaff;
-  --veimen-line: rgba(255, 255, 255, 0.12);
+  --veimen-line: var(--vm-line-dark);
 }
 
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: var(--vm-sans);
+  color: var(--vm-ink);
+  background: var(--vm-paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(66, 212, 189, 0.35);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vm-teal-ink);
+  outline-offset: 1px;
 }

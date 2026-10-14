@@ -68,17 +68,19 @@ const TABLE_PAGE_SIZE = 50;
 // Paleta base; se extiende cíclicamente para cubrir la cantidad de categorías
 // presentes. Con un dominio fijo de 5 colores, ngx-charts reciclaría tonos
 // cuando hay más categorías y las barras quedarían ambiguas.
+// Tonos derivados de la marca (navy + teal) con el mismo orden de familia:
+// teal, azul, ámbar, coral, violeta, cian, oliva, rosa, pizarra, arcilla.
 const BASE_PALETTE = [
-  '#2196F3',
-  '#F44336',
-  '#4CAF50',
-  '#FF9800',
-  '#9C27B0',
-  '#00BCD4',
-  '#8BC34A',
-  '#FF5722',
-  '#607D8B',
-  '#E91E63',
+  '#2bb8a3',
+  '#3d7dd8',
+  '#d99a2b',
+  '#d95f5a',
+  '#8b7bc7',
+  '#3aa7b8',
+  '#7d9c5f',
+  '#c76b98',
+  '#6b8ca8',
+  '#a87c5b',
 ];
 
 function toDateInputValue(date: Date): string {
@@ -789,7 +791,7 @@ export class UsoOpenAiComponent implements OnInit {
     name: 'veimen-web-usage',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#2196F3', '#F44336'],
+    domain: ['#3d7dd8', '#2bb8a3'],
   };
 
   /** La línea de costo tiene una sola serie, así que su dominio es fijo. */
@@ -797,7 +799,7 @@ export class UsoOpenAiComponent implements OnInit {
     name: 'veimen-web-cost',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#2196F3'],
+    domain: ['#2bb8a3'],
   };
 
   // Leyenda propia en HTML en vez de la de ngx-charts: con legendPosition=Below
@@ -807,7 +809,7 @@ export class UsoOpenAiComponent implements OnInit {
     const domain = this.usageSeriesScheme.domain ?? [];
     return this.dailyUsageSeries().map((series, i) => ({
       name: series.name,
-      color: domain[i % Math.max(domain.length, 1)] ?? '#6b7280',
+      color: domain[i % Math.max(domain.length, 1)] ?? '#8ba1b4',
     }));
   });
 

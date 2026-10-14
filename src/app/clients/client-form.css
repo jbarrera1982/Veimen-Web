@@ -13,12 +13,12 @@
 .client-form-header h1 {
   margin: 0;
   font-size: 1.35rem;
-  color: #1f2937;
+  color: var(--vm-ink);
 }
 
 .form-error {
   margin: 0;
-  color: #b91c1c;
+  color: var(--vm-danger);
   font-size: 0.875rem;
 }
 
@@ -28,16 +28,16 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  border-radius: 0.5rem;
-  background: #f9fafb;
-  color: #6b7280;
+  border-radius: 0.375rem;
+  background: var(--vm-wash);
+  color: var(--vm-muted);
 }
 
 .spinner {
   display: inline-block;
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid #2563eb;
+  border: 2px solid var(--vm-blue);
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -54,10 +54,9 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem 1.25rem;
   padding: 1rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: var(--vm-surface);
+  border: 1px solid var(--vm-line);
+  border-radius: 0.625rem;
 }
 
 .field {
@@ -68,30 +67,30 @@
 
 .field span {
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--vm-muted);
   font-weight: 500;
 }
 
 .field input[type='text'],
 .field input[type='email'] {
   padding: 0.4rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  color: #1f2937;
+  border: 1px solid var(--vm-line-strong);
+  border-radius: 0.375rem;
+  background: var(--vm-surface);
+  color: var(--vm-ink);
   font-size: 0.875rem;
   font-family: inherit;
 }
 
 .field input:focus {
   outline: 2px solid transparent;
-  border-color: #2563eb;
+  border-color: var(--vm-blue);
 }
 
 .field input[type='checkbox'] {
   width: 1.1rem;
   height: 1.1rem;
-  accent-color: #2563eb;
+  accent-color: var(--vm-blue);
   align-self: flex-start;
 }
 
@@ -119,20 +118,19 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 14px 21px;
+  padding: 0.6rem 1.1rem;
   border: 1px solid var(--veimen-accent);
-  border-radius: 10px;
+  border-radius: 0.375rem;
   background: var(--veimen-accent);
-  color: #031219;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--vm-abyss);
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.07);
-  transform: translateY(-2px);
+  filter: brightness(1.06);
 }
 
 .btn-primary:disabled {
@@ -149,20 +147,19 @@
 }
 
 .btn-secondary {
-  padding: 14px 21px;
+  padding: 0.6rem 1.1rem;
   border: 1px solid rgba(6, 16, 29, 0.28);
-  border-radius: 10px;
+  border-radius: 0.375rem;
   background: transparent;
-  color: #0c1d30;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--vm-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .btn-secondary:hover:not(:disabled) {
   border-color: var(--veimen-accent);
-  transform: translateY(-2px);
 }
 
 .btn-secondary:disabled {

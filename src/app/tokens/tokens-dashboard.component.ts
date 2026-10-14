@@ -27,17 +27,20 @@ const TABLE_PAGE_SIZE = 50;
 // Paleta base; se extiende cíclicamente para cubrir la cantidad de nodos
 // presentes. Con un dominio fijo de 5 colores, ngx-charts recicla tonos cuando
 // hay más categorías y las barras quedan ambiguas.
+// Tonos derivados de la marca (navy + teal) con el mismo orden de familia que
+// la paleta del dashboard de uso, para que un modelo tenga el mismo color en
+// ambas pantallas.
 const BASE_PALETTE = [
-  '#2196F3',
-  '#F44336',
-  '#4CAF50',
-  '#FF9800',
-  '#9C27B0',
-  '#00BCD4',
-  '#8BC34A',
-  '#FF5722',
-  '#607D8B',
-  '#E91E63',
+  '#2bb8a3',
+  '#3d7dd8',
+  '#d99a2b',
+  '#d95f5a',
+  '#8b7bc7',
+  '#3aa7b8',
+  '#7d9c5f',
+  '#c76b98',
+  '#6b8ca8',
+  '#a87c5b',
 ];
 
 function toDateInputValue(date: Date): string {
@@ -292,7 +295,7 @@ export class TokensDashboardComponent implements OnInit {
     name: 'veimen-web-series',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#2196F3', '#F44336'],
+    domain: ['#3d7dd8', '#2bb8a3'],
   };
 
   // Leyenda propia en HTML en vez de la de ngx-charts: con legendPosition=Below
@@ -303,7 +306,7 @@ export class TokensDashboardComponent implements OnInit {
     const domain = this.seriesScheme.domain ?? [];
     return this.timelineSeries().map((series, i) => ({
       name: series.name,
-      color: domain[i % Math.max(domain.length, 1)] ?? '#6b7280',
+      color: domain[i % Math.max(domain.length, 1)] ?? '#8ba1b4',
     }));
   });
 

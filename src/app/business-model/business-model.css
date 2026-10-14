@@ -19,12 +19,12 @@
 .page-heading h1 {
   margin: 0;
   font-size: 1.35rem;
-  color: #1f2937;
+  color: var(--vm-ink);
 }
 
 .page-heading .subtitle {
   margin: 0.15rem 0 0;
-  color: #6b7280;
+  color: var(--vm-muted);
   font-size: 0.875rem;
 }
 
@@ -32,10 +32,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: #ffffff;
-  color: #1f2937;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
+  background: var(--vm-surface);
+  color: var(--vm-ink);
+  border: 1px solid var(--vm-line-strong);
+  border-radius: 0.375rem;
   padding: 0.55rem 0.9rem;
   cursor: pointer;
   font-size: 0.85rem;
@@ -63,8 +63,8 @@
   width: 100%;
   height: calc(100vh - 13rem);
   min-height: 30rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  background: #f3f4f6;
+  border: 1px solid var(--vm-line);
+  border-radius: 0.625rem;
+  background: var(--vm-wash);
   box-sizing: border-box;
 }
