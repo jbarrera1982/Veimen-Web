@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RequestsService, RequestItem, RequestsPage, TraceStep } from './requests.service';
-import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
 const TRACE_URL = `${environment.apiBaseUrl}/api/ServiceRequests/trace`;
-const WEBHOOK_URL = environment.auditWebhookUrl;
+const AUDIT_URL = `${environment.apiBaseUrl}/api/ServiceRequests/audit`;
 
 const emptyPage = { items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0 };
 
@@ -140,28 +139,9 @@ describe('RequestsService', () => {
     req.flush(emptyPage);
   });
 
-  it('should POST the audit webhook with request_number and the logged user email', () => {
-    TestBed.inject(AuthService).currentUser.set({
-      userId: 1,
-      username: 'bob',
-      email: 'bob@example.com',
-      fullName: 'Bob',
-      active: true,
-      clientId: null,
-      lastLoginAt: null,
-    });
-
+  it('should POST the audit endpoint with the request number and no email (the API takes it from the token)', () => {
     service.auditRequest(202).subscribe(() => {});
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.params.get('request_number')).toBe('202');
-    expect(req.request.params.get('email')).toBe('bob@example.com');
-    req.flush({});
-  });
-
-  it('should POST the audit webhook without email when there is no logged user', () => {
-    service.auditRequest(202).subscribe(() => {});
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
+    const req = httpTesting.expectOne((r) => r.url === AUDIT_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.params.get('request_number')).toBe('202');
     expect(req.request.params.has('email')).toBe(false);

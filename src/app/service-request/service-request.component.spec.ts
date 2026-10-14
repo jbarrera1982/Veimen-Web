@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
 const TRACE_URL = `${environment.apiBaseUrl}/api/ServiceRequests/trace`;
-const WEBHOOK_URL = environment.auditWebhookUrl;
+const AUDIT_URL = `${environment.apiBaseUrl}/api/ServiceRequests/audit`;
 
 const emptyPage = { items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0 };
 
@@ -539,13 +539,13 @@ describe('ServiceRequestComponent', () => {
     req2.flush(emptyPage);
   });
 
-  it('should call the audit webhook with the request number and show a success toast', () => {
+  it('should call the audit endpoint with the request number and show a success toast', () => {
     fixture.detectChanges();
     flushResponse([]);
 
     component.runAudit(202);
 
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
+    const req = httpTesting.expectOne((r) => r.url === AUDIT_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.params.get('request_number')).toBe('202');
     req.flush({});
@@ -564,19 +564,19 @@ describe('ServiceRequestComponent', () => {
 
     component.runAudit(202); // se ignora: ya hay una en curso
 
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
+    const req = httpTesting.expectOne((r) => r.url === AUDIT_URL);
     expect(req.request.params.get('request_number')).toBe('202');
     req.flush({});
     expect(component.isAuditing(202)).toBe(false);
   });
 
-  it('should show an error toast when the audit webhook fails', () => {
+  it('should show an error toast when the audit call fails', () => {
     fixture.detectChanges();
     flushResponse([]);
 
     component.runAudit(202);
 
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
+    const req = httpTesting.expectOne((r) => r.url === AUDIT_URL);
     req.flush({}, { status: 500, statusText: 'Server Error' });
 
     expect(component.toast()?.type).toBe('error');
@@ -593,7 +593,7 @@ describe('ServiceRequestComponent', () => {
     button.click();
 
     expect(component.selectedRequest()).toBeNull();
-    const req = httpTesting.expectOne((r) => r.url === WEBHOOK_URL);
+    const req = httpTesting.expectOne((r) => r.url === AUDIT_URL);
     expect(req.request.params.get('request_number')).toBe('202');
     req.flush({});
   });

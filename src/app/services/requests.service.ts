@@ -2,7 +2,6 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { STATUS_LABELS } from './dashboard.service';
-import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
 export interface RequestItem {
@@ -125,9 +124,7 @@ interface RawTraceStep {
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
   private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
   private readonly apiBaseUrl = environment.apiBaseUrl;
-  private readonly auditWebhookUrl = environment.auditWebhookUrl;
 
   getRequestsList(options: DateRange = {}): Observable<RequestsPage> {
     let params = new HttpParams();
@@ -214,16 +211,11 @@ export class RequestsService {
       );
   }
 
-  // Dispara el webhook de n8n que genera el informe de auditoría de una solicitud.
-  // Se envía request_number como query param (misma convención que el resto de la API),
-  // más el email del usuario logueado para identificar quién solicitó la auditoría.
+  // Dispara el informe de auditoría de una solicitud a través de la API: el backend llama
+  // al webhook de n8n (la URL queda oculta al navegador) y toma el email del usuario del token.
   auditRequest(requestNumber: number): Observable<unknown> {
-    let params = new HttpParams().set('request_number', String(requestNumber));
-    const email = this.auth.currentUser()?.email?.trim();
-    if (email) {
-      params = params.set('email', email);
-    }
-    return this.http.post(this.auditWebhookUrl, null, { params });
+    const params = new HttpParams().set('request_number', String(requestNumber));
+    return this.http.post(`${this.apiBaseUrl}/api/ServiceRequests/audit`, null, { params });
   }
 
   private toApiDate(date: string): string {
