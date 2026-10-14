@@ -60,20 +60,20 @@
             Dashboard
           </a>
           <a
-            *appHasPermission="PERMISSIONS.tokensRead"
-            routerLink="/tokens"
-            routerLinkActive="active"
-            class="nav-link"
-          >
-            Consumo de tokens
-          </a>
-          <a
             *appHasPermission="PERMISSIONS.usageRead"
             routerLink="/uso-openai"
             routerLinkActive="active"
             class="nav-link"
           >
             Uso OpenAI
+          </a>
+          <a
+            *appHasPermission="PERMISSIONS.tokensRead"
+            routerLink="/tokens"
+            routerLinkActive="active"
+            class="nav-link"
+          >
+            Consumo de tokens
           </a>
           <a
             *appHasPermission="PERMISSIONS.serviceRequestsRead"
