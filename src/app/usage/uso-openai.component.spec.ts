@@ -40,6 +40,7 @@ function usage(
     requests?: number | null;
     cached?: number | null;
     project?: string | null;
+    projectName?: string | null;
   } = {},
 ) {
   return {
@@ -49,6 +50,7 @@ function usage(
     num_model_requests: opts.requests ?? null,
     model: opts.model === undefined ? 'gpt-5' : opts.model,
     project_id: opts.project === undefined ? 'proj_a' : opts.project,
+    project_name: opts.projectName ?? null,
   };
 }
 
@@ -60,6 +62,7 @@ function cost(
     quantity?: number | null;
     unit?: string | null;
     project?: string | null;
+    projectName?: string | null;
   } = {},
 ) {
   return {
@@ -68,6 +71,7 @@ function cost(
     quantity: opts.quantity ?? null,
     quantity_unit: opts.unit === undefined ? 'tokens' : opts.unit,
     project_id: opts.project === undefined ? 'proj_a' : opts.project,
+    project_name: opts.projectName ?? null,
   };
 }
 
@@ -709,6 +713,40 @@ describe('UsoOpenAiComponent', () => {
 
     expect(cells).toContain('Cliente Uno');
     expect(cells).not.toContain('proj_a');
+  });
+
+  // El nombre que manda el backend (project_name) se usa aunque no se puedan cargar clientes
+  // (p. ej. un usuario con cliente asociado sin permiso clients.read): el backend lo resuelve.
+  it('should use the backend-provided project name even without the client list', () => {
+    fixture.detectChanges();
+    httpTesting
+      .expectOne((r) => r.url === CLIENTS_URL)
+      .flush('boom', { status: 403, statusText: 'Forbidden' });
+    httpTesting
+      .expectOne((r) => r.url === COMPLETIONS_URL)
+      .flush(
+        page([
+          {
+            startTime: SEP_01,
+            results: [usage(10, 5, { project: 'proj_tuco', projectName: 'TUCOOP' })],
+          },
+        ]),
+      );
+    httpTesting
+      .expectOne((r) => r.url === COSTS_URL)
+      .flush(
+        page([
+          {
+            startTime: SEP_01,
+            results: [cost(3, 'usd', { project: 'proj_tuco', projectName: 'TUCOOP' })],
+          },
+        ]),
+      );
+    fixture.detectChanges();
+
+    expect(component.projectLabel('proj_tuco')).toBe('TUCOOP');
+    expect(component.byProjectTokens()).toEqual([{ name: 'TUCOOP', value: 15 }]);
+    expect(component.byProjectCost()).toEqual([{ name: 'TUCOOP', value: 3 }]);
   });
 
   // Si falla la carga de clientes (p. ej. sin permiso clients.read) el filtro se oculta.

@@ -1,0 +1,102 @@
+﻿[33mÔØ»[39m Building...
+[32mÔ£ö[39m Building...
+[1mInitial chunk files[22m                                  [2m | [22m[1mNames[22m                                             [2m | [22m [1mRaw size[22m
+[32mchunk-LUWHVLYB.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m[36m131.06 kB[39m[2m | [22m
+[32mchunk-Y6XL5YYC.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m[36m101.90 kB[39m[2m | [22m
+[32mchunk-MC6HPTNV.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m57.28 kB[39m[2m | [22m
+[32mchunk-6UMUFRBJ.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m46.73 kB[39m[2m | [22m
+[32mchunk-SABW76EX.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m46.55 kB[39m[2m | [22m
+[32mchunk-TVY56RCY.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m39.83 kB[39m[2m | [22m
+[32mchunk-ALQD2LGR.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m36.76 kB[39m[2m | [22m
+[32mchunk-TOPDBYMV.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m32.88 kB[39m[2m | [22m
+[32mchunk-46TKV7DV.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m31.81 kB[39m[2m | [22m
+[32mchunk-K5WLRQWQ.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m30.45 kB[39m[2m | [22m
+[32mspec-app-usage-uso-openai.component.js[39m               [2m | [22m[2mspec-app-usage-uso-openai.component[22m               [2m | [22m [36m21.81 kB[39m[2m | [22m
+[32mchunk-SKQZISX4.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m21.73 kB[39m[2m | [22m
+[32mspec-app-service-request-service-request.component.js[39m[2m | [22m[2mspec-app-service-request-service-request.component[22m[2m | [22m [36m21.69 kB[39m[2m | [22m
+[32mchunk-3SXJRNGP.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m16.48 kB[39m[2m | [22m
+[32mchunk-K5CBDDNA.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m [36m16.18 kB[39m[2m | [22m
+[32mspec-app-prompts-prompts-list.component.js[39m           [2m | [22m[2mspec-app-prompts-prompts-list.component[22m           [2m | [22m [36m13.25 kB[39m[2m | [22m
+[32mspec-app-app.routes.js[39m                               [2m | [22m[2mspec-app-app.routes[22m                               [2m | [22m [36m13.10 kB[39m[2m | [22m
+[32mspec-app-prompts-prompt-form.component.js[39m            [2m | [22m[2mspec-app-prompts-prompt-form.component[22m            [2m | [22m [36m11.83 kB[39m[2m | [22m
+[32mspec-app-services-usage.service.js[39m                   [2m | [22m[2mspec-app-services-usage.service[22m                   [2m | [22m [36m11.19 kB[39m[2m | [22m
+[32mspec-app-clients-clients-list.component.js[39m           [2m | [22m[2mspec-app-clients-clients-list.component[22m           [2m | [22m  [36m9.27 kB[39m[2m | [22m
+[32mspec-app-services-auth.service.js[39m                    [2m | [22m[2mspec-app-services-auth.service[22m                    [2m | [22m  [36m9.07 kB[39m[2m | [22m
+[32mspec-app-services-requests.service.js[39m                [2m | [22m[2mspec-app-services-requests.service[22m                [2m | [22m  [36m8.74 kB[39m[2m | [22m
+[32mspec-app-shell-shell.component.js[39m                    [2m | [22m[2mspec-app-shell-shell.component[22m                    [2m | [22m  [36m8.19 kB[39m[2m | [22m
+[32mspec-app-dashboard-dashboard.component.js[39m            [2m | [22m[2mspec-app-dashboard-dashboard.component[22m            [2m | [22m  [36m8.10 kB[39m[2m | [22m
+[32mspec-app-tokens-tokens-dashboard.component.js[39m        [2m | [22m[2mspec-app-tokens-tokens-dashboard.component[22m        [2m | [22m  [36m7.91 kB[39m[2m | [22m
+[32mspec-app-clients-client-form.component.js[39m            [2m | [22m[2mspec-app-clients-client-form.component[22m            [2m | [22m  [36m7.34 kB[39m[2m | [22m
+[32mchunk-E654GI7Y.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m7.34 kB[39m[2m | [22m
+[32mstyles.css[39m                                           [2m | [22m[2mstyles[22m                                            [2m | [22m  [36m7.32 kB[39m[2m | [22m
+[32mspec-app-users-user-form.component.js[39m                [2m | [22m[2mspec-app-users-user-form.component[22m                [2m | [22m  [36m7.20 kB[39m[2m | [22m
+[32mspec-app-services-auth.interceptor.js[39m                [2m | [22m[2mspec-app-services-auth.interceptor[22m                [2m | [22m  [36m6.84 kB[39m[2m | [22m
+[32mchunk-2IOQUVWM.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m5.90 kB[39m[2m | [22m
+[32mspec-app-services-prompts.service.js[39m                 [2m | [22m[2mspec-app-services-prompts.service[22m                 [2m | [22m  [36m5.88 kB[39m[2m | [22m
+[32mspec-app-users-users.component.js[39m                    [2m | [22m[2mspec-app-users-users.component[22m                    [2m | [22m  [36m5.71 kB[39m[2m | [22m
+[32mchunk-JBWBLPNK.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32mspec-app-auth-permission.guard.js[39m                    [2m | [22m[2mspec-app-auth-permission.guard[22m                    [2m | [22m  [36m5.03 kB[39m[2m | [22m
+[32mchunk-7YQJ2FFE.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m4.72 kB[39m[2m | [22m
+[32mchunk-ZULLZ7N2.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m4.43 kB[39m[2m | [22m
+[32mspec-app-services-clients.service.js[39m                 [2m | [22m[2mspec-app-services-clients.service[22m                 [2m | [22m  [36m4.34 kB[39m[2m | [22m
+[32mspec-app-services-tokens.service.js[39m                  [2m | [22m[2mspec-app-services-tokens.service[22m                  [2m | [22m  [36m4.21 kB[39m[2m | [22m
+[32mspec-app-auth-login.component.js[39m                     [2m | [22m[2mspec-app-auth-login.component[22m                     [2m | [22m  [36m3.44 kB[39m[2m | [22m
+[32mchunk-UL4REIMK.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m3.14 kB[39m[2m | [22m
+[32mspec-app-shell-home-redirect.component.js[39m            [2m | [22m[2mspec-app-shell-home-redirect.component[22m            [2m | [22m  [36m2.99 kB[39m[2m | [22m
+[32mspec-app-auth-change-password.component.js[39m           [2m | [22m[2mspec-app-auth-change-password.component[22m           [2m | [22m  [36m2.98 kB[39m[2m | [22m
+[32mspec-app-users-users.service.js[39m                      [2m | [22m[2mspec-app-users-users.service[22m                      [2m | [22m  [36m2.89 kB[39m[2m | [22m
+[32mspec-app-services-permissions.service.js[39m             [2m | [22m[2mspec-app-services-permissions.service[22m             [2m | [22m  [36m2.73 kB[39m[2m | [22m
+[32mchunk-QCPUR7WE.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m2.72 kB[39m[2m | [22m
+[32mchunk-LPQ2BYRB.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m2.71 kB[39m[2m | [22m
+[32mchunk-WNDVKISJ.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.93 kB[39m[2m | [22m
+[32mchunk-W66KX37S.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.91 kB[39m[2m | [22m
+[32mchunk-SENE63J5.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.89 kB[39m[2m | [22m
+[32mspec-app-services-dashboard.service.js[39m               [2m | [22m[2mspec-app-services-dashboard.service[22m               [2m | [22m  [36m1.85 kB[39m[2m | [22m
+[32mspec-app-app.js[39m                                      [2m | [22m[2mspec-app-app[22m                                      [2m | [22m  [36m1.82 kB[39m[2m | [22m
+[32mchunk-SKZ2OGX4.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.75 kB[39m[2m | [22m
+[32mchunk-6GRDDPQM.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.74 kB[39m[2m | [22m
+[32mchunk-OSZW6OMV.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.57 kB[39m[2m | [22m
+[32mspec-app-business-model-business-model.component.js[39m  [2m | [22m[2mspec-app-business-model-business-model.component[22m  [2m | [22m  [36m1.44 kB[39m[2m | [22m
+[32mchunk-PGFKPJVV.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m  [36m1.40 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                      [2m | [22m[2minit-testbed[22m                                      [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                 [2m | [22m[2mvitest-mock-patch[22m                                 [2m | [22m[36m974 bytes[39m[2m | [22m
+[32mchunk-AZEMZ5SU.js[39m                                    [2m | [22m[2m-[22m                                                 [2m | [22m[36m258 bytes[39m[2m | [22m
+
+[1m [22m                                                    [2m | [22m[1mInitial total[22m                                     [2m | [22m[1m878.56 kB[22m
+
+Application bundle generation complete. [8.912 seconds] - 2026-10-14T01:05:58.139Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Trabajo/Git/Veimen/Veimen Web[39m
+
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/service-request/service-request.component.spec.ts [2m([22m[2m41 tests[22m[2m)[22m[33m 2621[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m should create the component [33m 454[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/tokens/tokens-dashboard.component.spec.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1758[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m should create the component [33m 455[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m should sum the KPIs from every row [33m 308[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/prompts/prompt-form.component.spec.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 860[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/shell/shell.component.spec.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 760[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/prompts/prompts-list.component.spec.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 835[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/usage/uso-openai.component.spec.ts [2m([22m[2m37 tests[22m[2m)[22m[33m 3146[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m should create the component [33m 345[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/users/users.component.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 400[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/clients/client-form.component.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 324[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/clients/clients-list.component.spec.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 700[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/users/user-form.component.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 364[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/business-model/business-model.component.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 127[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/auth/login.component.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 195[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/auth.service.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/auth/change-password.component.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 101[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/auth.interceptor.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/requests.service.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/shell/home-redirect.component.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/usage.service.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/auth/permission.guard.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/tokens.service.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/clients.service.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/prompts.service.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/users/users.service.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/app.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/dashboard.service.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/services/permissions.service.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m [30m[43m veimen-web [49m[39m src/app/dashboard/dashboard.component.spec.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 372[2mms[22m[39m

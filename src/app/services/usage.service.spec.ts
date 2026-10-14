@@ -64,6 +64,7 @@ describe('UsageService', () => {
           date: '2026-09-01',
           model: 'gpt-5',
           projectId: '',
+          projectName: '',
           inputTokens: 100,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -76,6 +77,7 @@ describe('UsageService', () => {
           date: '2026-09-01',
           model: 'gpt-4o',
           projectId: '',
+          projectName: '',
           inputTokens: 50,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -88,6 +90,7 @@ describe('UsageService', () => {
           date: '2026-09-02',
           model: 'gpt-5',
           projectId: '',
+          projectName: '',
           inputTokens: 10,
           cachedInputTokens: 0,
           audioInputTokens: 0,
@@ -220,6 +223,34 @@ describe('UsageService', () => {
       expect(result?.[0]).not.toHaveProperty('batch');
     });
 
+    // El backend agrega project_name (nombre del cliente dueño del proyecto); el frontend lo
+    // expone tal cual, recortado, para poder rotular sin depender de /api/clients.
+    it('should expose the backend-provided project_name', () => {
+      let result: CompletionUsage[] | undefined;
+      service.getCompletionsUsage({ startDate: '2026-09-01' }).subscribe((r) => (result = r));
+
+      httpTesting
+        .expectOne((r) => r.url === COMPLETIONS_URL)
+        .flush({
+          data: [
+            {
+              start_time: SEP_01,
+              results: [
+                {
+                  input_tokens: 1,
+                  output_tokens: 1,
+                  project_id: 'proj_1',
+                  project_name: ' TUCOOP ',
+                },
+              ],
+            },
+          ],
+        });
+
+      expect(result?.[0].projectId).toBe('proj_1');
+      expect(result?.[0].projectName).toBe('TUCOOP');
+    });
+
     it('should return an empty array when the page or data is null', () => {
       let result: CompletionUsage[] | undefined;
       service.getCompletionsUsage({ startDate: '2026-09-01' }).subscribe((r) => (result = r));
@@ -268,6 +299,7 @@ describe('UsageService', () => {
           date: '2026-09-01',
           lineItem: 'gpt-5',
           projectId: 'proj_1',
+          projectName: '',
           amount: 12.34,
           currency: 'usd',
           quantity: 1000,
@@ -277,6 +309,7 @@ describe('UsageService', () => {
           date: '2026-09-01',
           lineItem: '',
           projectId: '',
+          projectName: '',
           amount: 0,
           currency: '',
           quantity: 0,
@@ -292,6 +325,31 @@ describe('UsageService', () => {
       httpTesting.expectOne((r) => r.url === COSTS_URL).flush(null);
 
       expect(result).toEqual([]);
+    });
+
+    it('should expose the backend-provided project_name', () => {
+      let result: CostEntry[] | undefined;
+      service.getCosts({ startDate: '2026-09-01' }).subscribe((r) => (result = r));
+
+      httpTesting
+        .expectOne((r) => r.url === COSTS_URL)
+        .flush({
+          data: [
+            {
+              start_time: SEP_01,
+              results: [
+                {
+                  amount: { value: 1, currency: 'usd' },
+                  project_id: 'proj_1',
+                  project_name: ' TUCOOP ',
+                },
+              ],
+            },
+          ],
+        });
+
+      expect(result?.[0].projectId).toBe('proj_1');
+      expect(result?.[0].projectName).toBe('TUCOOP');
     });
   });
 

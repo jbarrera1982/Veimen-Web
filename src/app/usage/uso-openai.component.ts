@@ -637,13 +637,21 @@ export class UsoOpenAiComponent implements OnInit {
   });
 
   /**
-   * Mapa projectId → nombre del cliente, para rotular los gráficos con el nombre real en
-   * vez del id de OpenAI. Se construye con todos los clientes cargados (activos o no): un
-   * proyecto histórico de un cliente inactivo igual debe mostrar su nombre. Si un proyecto
-   * no corresponde a ningún cliente (o el usuario no pudo listarlos) se conserva el id.
+   * Mapa projectId → nombre del cliente, para rotular con el nombre real en vez del id de
+   * OpenAI. Primero usa el nombre que ya resuelve el backend en cada fila (`projectName`,
+   * funciona aunque el usuario no tenga permiso `clients.read`); luego los clientes cargados
+   * (activos o no, para proyectos históricos). Si un proyecto no corresponde a ningún cliente
+   * se conserva el id.
    */
   private readonly projectNameById = computed<Map<string, string>>(() => {
     const map = new Map<string, string>();
+    for (const row of [...this.usageRows(), ...this.costRows()]) {
+      const projectId = row.projectId.trim();
+      const name = row.projectName.trim();
+      if (projectId && name && !map.has(projectId)) {
+        map.set(projectId, name);
+      }
+    }
     for (const client of this.clients()) {
       const projectId = client.projectId.trim();
       if (projectId && !map.has(projectId)) {

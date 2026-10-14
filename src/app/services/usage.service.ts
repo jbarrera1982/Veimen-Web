@@ -24,6 +24,7 @@ export interface CompletionUsage {
   date: string; // YYYY-MM-DD (día UTC del bucket)
   model: string; // '' si el resultado no trae modelo
   projectId: string; // '' si el resultado no trae proyecto
+  projectName: string; // nombre del cliente dueño del proyecto (lo agrega el backend), '' si no
   inputTokens: number;
   cachedInputTokens: number; // subconjunto de inputTokens, no se suma aparte
   audioInputTokens: number; // subconjunto de inputTokens, no se suma aparte
@@ -38,6 +39,7 @@ export interface CostEntry {
   date: string; // YYYY-MM-DD (día UTC del bucket)
   lineItem: string; // '' si el resultado no trae line_item
   projectId: string; // '' si el resultado no trae proyecto
+  projectName: string; // nombre del cliente dueño del proyecto (lo agrega el backend), '' si no
   amount: number; // amount.value
   currency: string; // amount.currency, '' si no viene
   quantity: number;
@@ -67,6 +69,7 @@ interface RawCompletionsUsageResult {
   output_audio_tokens?: number | null;
   num_model_requests?: number | null;
   project_id?: string | null;
+  project_name?: string | null; // lo agrega el backend (nombre del cliente)
   user_id?: string | null;
   api_key_id?: string | null;
   model?: string | null;
@@ -82,6 +85,7 @@ interface RawCostResult {
   amount?: RawCostAmount | null;
   line_item?: string | null;
   project_id?: string | null;
+  project_name?: string | null; // lo agrega el backend (nombre del cliente)
   api_key_id?: string | null;
   quantity?: number | null;
   quantity_unit?: string | null;
@@ -110,6 +114,7 @@ export class UsageService {
               date,
               model: result.model?.trim() || '',
               projectId: result.project_id?.trim() || '',
+              projectName: result.project_name?.trim() || '',
               inputTokens,
               cachedInputTokens: result.input_cached_tokens ?? 0,
               audioInputTokens: result.input_audio_tokens ?? 0,
@@ -143,6 +148,7 @@ export class UsageService {
             date,
             lineItem: result.line_item?.trim() || '',
             projectId: result.project_id?.trim() || '',
+            projectName: result.project_name?.trim() || '',
             amount: result.amount?.value ?? 0,
             currency: result.amount?.currency?.trim() || '',
             quantity: result.quantity ?? 0,
