@@ -473,12 +473,36 @@ describe('UsoOpenAiComponent', () => {
       },
     ]);
     expect(component.byProjectTokens()).toEqual([
-      { name: 'proj_b', value: 2400 },
-      { name: 'proj_a', value: 1100 },
+      { name: 'Cliente Dos', value: 2400 },
+      { name: 'Cliente Uno', value: 1100 },
     ]);
     expect(component.byProjectCost()).toEqual([
-      { name: 'proj_a', value: 10.5 },
-      { name: 'proj_b', value: 4.25 },
+      { name: 'Cliente Uno', value: 10.5 },
+      { name: 'Cliente Dos', value: 4.25 },
+    ]);
+  });
+
+  // El gráfico rota por el nombre del cliente dueño del proyecto; sin coincidencia, el id.
+  it('should label project charts with the client name and fall back to the project id', () => {
+    load(
+      page([{ startTime: SEP_01, results: [usage(10, 5, { project: 'proj_desconocido' })] }]),
+      page([
+        {
+          startTime: SEP_01,
+          results: [
+            cost(1, 'usd', { project: 'proj_a' }),
+            cost(2, 'usd', { project: 'proj_desconocido' }),
+          ],
+        },
+      ]),
+    );
+
+    expect(component.projectLabel('proj_a')).toBe('Cliente Uno');
+    expect(component.projectLabel('proj_desconocido')).toBe('proj_desconocido');
+    expect(component.byProjectTokens()).toEqual([{ name: 'proj_desconocido', value: 15 }]);
+    expect(component.byProjectCost()).toEqual([
+      { name: 'proj_desconocido', value: 2 },
+      { name: 'Cliente Uno', value: 1 },
     ]);
   });
 
@@ -654,12 +678,13 @@ describe('UsoOpenAiComponent', () => {
     httpTesting.expectOne((r) => r.url === COSTS_URL).flush(page([]));
   });
 
-  // Con cliente asociado el backend impone el proyecto: no se lista ni se envía project_ids.
+  // Con cliente asociado el backend impone el proyecto: el filtro no se muestra ni se envían
+  // project_ids, pero los clientes igual se cargan para rotular con su nombre.
   it('should hide the project filter and skip project_ids for a user with an associated client', () => {
     auth.currentUser.set(userDto(1));
     fixture.detectChanges();
 
-    httpTesting.expectNone((r) => r.url === CLIENTS_URL);
+    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
     expect(component.hasAssociatedClient()).toBe(true);
     expect(component.showProjectFilter()).toBe(false);
 
@@ -670,6 +695,20 @@ describe('UsoOpenAiComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).not.toContain('Cliente:');
+  });
+
+  // El id de proyecto no se muestra cuando hay un cliente con ese project_id: la tabla de
+  // detalle por proyecto rotula con el nombre del cliente.
+  it('should show the client name instead of the project id in the project detail table', () => {
+    load();
+    fixture.detectChanges();
+
+    const cells = Array.from(
+      fixture.nativeElement.querySelectorAll('td') as NodeListOf<HTMLElement>,
+    ).map((td) => td.textContent?.trim());
+
+    expect(cells).toContain('Cliente Uno');
+    expect(cells).not.toContain('proj_a');
   });
 
   // Si falla la carga de clientes (p. ej. sin permiso clients.read) el filtro se oculta.

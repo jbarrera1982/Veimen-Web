@@ -141,18 +141,14 @@ export class UsoOpenAiComponent implements OnInit {
   }
 
   /**
-   * Si el usuario tiene un cliente asociado (client_id) el backend ya restringe el acceso a su
-   * proyecto, por lo que no se muestra el filtro ni se envían project_ids. Sin cliente asociado
-   * se listan los clientes activos con proyecto para poder filtrar; si la carga falla (p. ej.
-   * sin permiso clients.read) el filtro se oculta sin romper la pantalla.
+   * Siempre se cargan los clientes: sirven para rotular con su nombre los proyectos que
+   * aparecen en gráficos/tablas (y, sin cliente asociado, para poblar el filtro). Si el
+   * usuario tiene un cliente asociado (client_id) el backend ya restringe el acceso a su
+   * proyecto, por lo que el filtro no se muestra ni se envían project_ids. Si la carga falla
+   * (p. ej. sin permiso clients.read) se cae al projectId y el filtro se oculta.
    */
   private initProjectFilter(): void {
-    const clientId = this.auth.currentUser()?.clientId ?? null;
-    if (clientId !== null) {
-      this.hasAssociatedClient.set(true);
-      this.load();
-      return;
-    }
+    this.hasAssociatedClient.set((this.auth.currentUser()?.clientId ?? null) !== null);
 
     this.clientsService.getClients().subscribe({
       next: (clients) => {
@@ -640,16 +636,38 @@ export class UsoOpenAiComponent implements OnInit {
       .sort((a, b) => b.totalTokens - a.totalTokens || a.project.localeCompare(b.project));
   });
 
+  /**
+   * Mapa projectId → nombre del cliente, para rotular los gráficos con el nombre real en
+   * vez del id de OpenAI. Se construye con todos los clientes cargados (activos o no): un
+   * proyecto histórico de un cliente inactivo igual debe mostrar su nombre. Si un proyecto
+   * no corresponde a ningún cliente (o el usuario no pudo listarlos) se conserva el id.
+   */
+  private readonly projectNameById = computed<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const client of this.clients()) {
+      const projectId = client.projectId.trim();
+      if (projectId && !map.has(projectId)) {
+        map.set(projectId, client.name.trim() || projectId);
+      }
+    }
+    return map;
+  });
+
+  /** Nombre del cliente dueño del proyecto, o el propio projectId si no se conoce. */
+  projectLabel(project: string): string {
+    return this.projectNameById().get(project) ?? project;
+  }
+
   readonly byProjectTokens = computed<ChartDatum[]>(() =>
     this.projectDetail()
-      .map((r) => ({ name: r.project, value: r.totalTokens }))
+      .map((r) => ({ name: this.projectLabel(r.project), value: r.totalTokens }))
       .filter((r) => r.value > 0)
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name)),
   );
 
   readonly byProjectCost = computed<ChartDatum[]>(() =>
     this.projectDetail()
-      .map((r) => ({ name: r.project, value: r.cost }))
+      .map((r) => ({ name: this.projectLabel(r.project), value: r.cost }))
       .filter((r) => r.value > 0)
       .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name)),
   );

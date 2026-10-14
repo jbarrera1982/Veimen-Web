@@ -458,7 +458,7 @@
             <tbody>
               @for (row of projectRows(); track row.project) {
                 <tr>
-                  <td>{{ row.project }}</td>
+                  <td>{{ projectLabel(row.project) }}</td>
                   <td class="num">{{ formatNumber(row.inputTokens) }}</td>
                   <td class="num">{{ formatNumber(row.outputTokens) }}</td>
                   <td class="num strong">{{ formatNumber(row.totalTokens) }}</td>
