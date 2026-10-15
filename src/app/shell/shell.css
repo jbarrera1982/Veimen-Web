@@ -272,11 +272,29 @@
   color: var(--vm-on-dark);
 }
 
+/* Iconos del menú: decorativos, heredan el color/fuerza del enlace. */
+.nav-icon {
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.nav-link:hover .nav-icon,
+.nav-link:focus-visible .nav-icon {
+  opacity: 1;
+}
+
 .nav-link.active {
   background: rgba(66, 212, 189, 0.1);
   box-shadow: inset 2px 0 0 var(--vm-teal);
   color: var(--vm-teal-bright);
   font-weight: 600;
+}
+
+.nav-link.active .nav-icon {
+  opacity: 1;
 }
 
 .logout {
