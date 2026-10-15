@@ -1,10 +1,11 @@
 import {
   Component,
   OnInit,
-  HostListener,
   signal,
   computed,
+  effect,
   inject,
+  untracked,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -14,8 +15,7 @@ import type { Color } from '@swimlane/ngx-charts';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { UsageService, type CompletionUsage, type CostEntry } from '../services/usage.service';
-import { ClientsService, type Client } from '../services/clients.service';
-import { AuthService } from '../services/auth.service';
+import { ClientContextService } from '../services/client-context.service';
 
 interface ChartDatum {
   name: string;
@@ -105,8 +105,9 @@ function toDateInputValue(date: Date): string {
 })
 export class UsoOpenAiComponent implements OnInit {
   private readonly usageService = inject(UsageService);
-  private readonly clientsService = inject(ClientsService);
-  private readonly auth = inject(AuthService);
+  // El filtro de cliente es global: vive en la cabecera del menú (ClientContextService)
+  // y este componente solo lo consume. Ya no hay selector propio de clientes.
+  private readonly clientContext = inject(ClientContextService);
 
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
@@ -121,96 +122,47 @@ export class UsoOpenAiComponent implements OnInit {
   readonly startDate = signal<string>('');
   readonly endDate = signal<string>('');
 
-  // Filtro por cliente (proyectos de OpenAI). El usuario solo puede elegir proyectos si NO
-  // tiene un cliente asociado; con cliente asociado el backend restringe el acceso, así que
-  // el filtro no se muestra ni se envían project_ids.
-  readonly clients = signal<Client[]>([]);
-  readonly selectedProjectIds = signal<Set<string>>(new Set());
-  readonly projectDropdownOpen = signal(false);
-  readonly hasAssociatedClient = signal(false);
-
   // Un tope de filas independiente por tabla.
   readonly dailyLimit = signal(TABLE_PAGE_SIZE);
   readonly projectLimit = signal(TABLE_PAGE_SIZE);
   readonly modelLimit = signal(TABLE_PAGE_SIZE);
   readonly lineItemLimit = signal(TABLE_PAGE_SIZE);
 
-  private inFlight = false;
+  // Id de la última petición lanzada. Con el filtro global el cliente puede cambiar en
+  // cualquier momento, así que las respuestas que llegan tarde (de una selección anterior)
+  // se descartan en vez de pisar la vista actual.
+  private requestId = 0;
+  private isFirstClientEffect = true;
+
+  /**
+   * El cliente seleccionado en el menú decide el proyecto de OpenAI por el que se filtra.
+   * "Todos" (null) no envía project_ids. Un cliente sin project_id tampoco filtra (no hay
+   * proyecto que enviar). Con cliente asociado el menú ya deja su cliente fijado.
+   */
+  readonly projectIds = computed<string[]>(() => {
+    const projectId = this.clientContext.selectedClient()?.projectId.trim() ?? '';
+    return projectId ? [projectId] : [];
+  });
+
+  constructor() {
+    // Recarga al cambiar el cliente del menú. `untracked` evita que el efecto se dispare
+    // por las señales que lee load() (fechas, errores, ...): solo depende del cliente.
+    // La carga inicial la hace ngOnInit, así que el primer valor del efecto no cuenta.
+    effect(() => {
+      this.clientContext.selectedClient();
+      untracked(() => {
+        if (this.isFirstClientEffect) {
+          this.isFirstClientEffect = false;
+          return;
+        }
+        this.load(true);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.applyDefaultRange();
-    this.initProjectFilter();
-  }
-
-  /**
-   * Siempre se cargan los clientes: sirven para rotular con su nombre los proyectos que
-   * aparecen en gráficos/tablas (y, sin cliente asociado, para poblar el filtro). Si el
-   * usuario tiene un cliente asociado (client_id) el backend ya restringe el acceso a su
-   * proyecto, por lo que el filtro no se muestra ni se envían project_ids. Si la carga falla
-   * (p. ej. sin permiso clients.read) se cae al projectId y el filtro se oculta.
-   */
-  private initProjectFilter(): void {
-    this.hasAssociatedClient.set((this.auth.currentUser()?.clientId ?? null) !== null);
-
-    this.clientsService.getClients().subscribe({
-      next: (clients) => {
-        this.clients.set(clients);
-        this.load();
-      },
-      error: () => {
-        this.clients.set([]);
-        this.load();
-      },
-    });
-  }
-
-  /** Clientes que aportan un proyecto de OpenAI (activos y con project_id no vacío). */
-  readonly projectOptions = computed<Client[]>(() =>
-    this.clients().filter((c) => c.active && c.projectId.trim().length > 0),
-  );
-
-  /** El filtro solo se muestra sin cliente asociado y con al menos un cliente seleccionable. */
-  readonly showProjectFilter = computed<boolean>(
-    () => !this.hasAssociatedClient() && this.projectOptions().length > 0,
-  );
-
-  readonly projectButtonLabel = computed<string>(() => {
-    const selected = this.selectedProjectIds();
-    if (selected.size === 0) return 'Todos';
-    if (selected.size === 1) {
-      const id = [...selected][0];
-      return this.projectOptions().find((c) => c.projectId === id)?.name || '1 cliente';
-    }
-    return `${selected.size} clientes`;
-  });
-
-  isAllProjects(): boolean {
-    return this.selectedProjectIds().size === 0;
-  }
-
-  toggleProjectDropdown(): void {
-    this.projectDropdownOpen.update((v) => !v);
-  }
-
-  toggleAllProjects(): void {
-    this.selectedProjectIds.set(new Set());
-  }
-
-  toggleProjectOption(projectId: string): void {
-    this.selectedProjectIds.update((current) => {
-      const next = new Set(current);
-      if (next.has(projectId)) {
-        next.delete(projectId);
-      } else {
-        next.add(projectId);
-      }
-      return next;
-    });
-  }
-
-  @HostListener('document:click')
-  onDocumentClick(): void {
-    this.projectDropdownOpen.set(false);
+    this.load();
   }
 
   private applyDefaultRange(): void {
@@ -234,11 +186,11 @@ export class UsoOpenAiComponent implements OnInit {
   }
 
   load(auto = false): void {
-    if (this.inFlight) return;
     // start_date es obligatorio en estos endpoints (lo exige la API de OpenAI), así
     // que sin "desde" no se disparan las peticiones para no comerse un 400.
     if (!this.startDate()) return;
-    this.inFlight = true;
+    const requestId = ++this.requestId;
+    const isStale = () => requestId !== this.requestId;
 
     if (auto) {
       this.isRefreshing.set(true);
@@ -251,8 +203,7 @@ export class UsoOpenAiComponent implements OnInit {
     const range = {
       startDate: this.startDate(),
       endDate: this.endDate() || undefined,
-      // Con cliente asociado el backend impone el proyecto: no se envía project_ids.
-      projectIds: this.hasAssociatedClient() ? undefined : [...this.selectedProjectIds()],
+      projectIds: this.projectIds(),
     };
 
     // Ambas peticiones en paralelo; cada una captura su error por separado para
@@ -260,22 +211,28 @@ export class UsoOpenAiComponent implements OnInit {
     forkJoin({
       usage: this.usageService.getCompletionsUsage(range).pipe(
         catchError(() => {
-          this.usageError.set(
-            'No se pudo cargar el consumo de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
-          );
+          if (!isStale()) {
+            this.usageError.set(
+              'No se pudo cargar el consumo de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
+            );
+          }
           return of(null);
         }),
       ),
       costs: this.usageService.getCosts(range).pipe(
         catchError(() => {
-          this.costError.set(
-            'No se pudieron cargar los costos de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
-          );
+          if (!isStale()) {
+            this.costError.set(
+              'No se pudieron cargar los costos de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
+            );
+          }
           return of(null);
         }),
       ),
     }).subscribe({
       next: ({ usage, costs }) => {
+        // Una respuesta de una selección/cliente anterior se descarta.
+        if (isStale()) return;
         this.usageRows.set(usage ?? []);
         this.costRows.set(costs ?? []);
         this.dailyLimit.set(TABLE_PAGE_SIZE);
@@ -285,9 +242,9 @@ export class UsoOpenAiComponent implements OnInit {
         this.lastUpdated.set(new Date());
       },
       complete: () => {
+        if (isStale()) return;
         this.isLoading.set(false);
         this.isRefreshing.set(false);
-        this.inFlight = false;
       },
     });
   }
@@ -641,9 +598,9 @@ export class UsoOpenAiComponent implements OnInit {
   /**
    * Mapa projectId → nombre del cliente, para rotular con el nombre real en vez del id de
    * OpenAI. Primero usa el nombre que ya resuelve el backend en cada fila (`projectName`,
-   * funciona aunque el usuario no tenga permiso `clients.read`); luego los clientes cargados
-   * (activos o no, para proyectos históricos). Si un proyecto no corresponde a ningún cliente
-   * se conserva el id.
+   * funciona aunque el usuario no tenga permiso `clients.read`); luego los clientes del
+   * contexto global (activos o no, para proyectos históricos). Si un proyecto no corresponde
+   * a ningún cliente se conserva el id.
    */
   private readonly projectNameById = computed<Map<string, string>>(() => {
     const map = new Map<string, string>();
@@ -654,7 +611,7 @@ export class UsoOpenAiComponent implements OnInit {
         map.set(projectId, name);
       }
     }
-    for (const client of this.clients()) {
+    for (const client of this.clientContext.clients()) {
       const projectId = client.projectId.trim();
       if (projectId && !map.has(projectId)) {
         map.set(projectId, client.name.trim() || projectId);

@@ -21,50 +21,6 @@
         <span>Hasta</span>
         <input type="date" [value]="endDate()" (change)="setEndDate($any($event.target).value)" />
       </label>
-      @if (showProjectFilter()) {
-        <div class="project-filter" (click)="$event.stopPropagation()">
-          <button
-            class="project-filter-btn"
-            type="button"
-            aria-haspopup="listbox"
-            [attr.aria-expanded]="projectDropdownOpen()"
-            (click)="toggleProjectDropdown()"
-          >
-            <span class="project-filter-heading">Cliente:</span>
-            <span class="project-filter-value">{{ projectButtonLabel() }}</span>
-            <svg
-              class="project-filter-chevron"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-
-          @if (projectDropdownOpen()) {
-            <div class="project-dropdown" role="listbox" aria-multiselectable="true">
-              <label class="project-option">
-                <input type="checkbox" [checked]="isAllProjects()" (change)="toggleAllProjects()" />
-                <span>Todos</span>
-              </label>
-              @for (client of projectOptions(); track client.clientId) {
-                <label class="project-option">
-                  <input
-                    type="checkbox"
-                    [checked]="selectedProjectIds().has(client.projectId)"
-                    (change)="toggleProjectOption(client.projectId)"
-                  />
-                  <span>{{ client.name || client.projectId }}</span>
-                </label>
-              }
-            </div>
-          }
-        </div>
-      }
       <button
         class="refresh-btn btn-icon"
         type="button"

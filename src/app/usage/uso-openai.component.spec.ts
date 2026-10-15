@@ -3,30 +3,32 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { UsoOpenAiComponent } from './uso-openai.component';
 import { UsageService } from '../services/usage.service';
-import { AuthService, type UserDto } from '../services/auth.service';
+import { ClientContextService } from '../services/client-context.service';
+import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
 const COMPLETIONS_URL = `${environment.apiBaseUrl}/api/usage/completions`;
 const COSTS_URL = `${environment.apiBaseUrl}/api/usage/costs`;
 const CLIENTS_URL = `${environment.apiBaseUrl}/api/clients`;
 
-// Clientes de ejemplo (activos y con project_id), tal como los devuelve GET /api/clients.
-const CLIENTS_SAMPLE = [
-  { clientId: 1, name: 'Cliente Uno', projectId: 'proj_a', active: true },
-  { clientId: 2, name: 'Cliente Dos', projectId: 'proj_b', active: true },
-];
-
-function userDto(clientId: number | null): UserDto {
+function client(partial: Partial<Client>): Client {
   return {
-    userId: 1,
-    username: 'tester',
-    email: 'tester@veimen.net',
-    fullName: null,
+    clientId: 1,
+    name: '',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    projectId: '',
     active: true,
-    clientId,
-    lastLoginAt: null,
+    ...partial,
   };
 }
+
+// Clientes de ejemplo (activos y con project_id), tal como los guarda el contexto global.
+const CLIENTS_SAMPLE: Client[] = [
+  client({ clientId: 1, name: 'Cliente Uno', projectId: 'proj_a' }),
+  client({ clientId: 2, name: 'Cliente Dos', projectId: 'proj_b' }),
+];
 
 // Epoch (segundos) de 2026-09-01T00:00:00Z y 2026-09-02T00:00:00Z.
 const SEP_01 = 1788220800;
@@ -116,7 +118,7 @@ describe('UsoOpenAiComponent', () => {
   let component: UsoOpenAiComponent;
   let fixture: any;
   let httpTesting: HttpTestingController;
-  let auth: AuthService;
+  let clientContext: ClientContextService;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -127,7 +129,10 @@ describe('UsoOpenAiComponent', () => {
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
-    auth = TestBed.inject(AuthService);
+    clientContext = TestBed.inject(ClientContextService);
+    // El filtro de cliente es global: el componente ya no pide la lista. Se siembra el
+    // contexto para que los proyectos se rotulen con el nombre del cliente.
+    clientContext.clients.set(CLIENTS_SAMPLE);
     fixture = TestBed.createComponent(UsoOpenAiComponent);
     component = fixture.componentInstance;
   });
@@ -136,14 +141,13 @@ describe('UsoOpenAiComponent', () => {
     httpTesting.verify();
   });
 
-  // On init without an associated client the component first loads the client list
-  // (GET /api/clients) and then both usage endpoints.
+  // On init the component requests both usage endpoints (the client list now comes from
+  // the global ClientContextService, not from this component).
   function load(
     usageData: Record<string, unknown> = USAGE_SAMPLE,
     costData: Record<string, unknown> = COST_SAMPLE,
   ): void {
     fixture.detectChanges();
-    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
     httpTesting.expectOne((r) => r.url === COMPLETIONS_URL).flush(usageData);
     httpTesting.expectOne((r) => r.url === COSTS_URL).flush(costData);
     fixture.detectChanges();
@@ -156,7 +160,6 @@ describe('UsoOpenAiComponent', () => {
   // Los dos endpoints exigen start_date: sin "desde" no se debe disparar la petición.
   it('should request both endpoints with a date range on init', () => {
     fixture.detectChanges();
-    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
 
     const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
     const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
@@ -615,7 +618,6 @@ describe('UsoOpenAiComponent', () => {
   // Si solo falla una fuente, se muestra la otra con un aviso.
   it('should render a partial result when only one endpoint fails', () => {
     fixture.detectChanges();
-    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
     httpTesting
       .expectOne((r) => r.url === COMPLETIONS_URL)
       .flush('boom', { status: 500, statusText: 'Server Error' });
@@ -631,7 +633,6 @@ describe('UsoOpenAiComponent', () => {
 
   it('should show an error with retry when both endpoints fail', () => {
     fixture.detectChanges();
-    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
     httpTesting
       .expectOne((r) => r.url === COMPLETIONS_URL)
       .flush('boom', { status: 500, statusText: 'Server Error' });
@@ -646,22 +647,46 @@ describe('UsoOpenAiComponent', () => {
   });
 
   // -----------------------
-  // Filtro por cliente (proyectos de OpenAI)
+  // Filtro por cliente (global, desde el menú)
   // -----------------------
 
-  it('should list clients as project options when the user has no associated client', () => {
+  // El componente ya no tiene su propio selector: la lista de clientes la pide el menú.
+  it('should not request the client list itself', () => {
     load();
 
-    expect(component.hasAssociatedClient()).toBe(false);
-    expect(component.showProjectFilter()).toBe(true);
-    expect(component.projectOptions().map((c) => c.projectId)).toEqual(['proj_a', 'proj_b']);
+    httpTesting.expectNone((r) => r.url === CLIENTS_URL);
   });
 
-  it('should send the selected projects as project_ids when filtering', () => {
+  it('should not send project_ids when the global filter is on "Todos"', () => {
     load();
 
-    component.toggleProjectOption('proj_a');
+    expect(component.projectIds()).toEqual([]);
     component.applyDateRange();
+
+    const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
+    expect(usageReq.request.params.has('project_ids')).toBe(false);
+    usageReq.flush(page([]));
+    httpTesting.expectOne((r) => r.url === COSTS_URL).flush(page([]));
+  });
+
+  it('should filter both endpoints by the project of the client selected in the menu', () => {
+    clientContext.selectClient(2);
+
+    fixture.detectChanges();
+    const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
+    expect(usageReq.request.params.getAll('project_ids')).toEqual(['proj_b']);
+    usageReq.flush(page([]));
+    const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
+    expect(costReq.request.params.getAll('project_ids')).toEqual(['proj_b']);
+    costReq.flush(page([]));
+    fixture.detectChanges();
+  });
+
+  it('should reload when the global client selection changes', () => {
+    load();
+
+    clientContext.selectClient(1);
+    fixture.detectChanges();
 
     const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
     expect(usageReq.request.params.getAll('project_ids')).toEqual(['proj_a']);
@@ -669,36 +694,21 @@ describe('UsoOpenAiComponent', () => {
     const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
     expect(costReq.request.params.getAll('project_ids')).toEqual(['proj_a']);
     costReq.flush(page([]));
-  });
-
-  it('should not send project_ids when every client is selected as "Todos"', () => {
-    load();
-
-    component.applyDateRange();
-
-    const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
-    expect(usageReq.request.params.has('project_ids')).toBe(false);
-    usageReq.flush(page([]));
-    httpTesting.expectOne((r) => r.url === COSTS_URL).flush(page([]));
-  });
-
-  // Con cliente asociado el backend impone el proyecto: el filtro no se muestra ni se envían
-  // project_ids, pero los clientes igual se cargan para rotular con su nombre.
-  it('should hide the project filter and skip project_ids for a user with an associated client', () => {
-    auth.currentUser.set(userDto(1));
     fixture.detectChanges();
+  });
 
-    httpTesting.expectOne((r) => r.url === CLIENTS_URL).flush(CLIENTS_SAMPLE);
-    expect(component.hasAssociatedClient()).toBe(true);
-    expect(component.showProjectFilter()).toBe(false);
+  // Un cliente sin project_id no tiene proyecto que enviar: se comporta como "Todos".
+  it('should ignore a selected client without a project_id', () => {
+    clientContext.clients.set([client({ clientId: 3, name: 'Sin proyecto', projectId: '' })]);
+    clientContext.selectClient(3);
+    expect(component.projectIds()).toEqual([]);
 
+    fixture.detectChanges();
     const usageReq = httpTesting.expectOne((r) => r.url === COMPLETIONS_URL);
     expect(usageReq.request.params.has('project_ids')).toBe(false);
     usageReq.flush(page([]));
     httpTesting.expectOne((r) => r.url === COSTS_URL).flush(page([]));
     fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).not.toContain('Cliente:');
   });
 
   // El id de proyecto no se muestra cuando hay un cliente con ese project_id: la tabla de
@@ -715,13 +725,11 @@ describe('UsoOpenAiComponent', () => {
     expect(cells).not.toContain('proj_a');
   });
 
-  // El nombre que manda el backend (project_name) se usa aunque no se puedan cargar clientes
+  // El nombre que manda el backend (project_name) se usa aunque el contexto no tenga clientes
   // (p. ej. un usuario con cliente asociado sin permiso clients.read): el backend lo resuelve.
   it('should use the backend-provided project name even without the client list', () => {
+    clientContext.clients.set([]);
     fixture.detectChanges();
-    httpTesting
-      .expectOne((r) => r.url === CLIENTS_URL)
-      .flush('boom', { status: 403, statusText: 'Forbidden' });
     httpTesting
       .expectOne((r) => r.url === COMPLETIONS_URL)
       .flush(
@@ -747,19 +755,5 @@ describe('UsoOpenAiComponent', () => {
     expect(component.projectLabel('proj_tuco')).toBe('TUCOOP');
     expect(component.byProjectTokens()).toEqual([{ name: 'TUCOOP', value: 15 }]);
     expect(component.byProjectCost()).toEqual([{ name: 'TUCOOP', value: 3 }]);
-  });
-
-  // Si falla la carga de clientes (p. ej. sin permiso clients.read) el filtro se oculta.
-  it('should hide the project filter when the client list cannot be loaded', () => {
-    fixture.detectChanges();
-    httpTesting
-      .expectOne((r) => r.url === CLIENTS_URL)
-      .flush('boom', { status: 403, statusText: 'Forbidden' });
-    httpTesting.expectOne((r) => r.url === COMPLETIONS_URL).flush(USAGE_SAMPLE);
-    httpTesting.expectOne((r) => r.url === COSTS_URL).flush(COST_SAMPLE);
-    fixture.detectChanges();
-
-    expect(component.showProjectFilter()).toBe(false);
-    expect(fixture.nativeElement.textContent).not.toContain('Cliente:');
   });
 });
