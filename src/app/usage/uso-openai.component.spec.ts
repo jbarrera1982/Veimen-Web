@@ -675,6 +675,16 @@ describe('UsoOpenAiComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Costo por proyecto');
   });
 
+  it('should hide the per-project charts when a client is selected in the menu', () => {
+    clientContext.clients.set(CLIENTS_SAMPLE);
+    clientContext.selectClient(2);
+    load();
+
+    expect(component.showProjectCharts()).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('Tokens por proyecto');
+    expect(fixture.nativeElement.textContent).not.toContain('Costo por proyecto');
+  });
+
   it('should not send project_ids when the global filter is on "Todos"', () => {
     load();
 
