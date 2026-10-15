@@ -1,10 +1,39 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ShellComponent } from './shell.component';
-import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
+import { AuthService, UserDto } from '../services/auth.service';
+import { Client } from '../services/clients.service';
+import { ClientContextService } from '../services/client-context.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+
+const CLIENTS_URL = `${environment.apiBaseUrl}/api/clients`;
+
+const USER: UserDto = {
+  userId: 1,
+  username: 'jcb',
+  email: 'jcb@veimen.net',
+  fullName: 'Juan Carlos',
+  active: true,
+  clientId: null,
+  lastLoginAt: null,
+};
+
+function client(partial: Partial<Client> = {}): Client {
+  return {
+    clientId: 1,
+    name: 'Cliente Demo',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    projectId: 'proj-demo',
+    active: true,
+    ...partial,
+  };
+}
 
 const ALL_PERMISSIONS = [
   PERMISSIONS.dashboardRead,
@@ -22,6 +51,7 @@ const ALL_PERMISSIONS = [
 describe('ShellComponent', () => {
   let fixture: any;
   let component: ShellComponent;
+  let httpTesting: HttpTestingController;
 
   function seedPermissions(codes: readonly string[]): void {
     const permissions = TestBed.inject(PermissionsService);
@@ -34,26 +64,103 @@ describe('ShellComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ShellComponent],
-      providers: [provideRouter([]), provideHttpClient()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
+    httpTesting = TestBed.inject(HttpTestingController);
     seedPermissions(ALL_PERMISSIONS);
+    TestBed.inject(AuthService).currentUser.set({ ...USER });
 
     fixture = TestBed.createComponent(ShellComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+
+    // El shell carga los clientes en ngOnInit para poblar el filtro global.
+    httpTesting.expectOne(CLIENTS_URL).flush([]);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
   });
 
   it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should render the client selector with the active clients for an unassociated user', () => {
+    const clientContext = TestBed.inject(ClientContextService);
+    clientContext.clients.set([
+      client({ clientId: 1, name: 'Acme' }),
+      client({ clientId: 2, name: 'Beta', active: false }),
+      client({ clientId: 3, name: 'Zeta' }),
+    ]);
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('.client-select');
+    expect(select).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.client-filter-static')).toBeNull();
+
+    // Solo clientes activos, ordenados por nombre, con "Todos" primero.
+    const options = Array.from<HTMLOptionElement>(select.querySelectorAll('option')).map((o) =>
+      o.textContent?.trim(),
+    );
+    expect(options).toEqual(['Todos', 'Acme', 'Zeta']);
+  });
+
+  it('should update the global selection when the menu selector changes', () => {
+    const clientContext = TestBed.inject(ClientContextService);
+    clientContext.clients.set([
+      client({ clientId: 1, name: 'Acme' }),
+      client({ clientId: 2, name: 'Beta' }),
+    ]);
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('.client-select') as HTMLSelectElement;
+    select.value = '2';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(clientContext.selectedClient()?.clientId).toBe(2);
+
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(clientContext.selectedClient()).toBeNull();
+  });
+
+  it('should show the associated client name (no selector) when the user has a clientId', () => {
+    const auth = TestBed.inject(AuthService);
+    const clientContext = TestBed.inject(ClientContextService);
+    auth.currentUser.set({ ...USER, clientId: 5 });
+
+    clientContext.load();
+    httpTesting.expectOne(CLIENTS_URL).flush([
+      {
+        clientId: 5,
+        name: 'Acme Corp',
+        inboundEmail: '',
+        outboundEmail: '',
+        analystEmail: '',
+        projectId: 'proj-acme',
+        active: true,
+      },
+    ]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.client-select')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.client-filter-static').textContent.trim()).toBe(
+      'Acme Corp',
+    );
+    expect(clientContext.selectedClient()?.clientId).toBe(5);
+  });
+
   it('should render the navigation links grouped by category', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
     expect(links.length).toBe(8);
     expect(links[0].textContent.trim()).toBe('Dashboard');
-    expect(links[1].textContent.trim()).toBe('Consumo de tokens');
-    expect(links[2].textContent.trim()).toBe('Uso OpenAI');
+    expect(links[1].textContent.trim()).toBe('Uso OpenAI');
+    expect(links[2].textContent.trim()).toBe('Consumo de tokens');
     expect(links[3].textContent.trim()).toBe('Requerimientos');
     expect(links[4].textContent.trim()).toBe('Clientes');
     expect(links[5].textContent.trim()).toBe('Usuarios');
@@ -81,7 +188,7 @@ describe('ShellComponent', () => {
 
   it('should link the Uso OpenAI entry to the unified usage route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links[2].getAttribute('href')).toBe('/uso-openai');
+    expect(links[1].getAttribute('href')).toBe('/uso-openai');
   });
 
   it('should hide the Uso OpenAI link without the usage.read permission', () => {

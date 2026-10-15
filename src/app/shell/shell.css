@@ -127,13 +127,81 @@
 }
 
 .sidebar-header {
-  display: none;
+  display: block;
 }
 
-.sidebar-brand {
+/* ---------- Filtro global de cliente (reemplaza al logo en el menú) ---------- */
+
+.client-filter {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.client-filter-label {
+  padding: 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--vm-on-dark-muted);
+  opacity: 0.85;
+}
+
+.client-filter-static {
+  padding: 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vm-on-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-select-wrap {
+  position: relative;
+  display: block;
+}
+
+.client-select {
+  width: 100%;
+  appearance: none;
+  padding: 0.5rem 2rem 0.5rem 0.65rem;
+  border: 1px solid var(--vm-line-dark);
+  border-radius: 0.375rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--vm-on-dark);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.client-select:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.client-select:focus-visible {
+  outline-color: var(--vm-teal);
+  border-color: var(--vm-teal);
+}
+
+/* Los <option> los pinta el sistema operativo: forzamos texto legible sobre blanco. */
+.client-select option {
+  color: var(--vm-ink);
+  background: var(--vm-surface);
+}
+
+.client-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  width: 1rem;
+  height: 1rem;
+  transform: translateY(-50%);
+  color: var(--vm-on-dark-muted);
+  pointer-events: none;
 }
 
 .brand-mark {
@@ -308,12 +376,6 @@
     box-shadow: none;
     padding: 1.25rem 0.75rem;
     gap: 1.5rem;
-  }
-
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    padding: 0 0.5rem;
   }
 
   .content {
