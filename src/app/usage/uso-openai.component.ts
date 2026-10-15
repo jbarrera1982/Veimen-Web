@@ -128,6 +128,9 @@ export class UsoOpenAiComponent implements OnInit {
   readonly modelLimit = signal(TABLE_PAGE_SIZE);
   readonly lineItemLimit = signal(TABLE_PAGE_SIZE);
 
+  // Un usuario con cliente asociado solo ve su propio consumo: los gráficos por proyecto no aplican.
+  readonly showProjectCharts = computed(() => !this.clientContext.hasAssociatedClient());
+
   // Id de la última petición lanzada. Con el filtro global el cliente puede cambiar en
   // cualquier momento, así que las respuestas que llegan tarde (de una selección anterior)
   // se descartan en vez de pisar la vista actual.

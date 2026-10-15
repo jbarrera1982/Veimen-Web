@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { UsoOpenAiComponent } from './uso-openai.component';
 import { UsageService } from '../services/usage.service';
 import { ClientContextService } from '../services/client-context.service';
+import { AuthService } from '../services/auth.service';
 import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
@@ -655,6 +656,23 @@ describe('UsoOpenAiComponent', () => {
     load();
 
     httpTesting.expectNone((r) => r.url === CLIENTS_URL);
+  });
+
+  it('should show the per-project charts when the user has no associated client', () => {
+    load();
+
+    expect(component.showProjectCharts()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Tokens por proyecto');
+    expect(fixture.nativeElement.textContent).toContain('Costo por proyecto');
+  });
+
+  it('should hide the per-project charts when the user has an associated client', () => {
+    TestBed.inject(AuthService).currentUser.set({ clientId: 1 } as never);
+    load();
+
+    expect(component.showProjectCharts()).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('Tokens por proyecto');
+    expect(fixture.nativeElement.textContent).not.toContain('Costo por proyecto');
   });
 
   it('should not send project_ids when the global filter is on "Todos"', () => {
