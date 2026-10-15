@@ -132,6 +132,20 @@ describe('RequestsService', () => {
     req.flush(emptyPage);
   });
 
+  it('should send client_id when a client is given', () => {
+    service.getRequestsList({ clientId: 7 }).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush(emptyPage);
+  });
+
+  it('should not send client_id when no client is given', () => {
+    service.getRequestsList({}).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBeFalsy();
+    req.flush(emptyPage);
+  });
+
   it('should send the search param with the raw value', () => {
     service.getRequestsList({ search: 'jbarreraccs' }).subscribe(() => {});
     const req = httpTesting.expectOne((r) => r.url === API_URL);

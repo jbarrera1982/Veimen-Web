@@ -94,6 +94,20 @@ describe('TokensService', () => {
     expect(req.request.params.has('end_date')).toBe(false);
   });
 
+  it('should send client_id when a client is given', () => {
+    service.getTokenUsage({ clientId: 7 }).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush([]);
+  });
+
+  it('should not send client_id when no client is given', () => {
+    service.getTokenUsage({ startDate: '2026-09-01' }).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush([]);
+  });
+
   // 'agent' viene en la respuesta pero el dashboard no lo usa: el detalle se
   // re-agrupa por día × nodo. El servicio solo lo descarta.
   it('should drop the agent field returned by the API', () => {

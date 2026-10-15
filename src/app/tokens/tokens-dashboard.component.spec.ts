@@ -3,9 +3,24 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TokensDashboardComponent } from './tokens-dashboard.component';
 import { TokensService } from '../services/tokens.service';
+import { ClientContextService } from '../services/client-context.service';
+import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests/tokens`;
+
+function client(partial: Partial<Client>): Client {
+  return {
+    clientId: 1,
+    name: '',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    projectId: '',
+    active: true,
+    ...partial,
+  };
+}
 
 function raw(
   date: string,
@@ -35,6 +50,7 @@ describe('TokensDashboardComponent', () => {
   let component: TokensDashboardComponent;
   let fixture: any;
   let httpTesting: HttpTestingController;
+  let clientContext: ClientContextService;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -45,6 +61,7 @@ describe('TokensDashboardComponent', () => {
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
+    clientContext = TestBed.inject(ClientContextService);
     fixture = TestBed.createComponent(TokensDashboardComponent);
     component = fixture.componentInstance;
   });
@@ -252,5 +269,29 @@ describe('TokensDashboardComponent', () => {
     expect(component.isLoading()).toBe(false);
     const rendered: string = fixture.nativeElement.textContent;
     expect(rendered).toContain('Reintentar');
+  });
+
+  // El filtro de cliente es global (cabecera del menú): "Todos" no envía client_id.
+  it('should not send client_id on init when no client is selected', () => {
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush([]);
+  });
+
+  it('should send client_id for the selected client and reload when it changes', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne((r) => r.url === API_URL).flush([]);
+
+    clientContext.clients.set([client({ clientId: 7, name: 'Cliente Siete' })]);
+    clientContext.selectClient(7);
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush([raw('2026-09-01', 'Clasificador', 10, 5, 15, 'GPT-5.5')]);
+
+    expect(component.totals().total).toBe(15);
   });
 });

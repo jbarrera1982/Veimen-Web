@@ -47,4 +47,18 @@ describe('DashboardService', () => {
     expect(req.request.params.get('end_date')).toBe('20260831');
     req.flush([]);
   });
+
+  it('should send client_id when a client is given', () => {
+    service.getStatusByStatus({ clientId: 7 }).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush([]);
+  });
+
+  it('should not send client_id when no client is given', () => {
+    service.getStatusByStatus({ startDate: '2026-08-01' }).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush([]);
+  });
 });

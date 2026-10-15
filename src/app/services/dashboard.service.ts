@@ -27,6 +27,8 @@ interface RawStatusCount {
 export interface DateRange {
   startDate?: string;
   endDate?: string;
+  // Cliente por el que filtrar (client_id). Ausente = sin filtro ("Todos").
+  clientId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +43,9 @@ export class DashboardService {
     }
     if (options.endDate) {
       params = params.set('end_date', this.toApiDate(options.endDate));
+    }
+    if (options.clientId !== undefined) {
+      params = params.set('client_id', String(options.clientId));
     }
 
     return this.http

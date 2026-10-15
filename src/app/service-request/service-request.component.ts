@@ -5,7 +5,9 @@ import {
   HostListener,
   computed,
   signal,
+  effect,
   inject,
+  untracked,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -13,6 +15,7 @@ import { finalize } from 'rxjs/operators';
 import { RequestsService, RequestItem, TraceStep } from '../services/requests.service';
 import { STATUS_LABELS } from '../services/dashboard.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { ClientContextService } from '../services/client-context.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 function toDateInputValue(date: Date): string {
@@ -89,15 +92,38 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   private inFlight = false;
   private traceInFlight = false;
+  // La carga inicial la hace ngOnInit; el primer disparo del effect del cliente no recarga.
+  private isFirstClientEffect = true;
 
   private readonly permissions = inject(PermissionsService);
+  private readonly clientContext = inject(ClientContextService);
 
   readonly PERMISSIONS = PERMISSIONS;
 
   // La sección de traza solo se muestra (y se pide al backend) con el permiso 'trace.read'.
   readonly canSeeTrace = computed(() => this.permissions.has(PERMISSIONS.traceRead));
 
-  constructor(private requestsService: RequestsService) {}
+  // El filtro de cliente es global (cabecera del menú). "Todos" (null) no filtra.
+  readonly clientId = computed<number | undefined>(
+    () => this.clientContext.selectedClient()?.clientId,
+  );
+
+  constructor(private requestsService: RequestsService) {
+    // Recarga al cambiar el cliente del menú, volviendo a la primera página (cambia
+    // el conjunto de resultados). `untracked` evita que el efecto se dispare por las
+    // señales que lee load() (fechas, búsqueda, errores, ...).
+    effect(() => {
+      this.clientContext.selectedClient();
+      untracked(() => {
+        if (this.isFirstClientEffect) {
+          this.isFirstClientEffect = false;
+          return;
+        }
+        this.page.set(1);
+        this.load(true);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.applyDefaultRange();
@@ -176,6 +202,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
         search: this.search().trim() || undefined,
         page: this.page(),
         pageSize: this.pageSize(),
+        clientId: this.clientId(),
       })
       .subscribe({
         next: (result) => {

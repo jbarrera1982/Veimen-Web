@@ -48,6 +48,8 @@ export interface DateRange {
   search?: string;
   page?: number;
   pageSize?: number;
+  // Cliente por el que filtrar (client_id). Ausente = sin filtro ("Todos").
+  clientId?: number;
 }
 
 export interface RequestsPage {
@@ -147,6 +149,9 @@ export class RequestsService {
     }
     if (options.pageSize) {
       params = params.set('pageSize', String(options.pageSize));
+    }
+    if (options.clientId !== undefined) {
+      params = params.set('client_id', String(options.clientId));
     }
 
     return this.http

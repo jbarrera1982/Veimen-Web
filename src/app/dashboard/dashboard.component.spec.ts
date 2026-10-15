@@ -3,14 +3,30 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService, StatusCount } from '../services/dashboard.service';
+import { ClientContextService } from '../services/client-context.service';
+import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests/dashboard`;
+
+function client(partial: Partial<Client>): Client {
+  return {
+    clientId: 1,
+    name: '',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    projectId: '',
+    active: true,
+    ...partial,
+  };
+}
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: any;
   let httpTesting: HttpTestingController;
+  let clientContext: ClientContextService;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -21,6 +37,7 @@ describe('DashboardComponent', () => {
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
+    clientContext = TestBed.inject(ClientContextService);
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
   });
@@ -248,5 +265,29 @@ describe('DashboardComponent', () => {
     expect(component.total()).toBe(127);
     expect(component.hiddenStatuses().size).toBe(0);
     expect(localStorage.getItem('veimen-web.hiddenStatuses')).toBe('[]');
+  });
+
+  // El filtro de cliente es global (cabecera del menú): "Todos" no envía client_id.
+  it('should not send client_id on init when no client is selected', () => {
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush([]);
+  });
+
+  it('should send client_id for the selected client and reload when it changes', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne((r) => r.url === API_URL).flush([]);
+
+    clientContext.clients.set([client({ clientId: 7, name: 'Cliente Siete' })]);
+    clientContext.selectClient(7);
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush([{ status: 'Received', date: '2026-08-01', total: 10 }]);
+
+    expect(component.total()).toBe(10);
   });
 });

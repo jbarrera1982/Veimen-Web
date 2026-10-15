@@ -1,10 +1,20 @@
-import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  effect,
+  inject,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import type { Color } from '@swimlane/ngx-charts';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { TokensService, type TokenUsage } from '../services/tokens.service';
+import { ClientContextService } from '../services/client-context.service';
 
 interface ChartDatum {
   name: string;
@@ -70,8 +80,30 @@ export class TokensDashboardComponent implements OnInit {
   readonly tableLimit = signal(TABLE_PAGE_SIZE);
 
   private inFlight = false;
+  // La carga inicial la hace ngOnInit; el primer disparo del effect del cliente no recarga.
+  private isFirstClientEffect = true;
 
-  constructor(private tokensService: TokensService) {}
+  private readonly clientContext = inject(ClientContextService);
+
+  // El filtro de cliente es global (cabecera del menú). "Todos" (null) no filtra.
+  readonly clientId = computed<number | undefined>(
+    () => this.clientContext.selectedClient()?.clientId,
+  );
+
+  constructor(private tokensService: TokensService) {
+    // Recarga al cambiar el cliente del menú. `untracked` evita que el efecto se
+    // dispare por las señales que lee load() (fechas, errores, ...).
+    effect(() => {
+      this.clientContext.selectedClient();
+      untracked(() => {
+        if (this.isFirstClientEffect) {
+          this.isFirstClientEffect = false;
+          return;
+        }
+        this.load(true);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.applyDefaultRange();
@@ -113,6 +145,7 @@ export class TokensDashboardComponent implements OnInit {
       .getTokenUsage({
         startDate: this.startDate() ?? undefined,
         endDate: this.endDate() ?? undefined,
+        clientId: this.clientId(),
       })
       .subscribe({
         next: (data) => {

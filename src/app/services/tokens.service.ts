@@ -40,6 +40,9 @@ export class TokensService {
     if (options.endDate) {
       params = params.set('end_date', this.toApiDate(options.endDate));
     }
+    if (options.clientId !== undefined) {
+      params = params.set('client_id', String(options.clientId));
+    }
 
     return this.http
       .get<RawTokenUsage[]>(`${this.apiBaseUrl}/api/ServiceRequests/tokens`, { params })

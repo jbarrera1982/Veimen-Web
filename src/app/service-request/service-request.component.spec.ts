@@ -4,6 +4,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ServiceRequestComponent } from './service-request.component';
 import { RequestsService, TraceStep } from '../services/requests.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { ClientContextService } from '../services/client-context.service';
+import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
@@ -11,6 +13,19 @@ const TRACE_URL = `${environment.apiBaseUrl}/api/ServiceRequests/trace`;
 const AUDIT_URL = `${environment.apiBaseUrl}/api/ServiceRequests/audit`;
 
 const emptyPage = { items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0 };
+
+function client(partial: Partial<Client>): Client {
+  return {
+    clientId: 1,
+    name: '',
+    inboundEmail: '',
+    outboundEmail: '',
+    analystEmail: '',
+    projectId: '',
+    active: true,
+    ...partial,
+  };
+}
 
 interface RawRequest {
   requestNumber: number;
@@ -56,6 +71,7 @@ describe('ServiceRequestComponent', () => {
   let fixture: any;
   let httpTesting: HttpTestingController;
   let permissions: PermissionsService;
+  let clientContext: ClientContextService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -67,6 +83,7 @@ describe('ServiceRequestComponent', () => {
     permissions = TestBed.inject(PermissionsService);
     permissions.permissions.set([PERMISSIONS.serviceRequestsRead, PERMISSIONS.traceRead]);
     permissions.loaded.set(true);
+    clientContext = TestBed.inject(ClientContextService);
     fixture = TestBed.createComponent(ServiceRequestComponent);
     component = fixture.componentInstance;
   });
@@ -673,5 +690,31 @@ describe('ServiceRequestComponent', () => {
     const req = httpTesting.expectOne((r) => r.url === API_URL);
     expect(req.request.params.get('page')).toBe('1');
     req.flush(emptyPage);
+  });
+
+  // El filtro de cliente es global (cabecera del menú): "Todos" no envía client_id.
+  it('should not send client_id on init when no client is selected', () => {
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush(emptyPage);
+  });
+
+  it('should send client_id for the selected client and reset to the first page on change', () => {
+    fixture.detectChanges();
+    flushPage([rawRequest({ requestNumber: 200 })], 2, 25, 2);
+    expect(component.page()).toBe(2);
+
+    clientContext.clients.set([client({ clientId: 7, name: 'Cliente Siete' })]);
+    clientContext.selectClient(7);
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush(emptyPage);
+
+    expect(component.page()).toBe(1);
   });
 });
