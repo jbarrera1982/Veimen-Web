@@ -6,6 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { PromptPayload, PromptsService } from '../services/prompts.service';
 import { AuthService } from '../services/auth.service';
+import { ClientContextService } from '../services/client-context.service';
+import { Client } from '../services/clients.service';
 
 @Component({
   selector: 'app-prompt-form',
@@ -24,6 +26,11 @@ export class PromptFormComponent implements OnInit {
   readonly isClone = signal(false);
 
   private readonly fb = inject(FormBuilder);
+  private readonly clientContext = inject(ClientContextService);
+
+  // Cliente fijo del contexto (asociado al usuario o seleccionado en el menú). Si existe,
+  // el campo Cliente no se muestra y el prompt se guarda con este client_id.
+  readonly contextClientId = this.clientContext.effectiveClientId;
 
   readonly form = this.fb.group({
     promptId: [0],
@@ -48,6 +55,8 @@ export class PromptFormComponent implements OnInit {
     updatedBy: [''],
     updatedAt: [''],
     schemaOutput: [''],
+    // null = sin cliente ("Todos").
+    clientId: [null as number | null],
   });
 
   constructor(
@@ -85,6 +94,7 @@ export class PromptFormComponent implements OnInit {
       // El backend solo setea created_at/updated_at: el usuario va desde el cliente.
       createdBy: this.isEdit() ? raw.createdBy : username,
       updatedBy: username,
+      clientId: this.contextClientId() ?? raw.clientId,
     };
 
     const request$: Observable<unknown> = this.isEdit()
@@ -125,6 +135,15 @@ export class PromptFormComponent implements OnInit {
 
   cancel(): void {
     void this.router.navigate(['/prompts']);
+  }
+
+  // Opciones del selector: clientes activos y, al editar, el cliente ya asociado aunque
+  // esté inactivo (para no perder la asociación al guardar).
+  clientOptions(): Client[] {
+    const current = this.form.controls.clientId.value;
+    return this.clientContext
+      .clients()
+      .filter((client) => client.active || client.clientId === current);
   }
 
   private loadPrompt(promptId: number): void {

@@ -68,6 +68,18 @@
         <input formControlName="code" type="text" />
       </label>
 
+      @if (contextClientId() === null) {
+        <label class="field">
+          <span>Cliente</span>
+          <select formControlName="clientId">
+            <option [ngValue]="null">Todos</option>
+            @for (client of clientOptions(); track client.clientId) {
+              <option [ngValue]="client.clientId">{{ client.name }}</option>
+            }
+          </select>
+        </label>
+      }
+
       <label class="field">
         <span>Nombre *</span>
         <input formControlName="name" type="text" />

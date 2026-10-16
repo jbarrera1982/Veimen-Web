@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { ManagedUser, UsersService } from './users.service';
+import { ClientContextService } from '../services/client-context.service';
 
 type Dialog = { kind: 'password'; user: ManagedUser } | null;
 
@@ -18,9 +19,16 @@ type Dialog = { kind: 'password'; user: ManagedUser } | null;
 export class UsersComponent {
   private readonly fb = inject(FormBuilder);
   private readonly users = inject(UsersService);
+  private readonly clientContext = inject(ClientContextService);
   readonly router = inject(Router);
 
   readonly usersList = signal<ManagedUser[]>([]);
+  readonly filteredUsers = computed(() => {
+    const clientId = this.clientContext.effectiveClientId();
+    return clientId === null
+      ? this.usersList()
+      : this.usersList().filter((user) => user.clientId === clientId);
+  });
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);

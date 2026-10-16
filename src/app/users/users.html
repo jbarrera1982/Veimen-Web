@@ -16,7 +16,7 @@
 
   @if (isLoading()) {
     <p class="users-loading">Cargando usuarios…</p>
-  } @else if (usersList().length === 0) {
+  } @else if (filteredUsers().length === 0) {
     <p class="users-empty">No hay usuarios registrados.</p>
   } @else {
     <div class="users-table-wrap">
@@ -34,8 +34,13 @@
           </tr>
         </thead>
         <tbody>
-          @for (user of usersList(); track user.userId) {
-            <tr>
+          @for (user of filteredUsers(); track user.userId) {
+            <tr
+              class="clickable-row"
+              tabindex="0"
+              (click)="openEdit(user)"
+              (keydown.enter)="openEdit(user)"
+            >
               <td>{{ user.username }}</td>
               <td>{{ user.email }}</td>
               <td>{{ user.fullName ?? '—' }}</td>
@@ -48,15 +53,25 @@
               </td>
               <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'short') : '—' }}</td>
               <td class="col-actions">
-                <button type="button" class="row-btn" (click)="openEdit(user)">Editar</button>
-                <button type="button" class="row-btn" (click)="openPassword(user)">
+                <button
+                  type="button"
+                  class="row-btn"
+                  (click)="openEdit(user); $event.stopPropagation()"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="row-btn"
+                  (click)="openPassword(user); $event.stopPropagation()"
+                >
                   Contraseña
                 </button>
                 <button
                   type="button"
                   class="row-btn"
                   [class.row-btn-danger]="user.active"
-                  (click)="toggleActive(user)"
+                  (click)="toggleActive(user); $event.stopPropagation()"
                 >
                   {{ user.active ? 'Desactivar' : 'Activar' }}
                 </button>

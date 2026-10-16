@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -24,6 +24,8 @@ export interface Prompt {
   updatedBy: string;
   updatedAt: string;
   schemaOutput: string;
+  // null = sin cliente ("Todos").
+  clientId: number | null;
 }
 
 /**
@@ -52,6 +54,7 @@ export interface PromptPayload {
   updatedBy: string | null;
   updatedAt: string | null;
   schemaOutput: string | null;
+  clientId: number | null;
 }
 
 /**
@@ -79,6 +82,7 @@ interface ApiPrompt {
   updatedBy?: string | null;
   updatedAt?: string | null;
   schemaOutput?: string | null;
+  clientId?: number | null;
 }
 
 // La API devuelve campos anulables; el resto de la app trabaja con el Prompt no anulable
@@ -105,6 +109,7 @@ function normalizePrompt(raw: ApiPrompt): Prompt {
     updatedBy: raw.updatedBy ?? '',
     updatedAt: raw.updatedAt ?? '',
     schemaOutput: raw.schemaOutput ?? '',
+    clientId: raw.clientId ?? null,
   };
 }
 
@@ -132,9 +137,11 @@ export class PromptsService {
 
   constructor(private http: HttpClient) {}
 
-  getPrompts(): Observable<Prompt[]> {
+  // `clientId` acota a los prompts de ese cliente; null = sin filtro ("Todos").
+  getPrompts(clientId: number | null = null): Observable<Prompt[]> {
+    const params = clientId === null ? undefined : new HttpParams().set('client_id', clientId);
     return this.http
-      .get<ApiPrompt[]>(this.baseUrl)
+      .get<ApiPrompt[]>(this.baseUrl, { params })
       .pipe(map((items) => items.map(normalizePrompt)));
   }
 

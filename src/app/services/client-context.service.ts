@@ -42,6 +42,14 @@ export class ClientContextService {
   /** `client_id` del usuario asociado; sirve de respaldo si no se resuelve el nombre. */
   readonly associatedClientId = computed(() => this.auth.currentUser()?.clientId ?? null);
 
+  /**
+   * `client_id` que acota las pantallas: el del usuario si tiene uno asociado; si no,
+   * el seleccionado en el menú. `null` = "Todos".
+   */
+  readonly effectiveClientId = computed(
+    () => this.associatedClientId() ?? this.selectedClient()?.clientId ?? null,
+  );
+
   /** Clientes elegibles en el selector: solo activos, ordenados por nombre. */
   readonly selectableClients = computed(() =>
     this.clients()

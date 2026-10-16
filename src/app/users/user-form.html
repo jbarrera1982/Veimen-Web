@@ -83,15 +83,17 @@
         </select>
       </div>
 
-      <div class="form-field">
-        <label for="edit-client">Cliente</label>
-        <select id="edit-client" formControlName="clientId">
-          <option [ngValue]="0">Todos</option>
-          @for (client of clientOptions(); track client.clientId) {
-            <option [ngValue]="client.clientId">{{ client.name }}</option>
-          }
-        </select>
-      </div>
+      @if (contextClientId() === null) {
+        <div class="form-field">
+          <label for="edit-client">Cliente</label>
+          <select id="edit-client" formControlName="clientId">
+            <option [ngValue]="0">Todos</option>
+            @for (client of clientOptions(); track client.clientId) {
+              <option [ngValue]="client.clientId">{{ client.name }}</option>
+            }
+          </select>
+        </div>
+      }
 
       @if (isEdit()) {
         <div class="form-field form-check">

@@ -32,6 +32,7 @@ function rawPrompt(partial: Record<string, unknown> = {}): Record<string, unknow
     updatedBy: 'admin',
     updatedAt: '2026-09-02T11:00:00',
     schemaOutput: '{}',
+    clientId: null,
     ...partial,
   };
 }
@@ -58,6 +59,7 @@ function mappedPrompt(partial: Partial<Prompt> = {}): Prompt {
     updatedBy: 'admin',
     updatedAt: '2026-09-02T11:00:00',
     schemaOutput: '{}',
+    clientId: null,
     ...partial,
   };
 }

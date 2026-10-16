@@ -3,13 +3,16 @@ import {
   OnInit,
   ChangeDetectionStrategy,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PromptsService, Prompt } from '../services/prompts.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { ClientContextService } from '../services/client-context.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 type SortColumn =
@@ -144,9 +147,12 @@ export class PromptsListComponent implements OnInit {
       this.statusFilter() !== 'active',
   );
 
-  private inFlight = false;
+  // Cada carga lleva un número: una respuesta vieja (otro cliente) se descarta.
+  private loadSeq = 0;
+  private isFirstClientEffect = true;
 
   private readonly permissions = inject(PermissionsService);
+  private readonly clientContext = inject(ClientContextService);
 
   readonly PERMISSIONS = PERMISSIONS;
 
@@ -155,15 +161,28 @@ export class PromptsListComponent implements OnInit {
   constructor(
     private promptsService: PromptsService,
     private router: Router,
-  ) {}
+  ) {
+    // Recarga al cambiar el cliente del menú (la API filtra por client_id). La carga inicial
+    // la hace ngOnInit, así que el primer valor del efecto no cuenta.
+    effect(() => {
+      this.clientContext.effectiveClientId();
+      untracked(() => {
+        if (this.isFirstClientEffect) {
+          this.isFirstClientEffect = false;
+          return;
+        }
+        this.page.set(1);
+        this.load(true);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.load();
   }
 
   load(auto = false): void {
-    if (this.inFlight) return;
-    this.inFlight = true;
+    const seq = ++this.loadSeq;
 
     if (auto) {
       this.isRefreshing.set(true);
@@ -172,18 +191,20 @@ export class PromptsListComponent implements OnInit {
     }
     this.error.set(null);
 
-    this.promptsService.getPrompts().subscribe({
-      next: (data) => this.prompts.set(data),
+    this.promptsService.getPrompts(this.clientContext.effectiveClientId()).subscribe({
+      next: (data) => {
+        if (seq === this.loadSeq) this.prompts.set(data);
+      },
       error: () => {
+        if (seq !== this.loadSeq) return;
         this.error.set('No se pudieron cargar los prompts. Verifica la conexión con el servidor.');
         this.isLoading.set(false);
         this.isRefreshing.set(false);
-        this.inFlight = false;
       },
       complete: () => {
+        if (seq !== this.loadSeq) return;
         this.isLoading.set(false);
         this.isRefreshing.set(false);
-        this.inFlight = false;
       },
     });
   }

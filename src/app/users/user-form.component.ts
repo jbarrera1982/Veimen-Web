@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ManagedUser, UsersService, Profile } from './users.service';
 import { Client, ClientsService } from '../services/clients.service';
+import { ClientContextService } from '../services/client-context.service';
 
 @Component({
   selector: 'app-user-form',
@@ -18,8 +19,13 @@ export class UserFormComponent {
   private readonly fb = inject(FormBuilder);
   private readonly users = inject(UsersService);
   private readonly clientsService = inject(ClientsService);
+  private readonly clientContext = inject(ClientContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  // Cliente fijo del contexto (asociado al usuario o seleccionado en el menú). Si existe,
+  // el campo Cliente no se muestra y el usuario se guarda con este client_id.
+  readonly contextClientId = this.clientContext.effectiveClientId;
 
   readonly isEdit = signal(false);
   readonly user = signal<ManagedUser | null>(null);
@@ -80,7 +86,7 @@ export class UserFormComponent {
     if (!this.isEdit()) {
       // Crear usuario nuevo.
       const { username, password, email, fullName, profileId, clientId, active } = this.form.value;
-      const selectedClient = Number(clientId ?? 0);
+      const selectedClient = this.contextClientId() ?? Number(clientId ?? 0);
       this.users
         .create({
           username: (username ?? '').trim(),
@@ -112,7 +118,7 @@ export class UserFormComponent {
         fullName: (fullName ?? '').trim() || null,
         profileId: Number(profileId),
         // 0 = quitar el cliente ("Todos"); > 0 = asignar.
-        clientId: Number(clientId ?? 0),
+        clientId: this.contextClientId() ?? Number(clientId ?? 0),
         active: active ?? true,
       })
       .subscribe({

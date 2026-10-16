@@ -163,6 +163,15 @@
   background: var(--vm-wash);
 }
 
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:focus-visible {
+  outline: 2px solid var(--vm-blue);
+  outline-offset: -2px;
+}
+
 .col-username,
 .col-email {
   white-space: nowrap;

@@ -51,10 +51,10 @@ export class ShellComponent implements OnInit {
   );
 
   // "Administrar" se oculta si el usuario no tiene ninguno de sus permisos
-  // (Clientes, Usuarios o Prompts).
+  // (Clientes, Usuarios o Prompts). Un usuario con cliente asociado no ve Clientes.
   readonly canManage = computed(() =>
     this.permissions.hasAny(
-      PERMISSIONS.clientsRead,
+      ...(this.hasAssociatedClient() ? [] : [PERMISSIONS.clientsRead]),
       PERMISSIONS.usersManage,
       PERMISSIONS.promptsRead,
     ),
