@@ -93,6 +93,7 @@
 
 .field input[type='text'],
 .field input[type='number'],
+.field select,
 .field textarea {
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--vm-line-strong);

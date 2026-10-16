@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { PromptFormComponent } from './prompt-form.component';
 import { AuthService } from '../services/auth.service';
+import { ClientContextService } from '../services/client-context.service';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiBaseUrl;
@@ -32,6 +33,7 @@ function apiPrompt(partial: Record<string, unknown> = {}): Record<string, unknow
     updatedBy: 'admin',
     updatedAt: '2026-09-02T11:00:00',
     schemaOutput: '{}',
+    clientId: 1,
     ...partial,
   };
 }
@@ -77,8 +79,45 @@ describe('PromptFormComponent', () => {
       llmModel: 'GPT-5.5',
       version: '1.0',
       systemPrompt: 'Eres un agente.',
+      clientId: 1,
     });
   }
+
+  it('should require a client when there is no client context', async () => {
+    const fixture = await setup(null);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector(
+      'select[formControlName="clientId"]',
+    );
+    expect(select.selectedOptions[0].textContent?.trim()).toBe('Selecciona un cliente');
+
+    fillRequired(fixture);
+    component.form.get('clientId')?.setValue(null);
+    expect(component.form.get('clientId')?.valid).toBeFalsy();
+    expect(component.form.valid).toBeFalsy();
+  });
+
+  it('should set and hide the client when a client context exists', async () => {
+    const fixture = await setup(null);
+    const component = fixture.componentInstance;
+    TestBed.inject(ClientContextService).selectedClient.set({
+      clientId: 3,
+      name: 'Cliente Tres',
+      inboundEmail: '',
+      outboundEmail: '',
+      analystEmail: '',
+      projectId: '',
+      active: true,
+    });
+    fixture.detectChanges();
+
+    expect(component.form.get('clientId')?.value).toBe(3);
+    expect(fixture.nativeElement.querySelector('select[formControlName="clientId"]')).toBeNull();
+    fillRequired(fixture);
+    expect(component.form.valid).toBeTruthy();
+  });
 
   it('should build an empty form for a new prompt', async () => {
     const fixture = await setup(null);

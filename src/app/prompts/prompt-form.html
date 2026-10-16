@@ -53,10 +53,25 @@
     >
       <input type="hidden" formControlName="promptId" />
 
-      <label class="field field-full field-readonly">
+      <label class="field field-readonly">
         <span>ID</span>
         <input formControlName="promptId" type="number" readonly />
       </label>
+
+      @if (contextClientId() === null) {
+        <label class="field">
+          <span>Cliente *</span>
+          <select formControlName="clientId">
+            <option [ngValue]="null">Selecciona un cliente</option>
+            @for (client of clientOptions(); track client.clientId) {
+              <option [ngValue]="client.clientId">{{ client.name }}</option>
+            }
+          </select>
+          @if (form.controls.clientId.touched && form.controls.clientId.invalid) {
+            <small class="form-error">Selecciona el cliente del prompt.</small>
+          }
+        </label>
+      }
 
       <label class="field">
         <span>Grupo de agente *</span>
@@ -67,18 +82,6 @@
         <span>Código *</span>
         <input formControlName="code" type="text" />
       </label>
-
-      @if (contextClientId() === null) {
-        <label class="field">
-          <span>Cliente</span>
-          <select formControlName="clientId">
-            <option [ngValue]="null">Todos</option>
-            @for (client of clientOptions(); track client.clientId) {
-              <option [ngValue]="client.clientId">{{ client.name }}</option>
-            }
-          </select>
-        </label>
-      }
 
       <label class="field">
         <span>Nombre *</span>

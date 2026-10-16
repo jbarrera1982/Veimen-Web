@@ -55,7 +55,7 @@ export class PromptFormComponent implements OnInit {
     updatedBy: [''],
     updatedAt: [''],
     schemaOutput: [''],
-    // null = sin cliente ("Todos").
+    // Obligatorio cuando no hay cliente de contexto (ver applyClientContext).
     clientId: [null as number | null],
   });
 
@@ -67,6 +67,7 @@ export class PromptFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.applyClientContext();
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'nuevo') {
       this.isEdit.set(true);
@@ -146,17 +147,33 @@ export class PromptFormComponent implements OnInit {
       .filter((client) => client.active || client.clientId === current);
   }
 
+  // Con cliente de contexto (asociado o seleccionado en el menú) el campo no se muestra y el
+  // prompt se guarda con ese cliente. Sin contexto, el cliente es obligatorio.
+  private applyClientContext(): void {
+    const clientId = this.form.controls.clientId;
+    const contextId = this.contextClientId();
+    if (contextId !== null) {
+      clientId.clearValidators();
+      clientId.setValue(contextId);
+    } else {
+      clientId.setValidators(Validators.required);
+    }
+    clientId.updateValueAndValidity();
+  }
+
   private loadPrompt(promptId: number): void {
     this.isLoading.set(true);
     this.error.set(null);
 
     this.promptsService.getPrompt(promptId).subscribe({
-      next: (prompt) =>
+      next: (prompt) => {
         this.form.patchValue({
           ...prompt,
           // 0 o vacío se edita como "sin límite" para no dejar el formulario inválido.
           maxTokens: prompt.maxTokens > 0 ? prompt.maxTokens : null,
-        }),
+        });
+        this.applyClientContext();
+      },
       error: () => {
         this.error.set('No se pudo cargar el prompt. Verifica la conexión con el servidor.');
         this.isLoading.set(false);
