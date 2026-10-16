@@ -15,7 +15,7 @@ import { PromptFormComponent } from './prompts/prompt-form.component';
 import { BusinessModelComponent } from './business-model/business-model.component';
 import { TokensDashboardComponent } from './tokens/tokens-dashboard.component';
 import { UsoOpenAiComponent } from './usage/uso-openai.component';
-import { permissionGuard } from './auth/permission.guard';
+import { permissionGuard, withoutAssociatedClientGuard } from './auth/permission.guard';
 import { PERMISSIONS } from './services/permissions.service';
 
 export const routes: Routes = [
@@ -62,17 +62,17 @@ export const routes: Routes = [
       {
         path: 'clientes',
         component: ClientsListComponent,
-        canActivate: [permissionGuard(PERMISSIONS.clientsRead)],
+        canActivate: [permissionGuard(PERMISSIONS.clientsRead), withoutAssociatedClientGuard],
       },
       {
         path: 'clientes/nuevo',
         component: ClientFormComponent,
-        canActivate: [permissionGuard(PERMISSIONS.clientsWrite)],
+        canActivate: [permissionGuard(PERMISSIONS.clientsWrite), withoutAssociatedClientGuard],
       },
       {
         path: 'clientes/:id',
         component: ClientFormComponent,
-        canActivate: [permissionGuard(PERMISSIONS.clientsWrite)],
+        canActivate: [permissionGuard(PERMISSIONS.clientsWrite), withoutAssociatedClientGuard],
       },
       {
         path: 'prompts',

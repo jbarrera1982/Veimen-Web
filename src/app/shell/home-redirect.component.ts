@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { ClientContextService } from '../services/client-context.service';
 import { PermissionsService } from '../services/permissions.service';
 import { firstAccessiblePath } from '../auth/permission.guard';
 
@@ -17,11 +18,17 @@ import { firstAccessiblePath } from '../auth/permission.guard';
 export class HomeRedirectComponent implements OnInit {
   private readonly permissions = inject(PermissionsService);
   private readonly router = inject(Router);
+  private readonly clientContext = inject(ClientContextService);
 
   async ngOnInit(): Promise<void> {
     if (!this.permissions.loaded()) {
       await firstValueFrom(this.permissions.load());
     }
-    await this.router.navigateByUrl(firstAccessiblePath((code) => this.permissions.has(code)));
+    await this.router.navigateByUrl(
+      firstAccessiblePath(
+        (code) => this.permissions.has(code),
+        this.clientContext.hasAssociatedClient(),
+      ),
+    );
   }
 }

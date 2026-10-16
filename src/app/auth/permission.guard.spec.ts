@@ -10,7 +10,11 @@ import {
 } from '@angular/router';
 import { AuthService, UserDto } from '../services/auth.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
-import { firstAccessiblePath, permissionGuard } from './permission.guard';
+import {
+  firstAccessiblePath,
+  permissionGuard,
+  withoutAssociatedClientGuard,
+} from './permission.guard';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiBaseUrl;
@@ -135,5 +139,42 @@ describe('firstAccessiblePath', () => {
 
   it('should fall back to cambiar-contrasena when there is no module access', () => {
     expect(firstAccessiblePath(() => false)).toBe('/cambiar-contrasena');
+  });
+
+  it('should skip clientes for a user with an associated client', () => {
+    const has = (code: string) => code === PERMISSIONS.clientsRead;
+    expect(firstAccessiblePath(has, true)).toBe('/cambiar-contrasena');
+    expect(firstAccessiblePath(has)).toBe('/clientes');
+  });
+});
+
+describe('withoutAssociatedClientGuard', () => {
+  let auth: AuthService;
+
+  function run(): ReturnType<CanActivateFn> {
+    const [route, state] = snapshots('/clientes');
+    return TestBed.runInInjectionContext(() => withoutAssociatedClientGuard(route, state));
+  }
+
+  beforeEach(async () => {
+    localStorage.clear();
+
+    await TestBed.configureTestingModule({
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    auth = TestBed.inject(AuthService);
+  });
+
+  it('should allow the route when the user has no associated client', () => {
+    auth.currentUser.set(user);
+    expect(run()).toBe(true);
+  });
+
+  it('should redirect to /sin-acceso when the user has an associated client', () => {
+    auth.currentUser.set({ ...user, clientId: 7 });
+    const result = run();
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(String(result)).toBe('/sin-acceso');
   });
 });

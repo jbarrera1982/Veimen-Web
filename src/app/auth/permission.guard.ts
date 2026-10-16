@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { ClientContextService } from '../services/client-context.service';
 import { PermissionsService, PERMISSIONS } from '../services/permissions.service';
 
 // Guard factory: permite la ruta si el usuario tiene al menos uno de los permisos dados.
@@ -30,10 +31,22 @@ export function permissionGuard(...codes: string[]): CanActivateFn {
   };
 }
 
+// Bloquea una ruta a los usuarios con cliente asociado (p. ej. Clientes): redirige a /sin-acceso.
+export const withoutAssociatedClientGuard: CanActivateFn = () => {
+  const clientContext = inject(ClientContextService);
+  const router = inject(Router);
+
+  return clientContext.hasAssociatedClient() ? router.createUrlTree(['/sin-acceso']) : true;
+};
+
 // Calcula la ruta del primer módulo al que el usuario tiene acceso,
 // en el mismo orden que el sidebar. /cambiar-contrasena siempre es accesible.
+// Un usuario con cliente asociado no aterriza en Clientes (la ruta está bloqueada).
 // Función pura para poder reutilizarla fuera de un guard (HomeRedirectComponent).
-export function firstAccessiblePath(has: (code: string) => boolean): string {
+export function firstAccessiblePath(
+  has: (code: string) => boolean,
+  hasAssociatedClient = false,
+): string {
   if (has(PERMISSIONS.dashboardRead)) {
     return '/dashboard';
   }
@@ -46,7 +59,7 @@ export function firstAccessiblePath(has: (code: string) => boolean): string {
   if (has(PERMISSIONS.serviceRequestsRead)) {
     return '/service-request';
   }
-  if (has(PERMISSIONS.clientsRead)) {
+  if (!hasAssociatedClient && has(PERMISSIONS.clientsRead)) {
     return '/clientes';
   }
   if (has(PERMISSIONS.usersManage)) {
