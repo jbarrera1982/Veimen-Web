@@ -9,12 +9,15 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin, of, catchError } from 'rxjs';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import type { Color } from '@swimlane/ngx-charts';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { TokensService, type TokenUsage } from '../services/tokens.service';
+import { UsageService, type CostEntry } from '../services/usage.service';
 import { ClientContextService } from '../services/client-context.service';
+import { PermissionsService, PERMISSIONS } from '../services/permissions.service';
 
 interface ChartDatum {
   name: string;
@@ -75,6 +78,8 @@ export class TokensDashboardComponent implements OnInit {
   readonly lastUpdated = signal<Date | null>(null);
 
   readonly rows = signal<TokenUsage[]>([]);
+  readonly costRows = signal<CostEntry[]>([]);
+  readonly costError = signal<string | null>(null);
   readonly startDate = signal<string | null>(null);
   readonly endDate = signal<string | null>(null);
   readonly tableLimit = signal(TABLE_PAGE_SIZE);
@@ -84,11 +89,27 @@ export class TokensDashboardComponent implements OnInit {
   private isFirstClientEffect = true;
 
   private readonly clientContext = inject(ClientContextService);
+  private readonly usageService = inject(UsageService);
+  private readonly permissions = inject(PermissionsService);
 
   // El filtro de cliente es global (cabecera del menú). "Todos" (null) no filtra.
   readonly clientId = computed<number | undefined>(
     () => this.clientContext.selectedClient()?.clientId,
   );
+
+  /**
+   * El cliente del menú decide también por qué proyecto de OpenAI se filtran los
+   * costos (project_ids), igual que en Uso OpenAI. "Todos" (null) no envía nada y
+   * un cliente sin projectId tampoco filtra.
+   */
+  readonly projectIds = computed<string[]>(() => {
+    const projectId = this.clientContext.selectedClient()?.projectId.trim() ?? '';
+    return projectId ? [projectId] : [];
+  });
+
+  // /api/usage/costs exige usage.read (RBAC del backend): sin ese permiso no se
+  // pide nada y las cards quedan ocultas, en vez de exponer un 403 permanente.
+  private readonly canReadUsage = computed(() => this.permissions.has(PERMISSIONS.usageRead));
 
   constructor(private tokensService: TokensService) {
     // Recarga al cambiar el cliente del menú. `untracked` evita que el efecto se
@@ -140,33 +161,59 @@ export class TokensDashboardComponent implements OnInit {
       this.isLoading.set(true);
     }
     this.error.set(null);
+    this.costError.set(null);
 
-    this.tokensService
-      .getTokenUsage({
-        startDate: this.startDate() ?? undefined,
-        endDate: this.endDate() ?? undefined,
-        clientId: this.clientId(),
-      })
-      .subscribe({
-        next: (data) => {
-          this.rows.set(data);
-          this.tableLimit.set(TABLE_PAGE_SIZE);
-          this.lastUpdated.set(new Date());
-        },
-        error: () => {
-          this.error.set(
-            'No se pudo cargar el consumo de tokens. Verifica tu sesión e inténtalo de nuevo.',
-          );
-          this.isLoading.set(false);
-          this.isRefreshing.set(false);
-          this.inFlight = false;
-        },
-        complete: () => {
-          this.isLoading.set(false);
-          this.isRefreshing.set(false);
-          this.inFlight = false;
-        },
-      });
+    const tokens$ = this.tokensService.getTokenUsage({
+      startDate: this.startDate() ?? undefined,
+      endDate: this.endDate() ?? undefined,
+      clientId: this.clientId(),
+    });
+
+    // Los costos se piden en paralelo con la misma lógica que Uso OpenAI.
+    // start_date es obligatorio en /api/usage/costs (lo exige la API de OpenAI),
+    // así que sin "Desde" —o sin permiso usage.read— no se dispara la petición y
+    // of(null) limpia las filas de costo.
+    const startDate = this.startDate();
+    const costs$ =
+      this.canReadUsage() && startDate
+        ? this.usageService
+            .getCosts({
+              startDate,
+              endDate: this.endDate() || undefined,
+              projectIds: this.projectIds(),
+            })
+            .pipe(
+              catchError(() => {
+                this.costError.set(
+                  'No se pudieron cargar los costos de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
+                );
+                return of(null);
+              }),
+            )
+        : of(null);
+
+    // Error por fuente: si fallan los costos, los tokens se siguen mostrando.
+    forkJoin({ usage: tokens$, costs: costs$ }).subscribe({
+      next: ({ usage, costs }) => {
+        this.rows.set(usage);
+        this.costRows.set(costs ?? []);
+        this.tableLimit.set(TABLE_PAGE_SIZE);
+        this.lastUpdated.set(new Date());
+      },
+      error: () => {
+        this.error.set(
+          'No se pudo cargar el consumo de tokens. Verifica tu sesión e inténtalo de nuevo.',
+        );
+        this.isLoading.set(false);
+        this.isRefreshing.set(false);
+        this.inFlight = false;
+      },
+      complete: () => {
+        this.isLoading.set(false);
+        this.isRefreshing.set(false);
+        this.inFlight = false;
+      },
+    });
   }
 
   readonly totals = computed(() => {
@@ -193,6 +240,70 @@ export class TokensDashboardComponent implements OnInit {
       avgPerDay: dayCount === 0 ? 0 : Math.round(total / dayCount),
     };
   });
+
+  // -----------------------
+  // Costos (mismos cálculos que Uso OpenAI)
+  // -----------------------
+
+  // Los importes NO son sumables entre monedas: 10 USD + 10 EUR no es "20".
+  // Toda la agregación se hace sobre la moneda principal y el resto se informa aparte.
+  private currencyTotals = computed(() => {
+    const byCurrency = new Map<string, { amount: number; dayCount: Set<string> }>();
+    for (const r of this.costRows()) {
+      const key = r.currency || '—';
+      const current = byCurrency.get(key);
+      if (current) {
+        current.amount += r.amount;
+        current.dayCount.add(r.date);
+      } else {
+        byCurrency.set(key, { amount: r.amount, dayCount: new Set([r.date]) });
+      }
+    }
+    return [...byCurrency.entries()]
+      .map(([currency, v]) => ({ currency, amount: v.amount, dayCount: v.dayCount.size }))
+      .sort((a, b) => b.amount - a.amount || a.currency.localeCompare(b.currency));
+  });
+
+  /** Moneda con mayor importe: es la única que se totaliza en las cards. */
+  readonly primaryCurrency = computed<string>(() => this.currencyTotals()[0]?.currency ?? '—');
+
+  /** Importes de las demás monedas, para avisar que hay más de una. */
+  readonly otherCurrencies = computed(() => this.currencyTotals().slice(1));
+
+  readonly rowsInPrimaryCurrency = computed<CostEntry[]>(() => {
+    const currency = this.primaryCurrency();
+    if (currency === '—' && this.currencyTotals().length === 0) return [];
+    return this.costRows().filter((r) => (r.currency || '—') === currency);
+  });
+
+  readonly costTotals = computed(() => {
+    let amount = 0;
+    const days = new Set<string>();
+
+    for (const r of this.rowsInPrimaryCurrency()) {
+      amount += r.amount;
+      days.add(r.date);
+    }
+
+    const dayCount = days.size;
+    return {
+      amount,
+      dayCount,
+      // Igual que en Uso OpenAI: promedio por día CON costo, no por día calendario.
+      avgPerDay: dayCount === 0 ? 0 : amount / dayCount,
+    };
+  });
+
+  /** Las cards de costo solo se ven con permiso, con "Desde" y si la petición no falló. */
+  readonly showCostCards = computed<boolean>(
+    () => this.canReadUsage() && !!this.startDate() && this.costError() === null,
+  );
+
+  /** Rótulo de moneda para los títulos de las cards: USD se muestra "US$". */
+  costCurrencyLabel(): string {
+    const currency = this.primaryCurrency().toUpperCase();
+    return currency === 'USD' || currency === '—' ? 'US$' : currency;
+  }
 
   /** Dos series (Input / Output) para la línea de evolución diaria. */
   readonly timelineSeries = computed(() => {
@@ -289,6 +400,14 @@ export class TokensDashboardComponent implements OnInit {
 
   formatNumber(value: number): string {
     return value.toLocaleString('es');
+  }
+
+  /** Importe con decimales: los costos por día suelen ser fracciones de centavo. */
+  formatAmount(value: number): string {
+    return new Intl.NumberFormat('es', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    }).format(value);
   }
 
   /** Versión compacta para ejes: 12 400 → "12,4 k". */

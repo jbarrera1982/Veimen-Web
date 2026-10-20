@@ -4,10 +4,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TokensDashboardComponent } from './tokens-dashboard.component';
 import { TokensService } from '../services/tokens.service';
 import { ClientContextService } from '../services/client-context.service';
+import { PermissionsService, PERMISSIONS } from '../services/permissions.service';
 import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/ServiceRequests/tokens`;
+const COSTS_URL = `${environment.apiBaseUrl}/api/usage/costs`;
 
 function client(partial: Partial<Client>): Client {
   return {
@@ -46,6 +48,41 @@ const SAMPLE = [
   raw('2026-09-02', 'Clasificador', 500, 50, 550, 'GPT-5.5'),
 ];
 
+// Epoch (segundos) de 2026-09-01T00:00:00Z y 2026-09-02T00:00:00Z.
+const SEP_01 = 1788220800;
+const SEP_02 = 1788307200;
+
+function cost(value: number, currency: string | null) {
+  return {
+    amount: currency === null ? null : { value, currency },
+    line_item: 'gpt-5',
+    quantity: 100,
+    quantity_unit: 'tokens',
+    project_id: 'proj_a',
+  };
+}
+
+// Envoltura page → bucket → results tal como la devuelve el backend de usage.
+function page(buckets: { startTime: number; results: unknown[] }[]): Record<string, unknown> {
+  return {
+    object: 'page',
+    has_more: false,
+    next_page: null,
+    data: buckets.map((b) => ({
+      object: 'bucket',
+      start_time: b.startTime,
+      end_time: b.startTime + 86400,
+      results: b.results,
+    })),
+  };
+}
+
+// 10.5 + 4.25 (2026-09-01) + 2.25 (2026-09-02) = 17 USD en 2 días con costo.
+const COST_SAMPLE = page([
+  { startTime: SEP_01, results: [cost(10.5, 'usd'), cost(4.25, 'usd')] },
+  { startTime: SEP_02, results: [cost(2.25, 'usd')] },
+]);
+
 describe('TokensDashboardComponent', () => {
   let component: TokensDashboardComponent;
   let fixture: any;
@@ -62,6 +99,12 @@ describe('TokensDashboardComponent', () => {
 
     httpTesting = TestBed.inject(HttpTestingController);
     clientContext = TestBed.inject(ClientContextService);
+    // /tokens solo exige tokens.read; se siembra usage.read para que además se
+    // dispare la petición de costos (sin él el componente la omite a propósito).
+    TestBed.inject(PermissionsService).permissions.set([
+      PERMISSIONS.tokensRead,
+      PERMISSIONS.usageRead,
+    ]);
     fixture = TestBed.createComponent(TokensDashboardComponent);
     component = fixture.componentInstance;
   });
@@ -70,9 +113,19 @@ describe('TokensDashboardComponent', () => {
     httpTesting.verify();
   });
 
-  function load(data: unknown[] = SAMPLE): void {
-    fixture.detectChanges();
+  function flushTokens(data: unknown[] = SAMPLE): void {
     httpTesting.expectOne((r) => r.url === API_URL).flush(data);
+  }
+
+  function flushCosts(data: Record<string, unknown> = COST_SAMPLE): void {
+    httpTesting.expectOne((r) => r.url === COSTS_URL).flush(data);
+  }
+
+  // On init the component requests the tokens endpoint and the usage costs endpoint.
+  function load(tokens: unknown[] = SAMPLE, costs: Record<string, unknown> = COST_SAMPLE): void {
+    fixture.detectChanges();
+    flushTokens(tokens);
+    flushCosts(costs);
     fixture.detectChanges();
   }
 
@@ -88,6 +141,32 @@ describe('TokensDashboardComponent', () => {
     expect(req.request.params.get('start_date')).toMatch(/^\d{8}$/);
     expect(req.request.params.get('end_date')).toMatch(/^\d{8}$/);
     req.flush([]);
+
+    // Los costos se piden en paralelo con el mismo rango.
+    const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
+    expect(costReq.request.method).toBe('GET');
+    expect(costReq.request.params.get('start_date')).toMatch(/^\d{8}$/);
+    expect(costReq.request.params.get('end_date')).toMatch(/^\d{8}$/);
+    costReq.flush(page([]));
+  });
+
+  // API date convention: los endpoints reciben start_date/end_date sin guiones.
+  it('should resend the range in YYYYMMDD to both endpoints when the filters are applied', () => {
+    load();
+
+    component.setStartDate('2026-09-01');
+    component.setEndDate('2026-09-30');
+    component.applyDateRange();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('start_date')).toBe('20260901');
+    expect(req.request.params.get('end_date')).toBe('20260930');
+    req.flush([]);
+
+    const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
+    expect(costReq.request.params.get('start_date')).toBe('20260901');
+    expect(costReq.request.params.get('end_date')).toBe('20260930');
+    costReq.flush(page([]));
   });
 
   it('should sum the KPIs from every row', () => {
@@ -244,7 +323,8 @@ describe('TokensDashboardComponent', () => {
       raw(`2026-09-0${(i % 9) + 1}`, `Nodo${i}`, 10, 5, 15),
     );
     component.load();
-    httpTesting.expectOne((r) => r.url === API_URL).flush(wide);
+    flushTokens(wide);
+    flushCosts();
 
     expect(component.nodeScheme().domain?.length).toBe(7);
   });
@@ -263,6 +343,7 @@ describe('TokensDashboardComponent', () => {
     httpTesting
       .expectOne((r) => r.url === API_URL)
       .flush('boom', { status: 500, statusText: 'Server Error' });
+    flushCosts();
     fixture.detectChanges();
 
     expect(component.error()).toBeTruthy();
@@ -278,13 +359,21 @@ describe('TokensDashboardComponent', () => {
     const req = httpTesting.expectOne((r) => r.url === API_URL);
     expect(req.request.params.has('client_id')).toBe(false);
     req.flush([]);
+
+    // Tampoco se envía project_ids: sin cliente no hay proyecto de OpenAI que filtrar.
+    const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
+    expect(costReq.request.params.has('project_ids')).toBe(false);
+    costReq.flush(page([]));
   });
 
   it('should send client_id for the selected client and reload when it changes', () => {
     fixture.detectChanges();
     httpTesting.expectOne((r) => r.url === API_URL).flush([]);
+    httpTesting.expectOne((r) => r.url === COSTS_URL).flush(page([]));
 
-    clientContext.clients.set([client({ clientId: 7, name: 'Cliente Siete' })]);
+    clientContext.clients.set([
+      client({ clientId: 7, name: 'Cliente Siete', projectId: 'proj_7' }),
+    ]);
     clientContext.selectClient(7);
     fixture.detectChanges();
 
@@ -292,6 +381,106 @@ describe('TokensDashboardComponent', () => {
     expect(req.request.params.get('client_id')).toBe('7');
     req.flush([raw('2026-09-01', 'Clasificador', 10, 5, 15, 'GPT-5.5')]);
 
+    // Los costos viajan con el project_id del cliente elegido (igual que Uso OpenAI).
+    const costReq = httpTesting.expectOne((r) => r.url === COSTS_URL);
+    expect(costReq.request.params.getAll('project_ids')).toEqual(['proj_7']);
+    costReq.flush(page([]));
+
     expect(component.totals().total).toBe(15);
+  });
+
+  // -----------------------
+  // Cards de costo (GET /api/usage/costs, misma lógica que Uso OpenAI)
+  // -----------------------
+
+  it('should show the two cost cards with the daily average and the accumulated amount', () => {
+    load();
+
+    // 10.5 + 4.25 + 2.25 = 17 USD repartidos en 2 días con costo.
+    expect(component.costTotals().amount).toBe(17);
+    expect(component.costTotals().dayCount).toBe(2);
+    expect(component.costTotals().avgPerDay).toBe(8.5);
+    expect(component.primaryCurrency()).toBe('usd');
+    expect(component.costCurrencyLabel()).toBe('US$');
+
+    const cards = fixture.nativeElement.querySelectorAll('.stats-row-costs .stat-card');
+    expect(cards.length).toBe(2);
+    expect(cards[0].querySelector('span').textContent.trim()).toBe(
+      'Promedio diario de consumo en US$',
+    );
+    expect(cards[0].querySelector('.stat-value').textContent.trim()).toBe('8,50');
+    expect(cards[0].querySelector('.stat-hint').textContent.trim()).toBe('2 días con costo');
+    expect(cards[1].querySelector('span').textContent.trim()).toBe(
+      'Monto acumulado en el mes en US$',
+    );
+    expect(cards[1].querySelector('.stat-value').textContent.trim()).toBe('17,00');
+  });
+
+  // Los importes no son sumables entre monedas: solo se totaliza la principal
+  // y el resto se informa en el aviso (.notice), como en Uso OpenAI.
+  it('should not sum amounts across currencies', () => {
+    load(SAMPLE, page([{ startTime: SEP_01, results: [cost(50, 'usd'), cost(10, 'eur')] }]));
+
+    expect(component.primaryCurrency()).toBe('usd');
+    expect(component.costTotals().amount).toBe(50);
+    expect(component.costTotals().dayCount).toBe(1);
+    expect(component.otherCurrencies().map((c) => c.currency)).toEqual(['eur']);
+
+    const notice = fixture.nativeElement.querySelector('.notice');
+    expect(notice).toBeTruthy();
+    expect(notice.textContent).toContain('USD');
+    expect(notice.textContent).toContain('EUR 10,00');
+    expect(fixture.nativeElement.querySelectorAll('.stats-row-costs .stat-card').length).toBe(2);
+  });
+
+  // Si fallan los costos, los tokens se siguen mostrando: solo se ocultan las
+  // cards y aparece el aviso de error parcial.
+  it('should keep tokens visible and hide the cost cards when costs fail', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne((r) => r.url === API_URL).flush(SAMPLE);
+    httpTesting
+      .expectOne((r) => r.url === COSTS_URL)
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(component.costError()).toBeTruthy();
+    expect(component.error()).toBeNull();
+    expect(component.isLoading()).toBe(false);
+    expect(component.totals().total).toBe(4050);
+    expect(component.showCostCards()).toBe(false);
+
+    const rendered: string = fixture.nativeElement.textContent;
+    expect(rendered).toContain('Las tarjetas de costo no están disponibles.');
+    expect(fixture.nativeElement.querySelector('.stats-row-costs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.stats-row')).toBeTruthy();
+  });
+
+  // /api/usage/costs exige usage.read: sin ese permiso no se pide nada (el
+  // backend devolvería 403) y las cards quedan ocultas.
+  it('should not request costs nor show the cards without usage.read', () => {
+    TestBed.inject(PermissionsService).permissions.set([PERMISSIONS.tokensRead]);
+
+    fixture.detectChanges();
+    httpTesting.expectOne((r) => r.url === API_URL).flush([]);
+    httpTesting.expectNone((r) => r.url === COSTS_URL);
+    fixture.detectChanges();
+
+    expect(component.showCostCards()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.stats-row-costs')).toBeNull();
+  });
+
+  // start_date es obligatorio en /api/usage/costs: sin "Desde" solo se piden tokens.
+  it('should keep requesting tokens but not costs when the start date is cleared', () => {
+    load();
+
+    component.setStartDate('');
+    component.applyDateRange();
+
+    httpTesting.expectOne((r) => r.url === API_URL).flush([]);
+    httpTesting.expectNone((r) => r.url === COSTS_URL);
+    fixture.detectChanges();
+
+    expect(component.showCostCards()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.stats-row-costs')).toBeNull();
   });
 });

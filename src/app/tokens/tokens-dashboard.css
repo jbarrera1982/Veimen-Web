@@ -203,6 +203,34 @@
   color: var(--vm-faint);
 }
 
+/* Fila de KPIs de costo: dos tarjetas (en móvil hereda el repeat(2) de .stats-row). */
+.stats-row-costs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ---------- Avisos de costo ---------- */
+
+/* Error parcial: falló /api/usage/costs pero los tokens cargaron. */
+.warning {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--vm-danger-line);
+  border-radius: 0.625rem;
+  background: var(--vm-danger-wash);
+  color: var(--vm-danger);
+  font-size: 0.8125rem;
+}
+
+/* Los importes no se suman entre monedas: se informa la principal y el resto aparte. */
+.notice {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--vm-warn-line);
+  border-radius: 0.625rem;
+  background: var(--vm-warn-wash);
+  color: var(--vm-warn);
+  font-size: 0.8125rem;
+}
+
 /* ---------- Fechas ---------- */
 
 .date-filters {

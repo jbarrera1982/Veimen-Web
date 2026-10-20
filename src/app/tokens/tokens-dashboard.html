@@ -88,6 +88,10 @@
       <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
     </div>
   } @else {
+    @if (costError(); as costErr) {
+      <p class="warning">{{ costErr }} Las tarjetas de costo no están disponibles.</p>
+    }
+
     <section class="stats-row">
       <div class="stat-card">
         <span>Total de tokens</span>
@@ -107,6 +111,35 @@
         <small class="stat-hint">{{ totals().dayCount }} días con consumo</small>
       </div>
     </section>
+
+    @if (showCostCards()) {
+      <section class="stats-row stats-row-costs">
+        <div class="stat-card">
+          <span>Promedio diario de consumo en {{ costCurrencyLabel() }}</span>
+          <strong class="stat-value">{{ formatAmount(costTotals().avgPerDay) }}</strong>
+          <small class="stat-hint">{{ costTotals().dayCount }} días con costo</small>
+        </div>
+        <div class="stat-card">
+          <span>Monto acumulado en el mes en {{ costCurrencyLabel() }}</span>
+          <strong class="stat-value">{{ formatAmount(costTotals().amount) }}</strong>
+          <small class="stat-hint">En el rango seleccionado</small>
+        </div>
+      </section>
+
+      @if (otherCurrencies().length) {
+        <p class="notice">
+          Los importes no se suman entre monedas: se muestra
+          <strong>{{ primaryCurrency().toUpperCase() }}</strong
+          >. Además:
+          @for (c of otherCurrencies(); track c.currency; let last = $last) {
+            <span>{{ c.currency.toUpperCase() }} {{ formatAmount(c.amount) }}</span>
+            @if (!last) {
+              ,
+            }
+          }
+        </p>
+      }
+    }
 
     @if (rows().length === 0) {
       <div class="chart-empty-empty">
