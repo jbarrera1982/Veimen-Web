@@ -82,6 +82,19 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   readonly isLoadingTrace = signal(false);
   readonly traceError = signal<string | null>(null);
 
+  // Revisión manual (solo con estado 'Pendiente por revisión' y permiso 'trace.write').
+  // Estados destino permitidos por el backend (API value → etiqueta en español).
+  readonly reviewStatusOptions = [
+    { value: 'Rejected' as const, label: 'Rechazado' },
+    { value: 'Closed' as const, label: 'Cerrado' },
+  ];
+  readonly reviewStatus = signal<'Rejected' | 'Closed' | null>(null);
+  readonly reviewObservations = signal('');
+  readonly isSavingReview = signal(false);
+  readonly reviewError = signal<string | null>(null);
+  // Etiqueta (en español) del estado actual del requerimiento en el modal.
+  readonly PENDING_REVIEW_LABEL = STATUS_LABELS['pending review'];
+
   // traceIds de los pasos con el panel de entrada/salida desplegado inline.
   readonly expandedJsonSteps = signal<Set<number>>(new Set());
 
@@ -102,6 +115,10 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   // La sección de traza solo se muestra (y se pide al backend) con el permiso 'trace.read'.
   readonly canSeeTrace = computed(() => this.permissions.has(PERMISSIONS.traceRead));
+
+  // El formulario de revisión se muestra solo con el permiso 'trace.write' (además del
+  // estado pendiente, que se evalúa en el template contra el requerimiento abierto).
+  readonly canReview = computed(() => this.permissions.has(PERMISSIONS.traceWrite));
 
   // El filtro de cliente es global (cabecera del menú). "Todos" (null) no filtra.
   readonly clientId = computed<number | undefined>(
@@ -264,6 +281,11 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.traceSteps.set([]);
     this.traceError.set(null);
     this.expandedJsonSteps.set(new Set());
+    // Reset del formulario de revisión (se muestra solo cuando el estado sea 'Pending review').
+    this.reviewStatus.set(null);
+    this.reviewObservations.set('');
+    this.isSavingReview.set(false);
+    this.reviewError.set(null);
     // Sin permiso de traza no se llama a la API: el modal abre sin la sección.
     if (this.canSeeTrace()) {
       this.loadTrace(item.requestNumber);
@@ -277,6 +299,10 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.expandedJsonSteps.set(new Set());
     this.isLoadingTrace.set(false);
     this.traceInFlight = false;
+    this.reviewStatus.set(null);
+    this.reviewObservations.set('');
+    this.isSavingReview.set(false);
+    this.reviewError.set(null);
   }
 
   isJsonExpanded(step: TraceStep): boolean {
@@ -297,6 +323,72 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   isAuditing(requestNumber: number): boolean {
     return this.auditing().has(requestNumber);
+  }
+
+  setReviewStatus(status: 'Rejected' | 'Closed'): void {
+    this.reviewStatus.set(status);
+    this.reviewError.set(null);
+  }
+
+  setReviewObservations(value: string): void {
+    this.reviewObservations.set(value);
+    this.reviewError.set(null);
+  }
+
+  canSaveReview(): boolean {
+    if (this.isSavingReview()) return false;
+    const observations = this.reviewObservations().trim();
+    return !!this.reviewStatus() && observations.length > 0;
+  }
+
+  saveReview(): void {
+    const req = this.selectedRequest();
+    if (!req) return;
+    const status = this.reviewStatus();
+    const observations = this.reviewObservations().trim();
+    if (!status || observations.length === 0 || this.isSavingReview()) return;
+
+    this.isSavingReview.set(true);
+    this.reviewError.set(null);
+
+    this.requestsService
+      .reviewRequest({ requestNumber: req.requestNumber, status, observations })
+      .pipe(finalize(() => this.isSavingReview.set(false)))
+      .subscribe({
+        next: () => {
+          const statusLabel =
+            status === 'Closed' ? STATUS_LABELS['closed'] : STATUS_LABELS['rejected'];
+          const updated = { ...req, status: statusLabel };
+          // Actualiza la lista y el modal con el nuevo estado.
+          this.requests.update((current) =>
+            current.map((r) =>
+              r.requestNumber === req.requestNumber ? { ...r, status: statusLabel } : r,
+            ),
+          );
+          this.selectedRequest.set(updated);
+          // El formulario desaparece tras guardar (el estado ya no será 'Pending review').
+          this.reviewStatus.set(null);
+          this.reviewObservations.set('');
+          // Recarga la traza para mostrar el nuevo paso 'Revisión manual'.
+          if (this.canSeeTrace()) {
+            this.traceSteps.set([]);
+            this.traceError.set(null);
+            this.traceInFlight = false;
+            this.loadTrace(req.requestNumber);
+          }
+          this.showToast(`Requerimiento ${req.requestNumber} revisado correctamente.`, 'success');
+        },
+        error: (err) => {
+          const message =
+            err?.status === 409
+              ? 'El requerimiento ya no está pendiente de revisión.'
+              : err?.status === 404
+                ? 'El requerimiento no existe.'
+                : 'No se pudo registrar la revisión. Intenta de nuevo.';
+          this.reviewError.set(message);
+          this.showToast(message, 'error');
+        },
+      });
   }
 
   runAudit(requestNumber: number): void {

@@ -326,6 +326,62 @@
           }
         </section>
 
+        @if (canReview() && req.status === PENDING_REVIEW_LABEL) {
+          <section class="review-section">
+            <h3>Revisión</h3>
+            <div class="review-form">
+              <div class="review-group">
+                <span class="review-label">Acción</span>
+                <div class="review-options" role="radiogroup" aria-label="Acción de revisión">
+                  @for (option of reviewStatusOptions; track option.value) {
+                    <label class="review-option" (click)="$event.stopPropagation()">
+                      <input
+                        type="radio"
+                        name="reviewAction"
+                        [value]="option.value"
+                        [checked]="reviewStatus() === option.value"
+                        (change)="reviewStatus.set($any($event.target).value)"
+                        [disabled]="isSavingReview()"
+                      />
+                      <span>{{ option.label }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="review-group">
+                <label class="review-label" for="review-observations">Observaciones</label>
+                <textarea
+                  id="review-observations"
+                  class="review-textarea"
+                  rows="4"
+                  [value]="reviewObservations()"
+                  (input)="setReviewObservations($any($event.target).value)"
+                  [disabled]="isSavingReview()"
+                  placeholder="Describe el motivo de la revisión..."
+                ></textarea>
+              </div>
+              @if (reviewError(); as err) {
+                <div class="review-error">{{ err }}</div>
+              }
+              <div class="review-actions">
+                <button
+                  type="button"
+                  class="review-save-btn"
+                  (click)="saveReview()"
+                  [disabled]="!canSaveReview()"
+                >
+                  @if (isSavingReview()) {
+                    <span class="spinner spinner-small"></span>
+                    Guardando...
+                  } @else {
+                    Guardar
+                  }
+                </button>
+              </div>
+            </div>
+          </section>
+        }
+
         <ng-container *appHasPermission="PERMISSIONS.traceRead">
           <section class="trace-section">
             <h3>Traza</h3>

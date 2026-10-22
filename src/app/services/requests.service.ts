@@ -69,12 +69,12 @@ interface RawRequestsPage {
   totalPages?: number;
 }
 
-export const STATUS_VALUES: Record<string, string> = {
-  Analizado: 'Analyzed',
+export const STATUS_VALUES: Record<string, string> = {  
   Recibido: 'Received',
   Rechazado: 'Rejected',
   Cerrado: 'Closed',
   'Esperando OTP': 'Awaiting OTP',
+  'Pendiente por revisión': 'Pending review',
 };
 
 export interface TraceStep {
@@ -221,6 +221,17 @@ export class RequestsService {
   auditRequest(requestNumber: number): Observable<unknown> {
     const params = new HttpParams().set('request_number', String(requestNumber));
     return this.http.post(`${this.apiBaseUrl}/api/ServiceRequests/audit`, null, { params });
+  }
+
+  // Revisión manual de un requerimiento 'Pending review': el backend cambia el estado del
+  // requerimiento (Rejected/Closed) y crea el paso 'Revisión manual' en la traza, en una
+  // única transacción. Requiere el permiso 'trace.write' (policy en el endpoint).
+  reviewRequest(payload: {
+    requestNumber: number;
+    status: 'Rejected' | 'Closed';
+    observations: string;
+  }): Observable<void> {
+    return this.http.post<void>(`${this.apiBaseUrl}/api/ServiceRequests/review`, payload);
   }
 
   private toApiDate(date: string): string {

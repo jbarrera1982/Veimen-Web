@@ -803,23 +803,128 @@
   }
 }
 
-.toast {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 100;
-  max-width: 24rem;
-  padding: 0.7rem 1rem;
-  border-radius: 0.375rem;
-  background: var(--vm-deep);
-  box-shadow: inset 3px 0 0 var(--vm-teal);
-  color: var(--vm-on-dark);
-  font-size: 0.85rem;
-  animation: toast-in 0.2s ease;
+.toast.toast-error {
+  box-shadow: inset 3px 0 0 var(--vm-danger);
 }
 
-.toast-error {
-  box-shadow: inset 3px 0 0 var(--vm-danger);
+/* Revisión manual (solo cuando el estado es 'Pending review' y hay permiso trace.write). */
+.review-section {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.review-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vm-ink);
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--vm-line);
+  border-radius: 0.625rem;
+  background: var(--vm-surface);
+}
+
+.review-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.review-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--vm-ink);
+}
+
+.review-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.review-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.9rem;
+  color: var(--vm-ink);
+}
+
+.review-option input[type='radio'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--vm-blue);
+}
+
+.review-textarea {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--vm-line-strong);
+  background: var(--vm-surface);
+  color: var(--vm-ink);
+  font-family: var(--vm-font-sans);
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: var(--vm-blue);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vm-blue) 18%, transparent);
+}
+
+.review-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.review-error {
+  font-size: 0.875rem;
+  color: var(--vm-danger);
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.review-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  background: var(--vm-teal-ink);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.review-save-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.review-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner-small {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
 }
 
 @keyframes toast-in {
