@@ -37,7 +37,7 @@ function client(partial: Partial<Client> = {}): Client {
 
 const ALL_PERMISSIONS = [
   PERMISSIONS.dashboardRead,
-  PERMISSIONS.tokensRead,
+  PERMISSIONS.menuTokens,
   PERMISSIONS.usageRead,
   PERMISSIONS.serviceRequestsRead,
   PERMISSIONS.clientsRead,
@@ -159,7 +159,7 @@ describe('ShellComponent', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
     expect(links.length).toBe(8);
     expect(links[0].textContent.trim()).toBe('Dashboard');
-    expect(links[1].textContent.trim()).toBe('Uso OpenAI');
+    expect(links[1].textContent.trim()).toBe('Uso IA');
     expect(links[2].textContent.trim()).toBe('Consumo de tokens');
     expect(links[3].textContent.trim()).toBe('Requerimientos');
     expect(links[4].textContent.trim()).toBe('Clientes');
@@ -202,9 +202,10 @@ describe('ShellComponent', () => {
     expect(texts).toEqual(['Prompts']);
   });
 
-  it('should hide the token usage link without the tokens.read permission', () => {
+  it('should hide the token usage link without the menu.tokens permission', () => {
     const permissions = TestBed.inject(PermissionsService);
-    permissions.permissions.set([PERMISSIONS.promptsRead]);
+    // Tiene tokens.read (acceso a la ruta) pero no menu.tokens: no debe verse el enlace.
+    permissions.permissions.set([PERMISSIONS.tokensRead, PERMISSIONS.promptsRead]);
     fixture.detectChanges();
 
     const texts = Array.from<Element>(

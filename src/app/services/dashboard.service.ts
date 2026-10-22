@@ -3,12 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export const STATUS_LABELS: Record<string, string> = {
-  analyzed: 'Analizado',
+export const STATUS_LABELS: Record<string, string> = {  
   received: 'Recibido',
   rejected: 'Rechazado',
   closed: 'Cerrado',
   'awaiting otp': 'Esperando OTP',
+  'pending review': 'Pendiente por revisión',
 };
 
 export interface StatusCount {

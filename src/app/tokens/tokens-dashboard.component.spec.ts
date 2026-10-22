@@ -340,10 +340,12 @@ describe('TokensDashboardComponent', () => {
 
   it('should show an error message when the request fails', () => {
     fixture.detectChanges();
+    // Primero la de costos: si la de tokens fallara antes, forkJoin cancelaría la
+    // petición de costos y flush posterior lanzaría "Cannot flush a cancelled request".
+    flushCosts();
     httpTesting
       .expectOne((r) => r.url === API_URL)
       .flush('boom', { status: 500, statusText: 'Server Error' });
-    flushCosts();
     fixture.detectChanges();
 
     expect(component.error()).toBeTruthy();

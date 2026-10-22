@@ -44,7 +44,7 @@ export class ShellComponent implements OnInit {
   readonly canMonitor = computed(() =>
     this.permissions.hasAny(
       PERMISSIONS.dashboardRead,
-      PERMISSIONS.tokensRead,
+      PERMISSIONS.menuTokens,
       PERMISSIONS.usageRead,
       PERMISSIONS.serviceRequestsRead,
     ),
