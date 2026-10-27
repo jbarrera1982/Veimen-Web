@@ -75,6 +75,7 @@ export const STATUS_VALUES: Record<string, string> = {
   Cerrado: 'Closed',
   'Esperando OTP': 'Awaiting OTP',
   'Pendiente por revisión': 'Pending review',
+  Cancelado: 'Cancelled',
 };
 
 export interface TraceStep {

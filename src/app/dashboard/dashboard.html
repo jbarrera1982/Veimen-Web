@@ -167,6 +167,7 @@
                 [view]="view"
                 [xAxis]="true"
                 [yAxis]="true"
+                [yAxisTicks]="barYTicks()"
                 [legend]="false"
                 [showDataLabel]="true"
                 [gradient]="false"
@@ -201,6 +202,45 @@
           <div class="chart-empty">No hay estados seleccionados.</div>
         }
       </div>
+    </section>
+
+    <section class="detail-card">
+      <h2>Requerimientos por fecha</h2>
+      <div class="table-scroll">
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="num">Requerimientos</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of detailRows(); track row.date) {
+              <tr>
+                <td class="date">{{ formatDate(row.date) }}</td>
+                <td class="num">{{ formatNumber(row.total) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2" class="table-empty">No hay datos en el rango seleccionado.</td>
+              </tr>
+            }
+          </tbody>
+          @if (detailRows().length) {
+            <tfoot>
+              <tr>
+                <td class="strong">Total</td>
+                <td class="num strong">{{ formatNumber(total()) }}</td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+      @if (hasMoreRows()) {
+        <button class="more-btn" type="button" (click)="showMore()">
+          Ver más ({{ formatNumber(dailyDetail().length - detailRows().length) }} restantes)
+        </button>
+      }
     </section>
   }
 </div>

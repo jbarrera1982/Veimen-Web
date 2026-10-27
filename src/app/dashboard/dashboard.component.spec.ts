@@ -118,6 +118,91 @@ describe('DashboardComponent', () => {
     expect(component.visibleByStatus()).toHaveLength(2);
   });
 
+  // El eje Y del gráfico de barras usa un set de ticks fijo (niceIntegerTicks) para
+  // evitar la oscilación de medición de ngx-charts (#349) entre la rotación de los
+  // labels del eje X y la cantidad de ticks del eje Y.
+  it('should pin integer y-axis ticks covering the max bar value', () => {
+    fixture.detectChanges();
+    flushResponse([
+      { status: 'Received', date: '2026-08-01', total: 87 },
+      { status: 'Rejected', date: '2026-08-01', total: 40 },
+    ]);
+
+    const ticks = component.barYTicks();
+    expect(ticks).toEqual([0, 20, 40, 60, 80, 100]);
+    expect(ticks[ticks.length - 1]).toBeGreaterThanOrEqual(87);
+    expect(ticks.every((t) => Number.isInteger(t))).toBe(true);
+  });
+
+  it('should keep y-axis ticks integer for small values', () => {
+    fixture.detectChanges();
+    flushResponse([{ status: 'Received', date: '2026-08-01', total: 5 }]);
+
+    expect(component.barYTicks()).toEqual([0, 2, 4, 6]);
+  });
+
+  it('should fall back to a unit tick range when there is no data', () => {
+    fixture.detectChanges();
+    flushResponse([]);
+
+    expect(component.barYTicks()).toEqual([0, 1]);
+  });
+
+  it('should build the daily detail grouped by date, newest first', () => {
+    fixture.detectChanges();
+    flushResponse([
+      { status: 'Received', date: '2026-08-01', total: 10 },
+      { status: 'Rejected', date: '2026-08-01', total: 5 },
+      { status: 'Received', date: '2026-08-03', total: 3 },
+      { status: 'Closed', date: '2026-08-02', total: 7 },
+    ]);
+
+    expect(component.dailyDetail()).toEqual([
+      { date: '2026-08-03', total: 3 },
+      { date: '2026-08-02', total: 7 },
+      { date: '2026-08-01', total: 15 },
+    ]);
+  });
+
+  it('should exclude hidden statuses from the daily detail', () => {
+    fixture.detectChanges();
+    flushResponse([
+      { status: 'Received', date: '2026-08-01', total: 10 },
+      { status: 'Rejected', date: '2026-08-01', total: 5 },
+    ]);
+
+    component.toggleStatus('Recibido');
+
+    expect(component.dailyDetail()).toEqual([{ date: '2026-08-01', total: 5 }]);
+  });
+
+  it('should cap the daily detail at 50 rows and reveal more with "Ver más"', () => {
+    fixture.detectChanges();
+    const data: StatusCount[] = [];
+    for (let i = 1; i <= 60; i++) {
+      data.push({
+        status: 'Received',
+        date: `2026-08-${String(i).padStart(2, '0')}`,
+        total: i,
+      });
+    }
+    flushResponse(data);
+
+    expect(component.dailyDetail()).toHaveLength(60);
+    expect(component.detailRows()).toHaveLength(50);
+    expect(component.hasMoreRows()).toBe(true);
+
+    component.showMore();
+
+    expect(component.detailRows()).toHaveLength(60);
+    expect(component.hasMoreRows()).toBe(false);
+  });
+
+  it('should format detail dates as dd/MM/yyyy', () => {
+    expect(component.formatDate('2026-08-03')).toBe('03/08/2026');
+    expect(component.formatDate('2026-08')).toBe('2026-08');
+  });
+
   it('should build a single total series grouped by date', () => {
     fixture.detectChanges();
     flushResponse([

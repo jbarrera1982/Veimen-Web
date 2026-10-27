@@ -9,6 +9,7 @@ export const STATUS_LABELS: Record<string, string> = {
   closed: 'Cerrado',
   'awaiting otp': 'Esperando OTP',
   'pending review': 'Pendiente por revisión',
+  cancelled: 'Cancelado',
 };
 
 export interface StatusCount {

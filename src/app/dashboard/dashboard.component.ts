@@ -20,8 +20,34 @@ interface ChartDatum {
   value: number;
 }
 
+interface DailyDetailRow {
+  date: string;
+  total: number;
+}
+
 const HIDDEN_STATUSES_KEY = 'veimen-web.hiddenStatuses';
 const DEFAULT_RANGE_DAYS = 30;
+const Y_TICK_COUNT = 5;
+const TABLE_PAGE_SIZE = 50;
+
+// Ticks enteros "bonitos" para el eje Y ([0..top] con paso 1/2/5×10ⁿ). Se fijan de
+// forma explícita para romper el bucle de medición de ngx-charts (#349 "Chart
+// Flickering"): el ángulo de los labels del eje X depende del ancho del plot; sin
+// ticks fijos, el eje Y deriva su cantidad de ticks del alto del plot
+// (floor(height/50)), lo que cambia el ancho del eje Y, realimenta el ángulo y
+// hace "temblar" los labels sin converger. Con un set de ticks estable el ancho
+// del eje Y (y por tanto el del plot) queda constante y el ángulo se elige una vez.
+function niceIntegerTicks(max: number, targetCount = Y_TICK_COUNT): number[] {
+  if (!Number.isFinite(max) || max <= 0) return [0, 1];
+  const roughStep = max / targetCount;
+  const mag = 10 ** Math.floor(Math.log10(roughStep));
+  const norm = roughStep / mag;
+  const step = Math.max(1, (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag);
+  const top = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+  for (let v = 0; v <= top; v += step) ticks.push(v);
+  return ticks;
+}
 
 function toDateInputValue(date: Date): string {
   const y = date.getFullYear();
@@ -49,6 +75,7 @@ export class DashboardComponent implements OnInit {
   readonly disabledStatuses = signal<Set<string>>(new Set());
   readonly startDate = signal<string | null>(null);
   readonly endDate = signal<string | null>(null);
+  readonly tableLimit = signal(TABLE_PAGE_SIZE);
 
   private readonly colorScheme: Color = {
     name: 'veimen-web',
@@ -130,6 +157,7 @@ export class DashboardComponent implements OnInit {
         next: (data) => {
           this.applyFreshStatuses(data);
           this.statusCounts.set(data);
+          this.tableLimit.set(TABLE_PAGE_SIZE);
           this.lastUpdated.set(new Date());
         },
         error: () => {
@@ -206,6 +234,11 @@ export class DashboardComponent implements OnInit {
     this.visibleByStatus().map((d) => ({ name: d.status, value: d.total })),
   );
 
+  // Set de ticks fijo para el eje Y del gráfico de barras (ver niceIntegerTicks).
+  readonly barYTicks = computed<number[]>(() =>
+    niceIntegerTicks(Math.max(0, ...this.barData().map((d) => d.value))),
+  );
+
   readonly total = computed<number>(() =>
     this.visibleByStatus().reduce((sum, d) => sum + d.total, 0),
   );
@@ -254,6 +287,31 @@ export class DashboardComponent implements OnInit {
     return dates.filter((_, i) => i % step === 0);
   });
 
+  // Detalle diario bajo los gráficos: misma agregación que la línea de tiempo
+  // (respeta los estados ocultos), ordenada por fecha descendente.
+  readonly dailyDetail = computed<DailyDetailRow[]>(() => {
+    const byDate = new Map<string, number>();
+    for (const c of this.visibleCounts()) {
+      if (!c.date) continue;
+      byDate.set(c.date, (byDate.get(c.date) ?? 0) + c.total);
+    }
+    return [...byDate.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, total]) => ({ date, total }));
+  });
+
+  readonly detailRows = computed<DailyDetailRow[]>(() =>
+    this.dailyDetail().slice(0, this.tableLimit()),
+  );
+
+  readonly hasMoreRows = computed<boolean>(
+    () => this.dailyDetail().length > this.detailRows().length,
+  );
+
+  showMore(): void {
+    this.tableLimit.update((n) => n + TABLE_PAGE_SIZE);
+  }
+
   hasHiddenFilters(): boolean {
     return this.hiddenStatuses().size > 0;
   }
@@ -287,6 +345,11 @@ export class DashboardComponent implements OnInit {
   formatXAxis(value: string): string {
     const parts = value.split('-');
     return parts.length === 3 ? `${parts[1]}/${parts[2]}` : value;
+  }
+
+  formatDate(value: string): string {
+    const parts = value.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
   }
 
   formatYAxis(value: number): string {
