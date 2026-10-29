@@ -42,6 +42,34 @@ $from = get_header('From', $raw_mail);
 $subject = get_header('Subject', $raw_mail);
 $body = get_clean_body($raw_mail);
 
+// Extraer el Message-ID y quitarle los signos < y >
+$message_id = get_header('Message-ID', $raw_mail);
+$message_id = trim($message_id, '<>');
+
+if (empty($message_id)) {
+    $message_id = uniqid();
+}
+
+// --- NUEVO: Extraer y dar formato ISO 8601 con milisegundos y zona horaria ---
+$date_header = get_header('Date', $raw_mail);
+
+try {
+    if (!empty($date_header)) {
+        // Intentar parsear la fecha que trae el correo
+        $dateTime = new DateTime($date_header);
+    } else {
+        // Si no trae fecha, usar el momento actual del servidor
+        $dateTime = new DateTime('now');
+    }
+} catch (Exception $e) {
+    // Fallback por si la fecha del correo viene corrupta
+    $dateTime = new DateTime('now');
+}
+
+// Formato deseado: 2026-10-29T05:39:25.203-04:00
+// Nota: 'v' representa los milisegundos (000) y 'P' representa la zona horaria con dos puntos (ej. -04:00)
+$receipt_date = $dateTime->format('Y-m-d\TH:i:s.vP');
+
 // --- CORRECCIÓN: Forzar conversión limpia a UTF-8 para evitar fallos en json_encode ---
 $from = mb_convert_encoding($from, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
 $subject = mb_convert_encoding($subject, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
@@ -53,6 +81,8 @@ $body = mb_convert_encoding($body, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
 
 // Preparar los datos estructurados en formato JSON
 $data = json_encode(array(
+    "message_id" => $message_id,
+    "receipt_date" => $receipt_date,
     "from" => $from,
     "subject" => $subject,
     "body" => $body
