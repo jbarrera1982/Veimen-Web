@@ -239,6 +239,17 @@ export class DashboardComponent implements OnInit {
     niceIntegerTicks(Math.max(0, ...this.barData().map((d) => d.value))),
   );
 
+  /**
+   * Techo del eje Y = tick más alto de `barYTicks()`. Sin fijarlo, cuando el máximo
+   * real no es múltiplo del paso el tick superior queda fuera del dominio, ngx-charts
+   * lo dibuja por encima del área de trazado y, como el SVG usa `overflow: visible`,
+   * se solapa con el título de la tarjeta.
+   */
+  readonly barScaleMax = computed<number>(() => {
+    const ticks = this.barYTicks();
+    return ticks[ticks.length - 1] ?? 0;
+  });
+
   readonly total = computed<number>(() =>
     this.visibleByStatus().reduce((sum, d) => sum + d.total, 0),
   );
