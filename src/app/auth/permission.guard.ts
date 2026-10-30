@@ -56,6 +56,9 @@ export function firstAccessiblePath(
   if (has(PERMISSIONS.usageRead)) {
     return '/uso-openai';
   }
+  if (has(PERMISSIONS.mailScan)) {
+    return '/procesamiento';
+  }
   if (has(PERMISSIONS.serviceRequestsRead)) {
     return '/service-request';
   }

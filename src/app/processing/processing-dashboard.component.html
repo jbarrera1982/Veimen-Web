@@ -1,0 +1,254 @@
+<div class="processing-dashboard">
+  <header class="dashboard-topbar">
+    <div class="topbar-title">
+      <h1>Procesamiento</h1>
+      <p class="subtitle">Correos recibidos vs requerimientos generados por fecha</p>
+      @if (lastUpdated(); as updated) {
+        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+      }
+    </div>
+
+    <div class="topbar-dates date-filters">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [value]="startDate() ?? ''"
+          (change)="setStartDate($any($event.target).value)"
+        />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input
+          type="date"
+          [value]="endDate() ?? ''"
+          (change)="setEndDate($any($event.target).value)"
+        />
+      </label>
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="applyDateRange()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Filtrar"
+        aria-label="Filtrar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          Actualizando…
+        </span>
+      }
+      <button
+        class="refresh-btn btn-icon"
+        type="button"
+        (click)="refresh()"
+        [disabled]="isRefreshing()"
+        data-tooltip="Recargar"
+        aria-label="Recargar"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">
+      <span class="spinner spinner-large"></span>
+      Cargando datos…
+    </div>
+  } @else if (error(); as err) {
+    <div class="error">
+      <p>{{ err }}</p>
+      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+    </div>
+  } @else {
+    <section class="stats-row">
+      <div class="stat-card">
+        <span>Correos recibidos</span>
+        <strong class="stat-value">{{ formatNumber(totals().mails) }}</strong>
+        <small class="stat-hint">{{ formatNumber(totals().mailDays) }} días con correos</small>
+      </div>
+      <div class="stat-card">
+        <span>Requerimientos generados</span>
+        <strong class="stat-value">{{ formatNumber(totals().requests) }}</strong>
+        <small class="stat-hint">
+          {{ formatNumber(totals().requestDays) }} días con requerimientos
+        </small>
+      </div>
+      <div class="stat-card">
+        <span>Conversión</span>
+        <strong class="stat-value">{{ formatConversion(totals().conversion) }}</strong>
+        <small class="stat-hint">Requerimientos ÷ correos</small>
+      </div>
+      <div class="stat-card">
+        <span>Balance</span>
+        <strong class="stat-value">{{ formatBalance(totals().balance) }}</strong>
+        <small class="stat-hint">Requerimientos − correos</small>
+      </div>
+    </section>
+
+    @if (rows().length === 0) {
+      <div class="chart-empty-empty">No se registró procesamiento en el rango seleccionado.</div>
+    } @else {
+      <section class="charts-grid">
+        <div class="chart-card chart-card-wide">
+          <div class="chart-card-head">
+            <h2>Evolución diaria</h2>
+            <ul class="mini-legend">
+              @for (item of legendItems(); track item.name) {
+                <li>
+                  <span class="swatch" [style.background]="item.color"></span>
+                  {{ item.name }}
+                </li>
+              }
+            </ul>
+          </div>
+          @if (hasTimelineData()) {
+            <div class="chart-canvas chart-canvas-timeline" chartView #lineView="chartView">
+              @if (lineView.dims(); as view) {
+                <ngx-charts-line-chart
+                  [results]="timelineSeries()"
+                  [scheme]="scheme"
+                  [animations]="false"
+                  [view]="view"
+                  [xAxis]="true"
+                  [yAxis]="true"
+                  [legend]="false"
+                  [gradient]="false"
+                  [xAxisTickFormatting]="formatXAxis"
+                  [yAxisTickFormatting]="formatYAxis"
+                  [xAxisTicks]="timelineTicks()"
+                  [rotateXAxisTicks]="true"
+                  [maxXAxisTickLength]="12"
+                  [trimXAxisTicks]="false"
+                >
+                </ngx-charts-line-chart>
+              }
+            </div>
+          } @else {
+            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          }
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <div class="chart-card-head">
+            <h2>Comparativa por día</h2>
+            <ul class="mini-legend">
+              @for (item of legendItems(); track item.name) {
+                <li>
+                  <span class="swatch" [style.background]="item.color"></span>
+                  {{ item.name }}
+                </li>
+              }
+            </ul>
+          </div>
+          <div class="chart-canvas chart-canvas-standard" chartView #barView="chartView">
+            @if (barView.dims(); as view) {
+              <ngx-charts-bar-vertical-2d
+                [results]="barGroups()"
+                [scheme]="scheme"
+                [animations]="false"
+                [view]="view"
+                [xAxis]="true"
+                [yAxis]="true"
+                [yAxisTicks]="barYTicks()"
+                [yScaleMax]="barScaleMax()"
+                [xAxisTicks]="timelineTicks()"
+                [legend]="false"
+                [gradient]="false"
+                [xAxisTickFormatting]="formatXAxis"
+                [yAxisTickFormatting]="formatYAxis"
+                [rotateXAxisTicks]="true"
+                [maxXAxisTickLength]="12"
+                [trimXAxisTicks]="false"
+                [groupPadding]="12"
+                [barPadding]="2"
+              >
+              </ngx-charts-bar-vertical-2d>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-card">
+        <h2>Detalle por fecha</h2>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th class="num">Correos</th>
+                <th class="num">Requerimientos</th>
+                <th class="num">Conversión</th>
+                <th class="num">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of detailRows(); track row.date) {
+                <tr>
+                  <td class="date">{{ formatDate(row.date) }}</td>
+                  <td class="num">{{ formatNumber(row.mails) }}</td>
+                  <td class="num">{{ formatNumber(row.requests) }}</td>
+                  <td class="num">{{ formatConversion(conversionFor(row)) }}</td>
+                  <td
+                    class="num"
+                    [class.balance-positive]="row.requests > row.mails"
+                    [class.balance-negative]="row.requests < row.mails"
+                  >
+                    {{ formatBalance(row.requests - row.mails) }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="table-empty">No hay datos en el rango seleccionado.</td>
+                </tr>
+              }
+            </tbody>
+            @if (detailRows().length) {
+              <tfoot>
+                <tr>
+                  <td class="strong">Total</td>
+                  <td class="num strong">{{ formatNumber(totals().mails) }}</td>
+                  <td class="num strong">{{ formatNumber(totals().requests) }}</td>
+                  <td class="num strong">{{ formatConversion(totals().conversion) }}</td>
+                  <td class="num strong">{{ formatBalance(totals().balance) }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (hasMoreRows()) {
+          <button class="more-btn" type="button" (click)="showMore()">
+            Ver más ({{ formatNumber(dailyDetail().length - detailRows().length) }} restantes)
+          </button>
+        }
+      </section>
+    }
+  }
+</div>

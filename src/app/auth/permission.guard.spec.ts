@@ -113,6 +113,11 @@ describe('firstAccessiblePath', () => {
     expect(firstAccessiblePath(has)).toBe('/uso-openai');
   });
 
+  it('should fall back to procesamiento when only mail.scan is readable', () => {
+    const has = (code: string) => code === PERMISSIONS.mailScan;
+    expect(firstAccessiblePath(has)).toBe('/procesamiento');
+  });
+
   it('should fall back to service-request when neither tokens nor uso-openai is readable', () => {
     const readable: string[] = [PERMISSIONS.usageRead, PERMISSIONS.serviceRequestsRead];
     // tokens.read no está, así que el siguiente del sidebar es el uso de OpenAI.

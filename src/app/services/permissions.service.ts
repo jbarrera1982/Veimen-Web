@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   businessModelRead: 'businessModel.read',
   clientsRead: 'clients.read',
   clientsWrite: 'clients.write',
+  mailScan: 'mail.scan',
 } as const;
 
 export interface UserPermissionsDto {

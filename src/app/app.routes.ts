@@ -15,6 +15,7 @@ import { PromptFormComponent } from './prompts/prompt-form.component';
 import { BusinessModelComponent } from './business-model/business-model.component';
 import { TokensDashboardComponent } from './tokens/tokens-dashboard.component';
 import { UsoOpenAiComponent } from './usage/uso-openai.component';
+import { ProcessingDashboardComponent } from './processing/processing-dashboard.component';
 import { permissionGuard, withoutAssociatedClientGuard } from './auth/permission.guard';
 import { PERMISSIONS } from './services/permissions.service';
 
@@ -28,6 +29,7 @@ export const routes: Routes = [
         PERMISSIONS.dashboardRead,
         PERMISSIONS.tokensRead,
         PERMISSIONS.usageRead,
+        PERMISSIONS.mailScan,
         PERMISSIONS.serviceRequestsRead,
         PERMISSIONS.promptsRead,
         PERMISSIONS.usersManage,
@@ -54,6 +56,11 @@ export const routes: Routes = [
       // Rutas antiguas: el consumo y los costos se unificaron en /uso-openai.
       { path: 'consumo', redirectTo: 'uso-openai', pathMatch: 'full' },
       { path: 'costos', redirectTo: 'uso-openai', pathMatch: 'full' },
+      {
+        path: 'procesamiento',
+        component: ProcessingDashboardComponent,
+        canActivate: [permissionGuard(PERMISSIONS.mailScan)],
+      },
       {
         path: 'service-request',
         component: ServiceRequestComponent,

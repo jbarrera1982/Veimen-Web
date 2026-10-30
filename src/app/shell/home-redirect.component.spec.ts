@@ -61,6 +61,16 @@ describe('HomeRedirectComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith('/uso-openai');
   });
 
+  it('should navigate to procesamiento when the user only has mail.scan', async () => {
+    permissions.permissions.set([PERMISSIONS.mailScan]);
+    permissions.loaded.set(true);
+
+    create();
+    await fixture.whenStable();
+
+    expect(navigateSpy).toHaveBeenCalledWith('/procesamiento');
+  });
+
   it('should navigate to the business model when it is the only accessible module', async () => {
     permissions.permissions.set([PERMISSIONS.businessModelRead]);
     permissions.loaded.set(true);

@@ -98,6 +98,33 @@ describe('app.routes wiring', () => {
     expect(router.url).toBe('/uso-openai');
   });
 
+  // /procesamiento consume /api/mail/comparison, protegido por mail.scan.
+  it('should redirect /procesamiento to /sin-acceso without the mail.scan permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/procesamiento');
+
+    expect(router.url).toContain('/sin-acceso');
+  });
+
+  it('should allow /procesamiento with the mail.scan permission', async () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(user);
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.mailScan]);
+    permissions.loaded.set(true);
+
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/procesamiento');
+
+    expect(router.url).toBe('/procesamiento');
+  });
+
   // Las rutas antiguas /consumo y /costos redirigen al módulo unificado.
   it.each(['/consumo', '/costos'])(
     'should redirect %s to /uso-openai with the usage.read permission',
