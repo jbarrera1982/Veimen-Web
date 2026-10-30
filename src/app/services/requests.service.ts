@@ -69,7 +69,7 @@ interface RawRequestsPage {
   totalPages?: number;
 }
 
-export const STATUS_VALUES: Record<string, string> = {  
+export const STATUS_VALUES: Record<string, string> = {
   Recibido: 'Received',
   Rechazado: 'Rejected',
   Cerrado: 'Closed',
@@ -185,6 +185,25 @@ export class RequestsService {
           return { items, totalCount, page, pageSize, totalPages };
         }),
       );
+  }
+
+  // Total de requerimientos en estado 'Pending review' (el que usa el badge del menú).
+  // Se apoya en el listado paginado con pageSize=1 y lee totalCount, así no hace falta un
+  // endpoint extra en la API. Sin start_date/end_date: cuenta todos los pendientes, sin
+  // importar la fecha (el backend interpreta la fecha ausente como "sin filtro").
+  getPendingReviewCount(clientId?: number): Observable<number> {
+    let params = new HttpParams()
+      .set('status', 'Pending review')
+      .set('page', '1')
+      .set('pageSize', '1');
+
+    if (clientId !== undefined) {
+      params = params.set('client_id', String(clientId));
+    }
+
+    return this.http
+      .get<RawRequestsPage>(`${this.apiBaseUrl}/api/ServiceRequests`, { params })
+      .pipe(map((response) => response?.totalCount ?? 0));
   }
 
   getRequestTrace(requestNumber: number): Observable<TraceStep[]> {

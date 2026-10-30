@@ -297,6 +297,48 @@
   opacity: 1;
 }
 
+/* Fila con el enlace y el badge del contador (Requerimientos pendientes de revisión). */
+.nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-row > .nav-link {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nav-badge {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  min-width: 1.55rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(66, 212, 189, 0.5);
+  border-radius: 9999px;
+  background: rgba(66, 212, 189, 0.16);
+  color: var(--vm-teal-bright);
+  font-family: var(--vm-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.nav-badge:hover {
+  background: rgba(66, 212, 189, 0.3);
+  border-color: var(--vm-teal);
+}
+
+.nav-badge:focus-visible {
+  outline: 2px solid var(--vm-teal);
+  outline-offset: 2px;
+}
+
 .logout {
   color: #f0a9a9;
 }

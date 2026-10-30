@@ -16,6 +16,7 @@ import { RequestsService, RequestItem, TraceStep } from '../services/requests.se
 import { STATUS_LABELS } from '../services/dashboard.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { ClientContextService } from '../services/client-context.service';
+import { PendingReviewService } from '../services/pending-review.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 function toDateInputValue(date: Date): string {
@@ -110,6 +111,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   private readonly permissions = inject(PermissionsService);
   private readonly clientContext = inject(ClientContextService);
+  private readonly pendingReview = inject(PendingReviewService);
 
   readonly PERMISSIONS = PERMISSIONS;
 
@@ -140,9 +142,26 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
         this.load(true);
       });
     });
+
+    // Click en el badge de pendientes del menú con el listado ya abierto: la navegación
+    // es un no-op, así que la petición se consume aquí (al crearse la vista la consume ngOnInit).
+    effect(() => {
+      if (!this.pendingReview.filterRequested()) return;
+      untracked(() => {
+        if (this.pendingReview.consumeFilterRequest()) {
+          this.showPendingReview();
+        }
+      });
+    });
   }
 
   ngOnInit(): void {
+    // El badge del menú llegó antes que la vista: se abre directamente el listado de
+    // pendientes de revisión (sin filtro de fechas) en lugar del rango por defecto.
+    if (this.pendingReview.consumeFilterRequest()) {
+      this.showPendingReview();
+      return;
+    }
     this.applyDefaultRange();
     this.load();
   }
@@ -157,6 +176,18 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     const today = new Date();
     this.startDate.set(toDateInputValue(today));
     this.endDate.set(toDateInputValue(today));
+  }
+
+  // Listado de pendientes de revisión que pide el badge del menú: sin filtro de fechas
+  // (el backend trata la fecha ausente como "sin filtro") y solo con el estado pendiente.
+  private showPendingReview(): void {
+    this.startDate.set(null);
+    this.endDate.set(null);
+    this.search.set('');
+    this.selectedStatuses.set(new Set([this.PENDING_REVIEW_LABEL]));
+    this.statusDropdownOpen.set(false);
+    this.page.set(1);
+    this.load(true);
   }
 
   setStartDate(value: string): void {
@@ -377,6 +408,8 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
             this.loadTrace(req.requestNumber);
           }
           this.showToast(`Requerimiento ${req.requestNumber} revisado correctamente.`, 'success');
+          // El requerimiento dejó de estar pendiente: actualiza el badge del menú.
+          this.pendingReview.refresh();
         },
         error: (err) => {
           const message =

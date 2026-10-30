@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -10,6 +11,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../services/auth.service';
 import { ClientContextService } from '../services/client-context.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { PendingReviewService } from '../services/pending-review.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 @Component({
@@ -20,17 +22,21 @@ import { HasPermissionDirective } from '../auth/has-permission.directive';
   styleUrl: './shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ShellComponent implements OnInit {
+export class ShellComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly permissions = inject(PermissionsService);
   private readonly router = inject(Router);
   private readonly clientContext = inject(ClientContextService);
+  private readonly pendingReview = inject(PendingReviewService);
 
   readonly PERMISSIONS = PERMISSIONS;
 
   readonly isMenuOpen = signal(false);
 
   readonly currentUser = this.auth.currentUser;
+
+  // Badge de "Requerimientos": cantidad de pendientes de revisión.
+  readonly pendingReviewCount = this.pendingReview.count;
 
   // Filtro global de cliente: el menú es el único que lo edita. El contexto lo
   // consumen los filtros internos de cada componente.
@@ -46,6 +52,7 @@ export class ShellComponent implements OnInit {
       PERMISSIONS.dashboardRead,
       PERMISSIONS.menuTokens,
       PERMISSIONS.usageRead,
+      PERMISSIONS.mailScan,
       PERMISSIONS.serviceRequestsRead,
     ),
   );
@@ -85,12 +92,26 @@ export class ShellComponent implements OnInit {
   ngOnInit(): void {
     // Carga los clientes para poblar el filtro global (el GET no exige clients.read).
     this.clientContext.ensureLoaded();
+    // Sondeo del badge de pendientes de revisión (se refresca también al cambiar de cliente).
+    this.pendingReview.start();
+  }
+
+  ngOnDestroy(): void {
+    this.pendingReview.stop();
   }
 
   /** Selecciona el cliente del desplegable del menú ('' = Todos). */
   onClientChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.clientContext.selectClient(value ? Number(value) : null);
+    // El badge cuenta los pendientes del cliente seleccionado.
+    this.pendingReview.refresh();
+  }
+
+  /** Click en el badge: abre el listado mostrando solo los pendientes de revisión, sin filtro de fechas. */
+  openPendingReview(): void {
+    this.pendingReview.requestFilter();
+    void this.router.navigate(['/service-request']);
   }
 
   toggleMenu(): void {

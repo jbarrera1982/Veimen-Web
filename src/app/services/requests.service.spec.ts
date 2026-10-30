@@ -176,6 +176,30 @@ describe('RequestsService', () => {
     req.flush(emptyPage);
   });
 
+  it('should count pending-review requests with no date filter', () => {
+    let count: number | undefined;
+    service.getPendingReviewCount().subscribe((value) => (count = value));
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.getAll('status')).toEqual(['Pending review']);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('1');
+    expect(req.request.params.has('start_date')).toBe(false);
+    expect(req.request.params.has('end_date')).toBe(false);
+    expect(req.request.params.has('client_id')).toBe(false);
+
+    req.flush({ items: [], totalCount: 6, page: 1, pageSize: 1, totalPages: 6 });
+    expect(count).toBe(6);
+  });
+
+  it('should send client_id when counting pending-review requests', () => {
+    service.getPendingReviewCount(9).subscribe(() => {});
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('client_id')).toBe('9');
+    req.flush({ items: [], totalCount: 0, page: 1, pageSize: 1, totalPages: 0 });
+  });
+
   it('should get the request trace by request number', () => {
     let result: TraceStep[] | undefined;
     service.getRequestTrace(202).subscribe((steps) => (result = steps));

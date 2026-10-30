@@ -5,6 +5,7 @@ import { ServiceRequestComponent } from './service-request.component';
 import { RequestsService, TraceStep } from '../services/requests.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { ClientContextService } from '../services/client-context.service';
+import { PendingReviewService } from '../services/pending-review.service';
 import { type Client } from '../services/clients.service';
 import { environment } from '../../environments/environment';
 
@@ -215,6 +216,39 @@ describe('ServiceRequestComponent', () => {
     expect(req.request.params.get('start_date')).toBe('20260101');
     expect(req.request.params.get('end_date')).toBe('20260131');
     req.flush(emptyPage);
+  });
+
+  it('should open the pending-review list requested by the menu badge without a date filter', () => {
+    TestBed.inject(PendingReviewService).requestFilter();
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('start_date')).toBe(false);
+    expect(req.request.params.has('end_date')).toBe(false);
+    expect(req.request.params.getAll('status')).toEqual(['Pending review']);
+    req.flush(emptyPage);
+
+    expect(component.startDate()).toBeNull();
+    expect(component.endDate()).toBeNull();
+    expect(component.selectedStatuses()).toEqual(new Set(['Pendiente por revisión']));
+  });
+
+  it('should apply the pending-review filter when the badge is clicked with the list open', () => {
+    fixture.detectChanges();
+    flushResponse([]);
+
+    TestBed.inject(PendingReviewService).requestFilter();
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.has('start_date')).toBe(false);
+    expect(req.request.params.has('end_date')).toBe(false);
+    expect(req.request.params.getAll('status')).toEqual(['Pending review']);
+    req.flush(emptyPage);
+
+    expect(component.selectedStatuses()).toEqual(new Set(['Pendiente por revisión']));
+    // La petición se consume una sola vez.
+    expect(TestBed.inject(PendingReviewService).filterRequested()).toBe(false);
   });
 
   it('should trigger a new request on refresh', () => {

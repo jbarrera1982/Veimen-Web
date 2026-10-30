@@ -9,8 +9,10 @@ import { AuthService, UserDto } from '../services/auth.service';
 import { Client } from '../services/clients.service';
 import { ClientContextService } from '../services/client-context.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
+import { PendingReviewService } from '../services/pending-review.service';
 
 const CLIENTS_URL = `${environment.apiBaseUrl}/api/clients`;
+const REQUESTS_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
 
 const USER: UserDto = {
   userId: 1,
@@ -39,6 +41,7 @@ const ALL_PERMISSIONS = [
   PERMISSIONS.dashboardRead,
   PERMISSIONS.menuTokens,
   PERMISSIONS.usageRead,
+  PERMISSIONS.mailScan,
   PERMISSIONS.serviceRequestsRead,
   PERMISSIONS.clientsRead,
   PERMISSIONS.clientsWrite,
@@ -59,6 +62,22 @@ describe('ShellComponent', () => {
     permissions.loaded.set(true);
   }
 
+  // El shell sondea el badge de pendientes al iniciar (GET del listado con status).
+  function flushPendingReviewCount(totalCount: number): void {
+    const req = httpTesting.expectOne(
+      (r) => r.url === REQUESTS_URL && r.params.get('status') === 'Pending review',
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('pageSize')).toBe('1');
+    req.flush({
+      items: [],
+      totalCount,
+      page: 1,
+      pageSize: 1,
+      totalPages: totalCount > 0 ? totalCount : 0,
+    });
+  }
+
   beforeEach(async () => {
     localStorage.clear();
 
@@ -77,6 +96,8 @@ describe('ShellComponent', () => {
 
     // El shell carga los clientes en ngOnInit para poblar el filtro global.
     httpTesting.expectOne(CLIENTS_URL).flush([]);
+    // Y arranca el sondeo del badge de pendientes de revisión.
+    flushPendingReviewCount(0);
   });
 
   afterEach(() => {
@@ -122,11 +143,16 @@ describe('ShellComponent', () => {
 
     expect(clientContext.selectedClient()?.clientId).toBe(2);
 
+    // Al cambiar de cliente el badge vuelve a contar los pendientes del cliente.
+    flushPendingReviewCount(0);
+
     select.value = '';
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
     expect(clientContext.selectedClient()).toBeNull();
+
+    flushPendingReviewCount(0);
   });
 
   it('should show the associated client name (no selector) when the user has a clientId', () => {
@@ -157,15 +183,16 @@ describe('ShellComponent', () => {
 
   it('should render the navigation links grouped by category', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links.length).toBe(8);
+    expect(links.length).toBe(9);
     expect(links[0].textContent.trim()).toBe('Dashboard');
     expect(links[1].textContent.trim()).toBe('Uso IA');
     expect(links[2].textContent.trim()).toBe('Consumo de tokens');
-    expect(links[3].textContent.trim()).toBe('Requerimientos');
-    expect(links[4].textContent.trim()).toBe('Clientes');
-    expect(links[5].textContent.trim()).toBe('Usuarios');
-    expect(links[6].textContent.trim()).toBe('Prompts');
-    expect(links[7].textContent.trim()).toBe('Modelo de negocios');
+    expect(links[3].textContent.trim()).toBe('Procesamiento');
+    expect(links[4].textContent.trim()).toBe('Requerimientos');
+    expect(links[5].textContent.trim()).toBe('Clientes');
+    expect(links[6].textContent.trim()).toBe('Usuarios');
+    expect(links[7].textContent.trim()).toBe('Prompts');
+    expect(links[8].textContent.trim()).toBe('Modelo de negocios');
 
     const titles = Array.from<Element>(
       fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-group-title'),
@@ -175,7 +202,7 @@ describe('ShellComponent', () => {
 
   it('should link the business model entry to its own route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    const link = links[7];
+    const link = links[8];
 
     expect(link.getAttribute('href')).toBe('/business-model');
     expect(link.hasAttribute('target')).toBe(false);
@@ -183,7 +210,23 @@ describe('ShellComponent', () => {
 
   it('should link the Clientes entry to its route', () => {
     const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
-    expect(links[4].getAttribute('href')).toBe('/clientes');
+    expect(links[5].getAttribute('href')).toBe('/clientes');
+  });
+
+  it('should link the Procesamiento entry to its route', () => {
+    const links = fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link');
+    expect(links[3].getAttribute('href')).toBe('/procesamiento');
+  });
+
+  it('should hide the Procesamiento link without the mail.scan permission', () => {
+    const permissions = TestBed.inject(PermissionsService);
+    permissions.permissions.set([PERMISSIONS.dashboardRead]);
+    fixture.detectChanges();
+
+    const texts = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link'),
+    ).map((link) => link.textContent?.trim());
+    expect(texts).not.toContain('Procesamiento');
   });
 
   it('should link the Uso OpenAI entry to the unified usage route', () => {
@@ -313,6 +356,55 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
 
     expect(component.isMenuOpen()).toBe(true);
+  });
+
+  it('should hide the pending-review badge when there are no pending requests', () => {
+    expect(fixture.nativeElement.querySelector('.nav-badge')).toBeNull();
+  });
+
+  it('should show the pending-review count in the badge', () => {
+    TestBed.inject(PendingReviewService).refresh();
+    flushPendingReviewCount(4);
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.nav-badge');
+    expect(badge).toBeTruthy();
+    expect(badge.textContent.trim()).toBe('4');
+    expect(badge.getAttribute('title')).toBe('4 pendientes de revisión');
+
+    // El enlace sigue apuntando al listado completo.
+    const link = fixture.nativeElement.querySelector('.nav-row a.nav-link') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/service-request');
+  });
+
+  it('should send the selected client when counting pending requests', () => {
+    const clientContext = TestBed.inject(ClientContextService);
+    clientContext.clients.set([client({ clientId: 7, name: 'Acme' })]);
+    clientContext.selectClient(7);
+
+    TestBed.inject(PendingReviewService).refresh();
+    const req = httpTesting.expectOne(
+      (r) => r.url === REQUESTS_URL && r.params.get('status') === 'Pending review',
+    );
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush({ items: [], totalCount: 1, page: 1, pageSize: 1, totalPages: 1 });
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.nav-badge').textContent.trim()).toBe('1');
+  });
+
+  it('should open the pending-review list when the badge is clicked', () => {
+    TestBed.inject(PendingReviewService).refresh();
+    flushPendingReviewCount(2);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.nativeElement.querySelector('.nav-badge').click();
+
+    expect(TestBed.inject(PendingReviewService).filterRequested()).toBe(true);
+    expect(navigateSpy).toHaveBeenCalledWith(['/service-request']);
   });
 
   it('should log out and navigate to login', () => {
