@@ -39,6 +39,7 @@ export class UserFormComponent {
   readonly form = this.fb.group({
     username: ['', [Validators.required, Validators.maxLength(50)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    phone: ['', [Validators.maxLength(30), Validators.pattern(/^\+?[0-9\s().-]{6,30}$/)]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     fullName: ['', [Validators.maxLength(150)]],
     profileId: [0 as number, [Validators.required, Validators.min(1)]],
@@ -85,13 +86,15 @@ export class UserFormComponent {
 
     if (!this.isEdit()) {
       // Crear usuario nuevo.
-      const { username, password, email, fullName, profileId, clientId, active } = this.form.value;
+      const { username, password, email, phone, fullName, profileId, clientId, active } =
+        this.form.value;
       const selectedClient = this.contextClientId() ?? Number(clientId ?? 0);
       this.users
         .create({
           username: (username ?? '').trim(),
           email: (email ?? '').trim(),
           password: (password ?? '').trim(),
+          phone: (phone ?? '').trim() || null,
           fullName: (fullName ?? '').trim() || null,
           profileId: Number(profileId),
           clientId: selectedClient > 0 ? selectedClient : null,
@@ -111,10 +114,12 @@ export class UserFormComponent {
       return;
     }
 
-    const { email, fullName, profileId, clientId, active } = this.form.value;
+    const { email, phone, fullName, profileId, clientId, active } = this.form.value;
     this.users
       .update(current.userId, {
         email: (email ?? '').trim(),
+        // "" = quitar el teléfono (null ausente significaría "no cambiar").
+        phone: (phone ?? '').trim(),
         fullName: (fullName ?? '').trim() || null,
         profileId: Number(profileId),
         // 0 = quitar el cliente ("Todos"); > 0 = asignar.
@@ -175,6 +180,7 @@ export class UserFormComponent {
           this.form.reset({
             username: found.username,
             email: found.email,
+            phone: found.phone ?? '',
             password: '',
             fullName: found.fullName ?? '',
             profileId: found.profileId ?? 0,

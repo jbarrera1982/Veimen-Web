@@ -7,6 +7,7 @@ export interface ManagedUser {
   userId: number;
   username: string;
   email: string;
+  phone: string | null;
   fullName: string | null;
   active: boolean;
   profileId: number | null;
@@ -27,6 +28,7 @@ export interface CreateUserPayload {
   username: string;
   email: string;
   password: string;
+  phone?: string | null;
   fullName?: string | null;
   profileId: number;
   active?: boolean;
@@ -35,6 +37,7 @@ export interface CreateUserPayload {
 
 export interface UpdateUserPayload {
   email?: string;
+  phone?: string;
   fullName?: string | null;
   profileId?: number;
   active?: boolean;

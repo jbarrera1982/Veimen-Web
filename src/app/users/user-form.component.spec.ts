@@ -11,6 +11,7 @@ const user = {
   userId: 1,
   username: 'bob',
   email: 'bob@example.com',
+  phone: null,
   fullName: 'Bob',
   active: true,
   profileId: 1,
@@ -112,6 +113,7 @@ describe('UserFormComponent', () => {
       username: 'alice',
       email: 'alice@example.com',
       password: 'password123',
+      phone: null,
       fullName: 'Alice',
       profileId: 1,
       clientId: null,
@@ -155,6 +157,7 @@ describe('UserFormComponent', () => {
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({
       email: 'nuevo@example.com',
+      phone: '',
       fullName: 'Bobby',
       profileId: 1,
       clientId: 0,

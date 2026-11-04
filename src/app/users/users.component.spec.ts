@@ -11,6 +11,7 @@ const user = {
   userId: 1,
   username: 'bob',
   email: 'bob@example.com',
+  phone: null,
   fullName: 'Bob',
   active: true,
   profileId: 1,

@@ -54,6 +54,23 @@
       </div>
 
       <div class="form-field">
+        <label for="edit-phone">Teléfono</label>
+        <input
+          id="edit-phone"
+          type="tel"
+          formControlName="phone"
+          autocomplete="tel"
+          placeholder="+54 9 11 5555-1234"
+        />
+        @if (
+          form.controls.phone.touched &&
+          (form.controls.phone.hasError('pattern') || form.controls.phone.hasError('maxlength'))
+        ) {
+          <span class="field-error">El teléfono no es válido (máximo 30 caracteres).</span>
+        }
+      </div>
+
+      <div class="form-field">
         <label for="edit-fullname">Nombre completo</label>
         <input id="edit-fullname" type="text" formControlName="fullName" autocomplete="off" />
       </div>
