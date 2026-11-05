@@ -297,7 +297,7 @@
   opacity: 1;
 }
 
-/* Fila con el enlace y el badge del contador (Requerimientos pendientes de revisión). */
+/* Fila con el enlace y el badge del contador (Requerimientos / Procesamiento). */
 .nav-row {
   display: flex;
   align-items: center;
@@ -337,6 +337,22 @@
 .nav-badge:focus-visible {
   outline: 2px solid var(--vm-teal);
   outline-offset: 2px;
+}
+
+/* Badge de Procesamiento: correos sin requerimiento, siempre en rojo. */
+.nav-badge--danger {
+  border-color: rgba(193, 59, 59, 0.55);
+  background: rgba(193, 59, 59, 0.18);
+  color: #f0a9a9;
+}
+
+.nav-badge--danger:hover {
+  background: rgba(193, 59, 59, 0.3);
+  border-color: #c13b3b;
+}
+
+.nav-badge--danger:focus-visible {
+  outline-color: #f0a9a9;
 }
 
 .logout {

@@ -10,6 +10,10 @@ export interface MailComparison {
   requests: number;
 }
 
+export interface MailPendingCount {
+  count: number;
+}
+
 // La API .NET serializa en camelCase (System.Text.Json por defecto) y devuelve
 // la fecha como YYYYMMDD (ej: "20261020"). El resto de la app trabaja con
 // YYYY-MM-DD, así que se normaliza en el servicio.
@@ -50,6 +54,19 @@ export class MailService {
           })),
         ),
       );
+  }
+
+  // Correos sin requerimiento asociado (badge de Procesamiento). `clientId` ausente
+  // = sin filtro por cliente ("Todos"); el backend además fuerza el cliente asociado.
+  getPendingCount(clientId?: number | null): Observable<number> {
+    let params = new HttpParams();
+    if (clientId !== undefined && clientId !== null) {
+      params = params.set('client_id', String(clientId));
+    }
+
+    return this.http
+      .get<MailPendingCount>(`${this.apiBaseUrl}/api/mail/pending-count`, { params })
+      .pipe(map((response) => response?.count ?? 0));
   }
 
   private toApiDate(date: string): string {

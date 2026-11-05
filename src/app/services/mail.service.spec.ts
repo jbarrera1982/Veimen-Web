@@ -5,6 +5,7 @@ import { MailService } from './mail.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/mail/comparison`;
+const PENDING_URL = `${environment.apiBaseUrl}/api/mail/pending-count`;
 
 describe('MailService', () => {
   let service: MailService;
@@ -83,5 +84,28 @@ describe('MailService', () => {
       .flush([{ date: '2026-10-20T00:00:00', mails: 1, requests: 1 }]);
 
     expect(result).toEqual([{ date: '2026-10-20', mails: 1, requests: 1 }]);
+  });
+
+  it('should request the pending mail count with the selected client', () => {
+    let result: number | undefined;
+    service.getPendingCount(7).subscribe((count) => (result = count));
+
+    const req = httpTesting.expectOne((r) => r.url === PENDING_URL);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush({ count: 3 });
+
+    expect(result).toBe(3);
+  });
+
+  it('should omit client_id and default a missing pending count to zero', () => {
+    let result: number | undefined;
+    service.getPendingCount().subscribe((count) => (result = count));
+
+    const req = httpTesting.expectOne((r) => r.url === PENDING_URL);
+    expect(req.request.params.has('client_id')).toBe(false);
+    req.flush({});
+
+    expect(result).toBe(0);
   });
 });

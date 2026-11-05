@@ -6,9 +6,11 @@ import { AuthService } from '../services/auth.service';
 import { MailService } from '../services/mail.service';
 import { ClientContextService } from '../services/client-context.service';
 import { type Client } from '../services/clients.service';
+import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiBaseUrl}/api/mail/comparison`;
+const PENDING_URL = `${environment.apiBaseUrl}/api/mail/pending-count`;
 
 function client(partial: Partial<Client>): Client {
   return {
@@ -268,6 +270,19 @@ describe('ProcessingDashboardComponent', () => {
     req.flush(SAMPLE);
 
     expect(component.rows().length).toBe(SAMPLE.length);
+  });
+
+  // La comparativa escanea el buzón: al terminar se refresca el badge de Procesamiento.
+  it('should refresh the processing badge after loading the comparison', () => {
+    TestBed.inject(PermissionsService).permissions.set([PERMISSIONS.mailScan]);
+
+    fixture.detectChanges();
+    flushComparison(SAMPLE);
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne((r) => r.url === PENDING_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush({ count: 2 });
   });
 
   // Usuario con cliente asociado (claim client_id): se filtra por el suyo aunque el

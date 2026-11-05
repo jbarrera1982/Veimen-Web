@@ -10,9 +10,11 @@ import { Client } from '../services/clients.service';
 import { ClientContextService } from '../services/client-context.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { PendingReviewService } from '../services/pending-review.service';
+import { PendingProcessingService } from '../services/pending-processing.service';
 
 const CLIENTS_URL = `${environment.apiBaseUrl}/api/clients`;
 const REQUESTS_URL = `${environment.apiBaseUrl}/api/ServiceRequests`;
+const PENDING_PROCESSING_URL = `${environment.apiBaseUrl}/api/mail/pending-count`;
 
 const USER: UserDto = {
   userId: 1,
@@ -62,6 +64,13 @@ describe('ShellComponent', () => {
     permissions.loaded.set(true);
   }
 
+  // El shell sondea el badge de Procesamiento al iniciar (GET del conteo).
+  function flushPendingProcessingCount(count: number): void {
+    const req = httpTesting.expectOne((r) => r.url === PENDING_PROCESSING_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush({ count });
+  }
+
   // El shell sondea el badge de pendientes al iniciar (GET del listado con status).
   function flushPendingReviewCount(totalCount: number): void {
     const req = httpTesting.expectOne(
@@ -96,8 +105,9 @@ describe('ShellComponent', () => {
 
     // El shell carga los clientes en ngOnInit para poblar el filtro global.
     httpTesting.expectOne(CLIENTS_URL).flush([]);
-    // Y arranca el sondeo del badge de pendientes de revisión.
+    // Y arranca el sondeo de los badges de pendientes y de Procesamiento.
     flushPendingReviewCount(0);
+    flushPendingProcessingCount(0);
   });
 
   afterEach(() => {
@@ -143,8 +153,9 @@ describe('ShellComponent', () => {
 
     expect(clientContext.selectedClient()?.clientId).toBe(2);
 
-    // Al cambiar de cliente el badge vuelve a contar los pendientes del cliente.
+    // Al cambiar de cliente los badges vuelven a contar con el cliente elegido.
     flushPendingReviewCount(0);
+    flushPendingProcessingCount(0);
 
     select.value = '';
     select.dispatchEvent(new Event('change'));
@@ -153,6 +164,7 @@ describe('ShellComponent', () => {
     expect(clientContext.selectedClient()).toBeNull();
 
     flushPendingReviewCount(0);
+    flushPendingProcessingCount(0);
   });
 
   it('should show the associated client name (no selector) when the user has a clientId', () => {
@@ -359,7 +371,7 @@ describe('ShellComponent', () => {
   });
 
   it('should hide the pending-review badge when there are no pending requests', () => {
-    expect(fixture.nativeElement.querySelector('.nav-badge')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.nav-badge--review')).toBeNull();
   });
 
   it('should show the pending-review count in the badge', () => {
@@ -367,14 +379,16 @@ describe('ShellComponent', () => {
     flushPendingReviewCount(4);
     fixture.detectChanges();
 
-    const badge = fixture.nativeElement.querySelector('.nav-badge');
+    const badge = fixture.nativeElement.querySelector('.nav-badge--review');
     expect(badge).toBeTruthy();
     expect(badge.textContent.trim()).toBe('4');
     expect(badge.getAttribute('title')).toBe('4 pendientes de revisión');
 
     // El enlace sigue apuntando al listado completo.
-    const link = fixture.nativeElement.querySelector('.nav-row a.nav-link') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/service-request');
+    const link = fixture.nativeElement.querySelector(
+      'a[href="/service-request"]',
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
   });
 
   it('should send the selected client when counting pending requests', () => {
@@ -390,7 +404,7 @@ describe('ShellComponent', () => {
     req.flush({ items: [], totalCount: 1, page: 1, pageSize: 1, totalPages: 1 });
 
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.nav-badge').textContent.trim()).toBe('1');
+    expect(fixture.nativeElement.querySelector('.nav-badge--review').textContent.trim()).toBe('1');
   });
 
   it('should open the pending-review list when the badge is clicked', () => {
@@ -401,10 +415,54 @@ describe('ShellComponent', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    fixture.nativeElement.querySelector('.nav-badge').click();
+    fixture.nativeElement.querySelector('.nav-badge--review').click();
 
     expect(TestBed.inject(PendingReviewService).filterRequested()).toBe(true);
     expect(navigateSpy).toHaveBeenCalledWith(['/service-request']);
+  });
+
+  it('should hide the processing badge when there are no pending mails', () => {
+    expect(fixture.nativeElement.querySelector('.nav-badge--danger')).toBeNull();
+  });
+
+  it('should show the processing count in a red badge from the first mail', () => {
+    TestBed.inject(PendingProcessingService).refresh();
+    flushPendingProcessingCount(1);
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('.nav-badge--danger');
+    expect(badge).toBeTruthy();
+    expect(badge.textContent.trim()).toBe('1');
+    expect(badge.getAttribute('title')).toBe('1 correos sin requerimiento');
+    expect(badge.classList.contains('nav-badge')).toBe(true);
+    expect(fixture.nativeElement.querySelector('a[href="/procesamiento"]')).toBeTruthy();
+  });
+
+  it('should send the selected client when counting pending mails', () => {
+    const clientContext = TestBed.inject(ClientContextService);
+    clientContext.clients.set([client({ clientId: 7, name: 'Acme' })]);
+    clientContext.selectClient(7);
+
+    TestBed.inject(PendingProcessingService).refresh();
+    const req = httpTesting.expectOne((r) => r.url === PENDING_PROCESSING_URL);
+    expect(req.request.params.get('client_id')).toBe('7');
+    req.flush({ count: 2 });
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.nav-badge--danger').textContent.trim()).toBe('2');
+  });
+
+  it('should open Procesamiento when the processing badge is clicked', () => {
+    TestBed.inject(PendingProcessingService).refresh();
+    flushPendingProcessingCount(2);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.nativeElement.querySelector('.nav-badge--danger').click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/procesamiento']);
   });
 
   it('should log out and navigate to login', () => {

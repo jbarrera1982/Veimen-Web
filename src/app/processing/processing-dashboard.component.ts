@@ -15,6 +15,7 @@ import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { ClientContextService } from '../services/client-context.service';
 import { MailService, type MailComparison } from '../services/mail.service';
+import { PendingProcessingService } from '../services/pending-processing.service';
 
 interface ChartSeries {
   name: string;
@@ -81,6 +82,7 @@ export class ProcessingDashboardComponent implements OnInit {
 
   private readonly mailService = inject(MailService);
   private readonly clientContext = inject(ClientContextService);
+  private readonly pendingProcessing = inject(PendingProcessingService);
 
   /**
    * Filtro por cliente: el del usuario asociado si lo tiene (claim `client_id`), si no
@@ -174,6 +176,9 @@ export class ProcessingDashboardComponent implements OnInit {
           this.isLoading.set(false);
           this.isRefreshing.set(false);
           this.inFlight = false;
+          // La comparativa escanea el buzón: se refresca el badge del menú con
+          // los correos que acaban de quedar sin requerimiento.
+          this.pendingProcessing.refresh();
         },
       });
   }

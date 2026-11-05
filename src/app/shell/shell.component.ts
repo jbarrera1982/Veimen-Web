@@ -12,6 +12,7 @@ import { AuthService } from '../services/auth.service';
 import { ClientContextService } from '../services/client-context.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { PendingReviewService } from '../services/pending-review.service';
+import { PendingProcessingService } from '../services/pending-processing.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
 
 @Component({
@@ -28,6 +29,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly clientContext = inject(ClientContextService);
   private readonly pendingReview = inject(PendingReviewService);
+  private readonly pendingProcessing = inject(PendingProcessingService);
 
   readonly PERMISSIONS = PERMISSIONS;
 
@@ -37,6 +39,9 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   // Badge de "Requerimientos": cantidad de pendientes de revisión.
   readonly pendingReviewCount = this.pendingReview.count;
+
+  // Badge de "Procesamiento": correos sin requerimiento asociado.
+  readonly pendingProcessingCount = this.pendingProcessing.count;
 
   // Filtro global de cliente: el menú es el único que lo edita. El contexto lo
   // consumen los filtros internos de cada componente.
@@ -92,26 +97,34 @@ export class ShellComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Carga los clientes para poblar el filtro global (el GET no exige clients.read).
     this.clientContext.ensureLoaded();
-    // Sondeo del badge de pendientes de revisión (se refresca también al cambiar de cliente).
+    // Sondeo de los badges del menú (se refrescan también al cambiar de cliente).
     this.pendingReview.start();
+    this.pendingProcessing.start();
   }
 
   ngOnDestroy(): void {
     this.pendingReview.stop();
+    this.pendingProcessing.stop();
   }
 
   /** Selecciona el cliente del desplegable del menú ('' = Todos). */
   onClientChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.clientContext.selectClient(value ? Number(value) : null);
-    // El badge cuenta los pendientes del cliente seleccionado.
+    // Los badges cuentan con el cliente seleccionado.
     this.pendingReview.refresh();
+    this.pendingProcessing.refresh();
   }
 
   /** Click en el badge: abre el listado mostrando solo los pendientes de revisión, sin filtro de fechas. */
   openPendingReview(): void {
     this.pendingReview.requestFilter();
     void this.router.navigate(['/service-request']);
+  }
+
+  /** Click en el badge de Procesamiento: abre la comparativa de correos vs requerimientos. */
+  openProcessing(): void {
+    void this.router.navigate(['/procesamiento']);
   }
 
   toggleMenu(): void {

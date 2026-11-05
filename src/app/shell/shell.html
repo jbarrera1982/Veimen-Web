@@ -148,28 +148,43 @@
             </svg>
             <span>Consumo de tokens</span>
           </a>
-          <a
-            *appHasPermission="PERMISSIONS.mailScan"
-            routerLink="/procesamiento"
-            routerLinkActive="active"
-            class="nav-link"
-          >
-            <svg
-              class="nav-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+          <div class="nav-row nav-row--processing">
+            <a
+              *appHasPermission="PERMISSIONS.mailScan"
+              routerLink="/procesamiento"
+              routerLinkActive="active"
+              class="nav-link"
             >
-              <path
-                d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-              />
-            </svg>
-            <span>Procesamiento</span>
-          </a>
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                />
+              </svg>
+              <span>Procesamiento</span>
+            </a>
+            @if (pendingProcessingCount() > 0) {
+              <button
+                type="button"
+                class="nav-badge nav-badge--danger"
+                (click)="openProcessing()"
+                [title]="pendingProcessingCount() + ' correos sin requerimiento'"
+                [attr.aria-label]="
+                  'Ver los ' + pendingProcessingCount() + ' correos sin requerimiento'
+                "
+              >
+                {{ pendingProcessingCount() }}
+              </button>
+            }
+          </div>
           <div class="nav-row">
             <a
               *appHasPermission="PERMISSIONS.serviceRequestsRead"
@@ -196,7 +211,7 @@
             @if (pendingReviewCount() > 0) {
               <button
                 type="button"
-                class="nav-badge"
+                class="nav-badge nav-badge--review"
                 (click)="openPendingReview()"
                 [title]="pendingReviewCount() + ' pendientes de revisión'"
                 [attr.aria-label]="
