@@ -395,6 +395,56 @@ describe('ServiceRequestComponent', () => {
     expect(panes[1].textContent).toContain('"b": "ok"');
   });
 
+  it('should highlight the known placeholders in the input/output JSON panes', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([
+      rawTrace({
+        inputJson: '{"a":"[FIRST_NAME_1]","b":"[EMAIL_2]","c":"sin marcadores"}',
+        outputJson: '{"d":"[LAST_NAME_1]","e":"[PHONE_1]","f":"[LOAN_NUMBER_1]"}',
+      }),
+    ]);
+    fixture.detectChanges();
+
+    const toggle = fixture.nativeElement.querySelector('.json-toggle-btn') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+
+    const marks = fixture.nativeElement.querySelectorAll('.json-pane pre mark.json-token');
+    expect([...marks].map((mark: Element) => mark.textContent)).toEqual([
+      'FIRST_NAME_1',
+      'EMAIL_2',
+      'LAST_NAME_1',
+      'PHONE_1',
+      'LOAN_NUMBER_1',
+    ]);
+  });
+
+  it('should escape HTML from the JSON payloads before rendering the highlight', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([
+      rawTrace({
+        inputJson: '{"x":"<img src=x onerror=alert(1)> [FIRST_NAME_1]"}',
+        outputJson: null,
+      }),
+    ]);
+    fixture.detectChanges();
+
+    const toggle = fixture.nativeElement.querySelector('.json-toggle-btn') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+
+    const pane = fixture.nativeElement.querySelector('.json-pane pre') as HTMLElement;
+    expect(pane.querySelector('img')).toBeNull();
+    expect(pane.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(pane.querySelector('mark.json-token')?.textContent).toBe('FIRST_NAME_1');
+  });
+
   it('should open the detail modal and load the trace for the clicked request', () => {
     fixture.detectChanges();
     flushResponse([rawRequest({ requestNumber: 202 })]);
@@ -422,6 +472,33 @@ describe('ServiceRequestComponent', () => {
     flushTrace([rawTrace({ traceId: 988, sequence: 1 }), rawTrace({ traceId: 986, sequence: 3 })]);
 
     expect(component.traceSteps().map((s) => s.traceId)).toEqual([986, 988]);
+  });
+
+  it('should reload the trace without clearing it when the refresh button is clicked', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202 })]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([rawTrace({ traceId: 1, node: 'Agente 1' })]);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.trace-refresh-btn') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+
+    // Recarga silenciosa: la lista se mantiene mientras llegan los pasos nuevos.
+    expect(component.isRefreshingTrace()).toBeTruthy();
+    expect(component.traceSteps()).toHaveLength(1);
+    expect(button.disabled).toBe(true);
+
+    flushTrace([
+      rawTrace({ traceId: 1, node: 'Agente 1' }),
+      rawTrace({ traceId: 2, node: 'Agente 2' }),
+    ]);
+    fixture.detectChanges();
+
+    expect(component.isRefreshingTrace()).toBeFalsy();
+    expect(component.traceSteps()).toHaveLength(2);
   });
 
   it('should set a trace error when the detail request fails', () => {
@@ -472,6 +549,7 @@ describe('ServiceRequestComponent', () => {
     expect(component.canSeeTrace()).toBe(false);
     expect(component.selectedRequest()).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.trace-section')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.trace-refresh-btn')).toBeNull();
     httpTesting.expectNone((r) => r.url === TRACE_URL);
   });
 

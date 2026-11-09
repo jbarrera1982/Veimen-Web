@@ -264,6 +264,34 @@
           >
             Informe de auditoría
           </button>
+          <ng-container *appHasPermission="PERMISSIONS.traceRead">
+            <button
+              type="button"
+              class="refresh-btn btn-icon trace-refresh-btn"
+              (click)="refreshTrace()"
+              [disabled]="isLoadingTrace() || isRefreshingTrace()"
+              data-tooltip="Actualizar trazas"
+              aria-label="Actualizar trazas"
+            >
+              @if (isRefreshingTrace()) {
+                <span class="spinner spinner-small"></span>
+              } @else {
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+              }
+            </button>
+          </ng-container>
           <button class="modal-close" type="button" (click)="closeDetail()" aria-label="Cerrar">
             <svg
               class="icon"
@@ -459,15 +487,19 @@
                           <div class="json-panel">
                             <section class="json-pane">
                               <header class="json-pane-header">Entrada</header>
-                              <pre>{{
-                                step.inputJson ? formatJson(step.inputJson) : 'Sin datos'
-                              }}</pre>
+                              <pre
+                                [innerHTML]="
+                                  step.inputJson ? formatJsonHtml(step.inputJson) : 'Sin datos'
+                                "
+                              ></pre>
                             </section>
                             <section class="json-pane">
                               <header class="json-pane-header">Salida</header>
-                              <pre>{{
-                                step.outputJson ? formatJson(step.outputJson) : 'Sin datos'
-                              }}</pre>
+                              <pre
+                                [innerHTML]="
+                                  step.outputJson ? formatJsonHtml(step.outputJson) : 'Sin datos'
+                                "
+                              ></pre>
                             </section>
                           </div>
                         }

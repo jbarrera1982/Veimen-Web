@@ -11,6 +11,8 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SecurityContext } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { finalize } from 'rxjs/operators';
 import { RequestsService, RequestItem, TraceStep } from '../services/requests.service';
 import { STATUS_LABELS } from '../services/dashboard.service';
@@ -25,6 +27,10 @@ function toDateInputValue(date: Date): string {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+// Marcadores que el flujo rellena en los prompts (FIRST_NAME_1, EMAIL_2, …). Se resaltan
+// en los paneles de entrada/salida para poder localizarlos de un vistazo.
+const JSON_TOKEN_PATTERN = /\b(?:FIRST_NAME|LAST_NAME|EMAIL|PHONE|LOAN_NUMBER)_\d+\b/g;
 
 @Component({
   selector: 'app-service-request',
@@ -81,6 +87,8 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   readonly selectedRequest = signal<RequestItem | null>(null);
   readonly traceSteps = signal<TraceStep[]>([]);
   readonly isLoadingTrace = signal(false);
+  // Recarga silenciosa (botón de actualizar): mantiene la lista visible y solo gira el icono.
+  readonly isRefreshingTrace = signal(false);
   readonly traceError = signal<string | null>(null);
 
   // Revisión manual (solo con estado 'Pendiente por revisión' y permiso 'trace.write').
@@ -112,6 +120,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   private readonly permissions = inject(PermissionsService);
   private readonly clientContext = inject(ClientContextService);
   private readonly pendingReview = inject(PendingReviewService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly PERMISSIONS = PERMISSIONS;
 
@@ -311,6 +320,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.selectedRequest.set(item);
     this.traceSteps.set([]);
     this.traceError.set(null);
+    this.isRefreshingTrace.set(false);
     this.expandedJsonSteps.set(new Set());
     // Reset del formulario de revisión (se muestra solo cuando el estado sea 'Pending review').
     this.reviewStatus.set(null);
@@ -329,6 +339,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     this.traceError.set(null);
     this.expandedJsonSteps.set(new Set());
     this.isLoadingTrace.set(false);
+    this.isRefreshingTrace.set(false);
     this.traceInFlight = false;
     this.reviewStatus.set(null);
     this.reviewObservations.set('');
@@ -471,10 +482,22 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadTrace(requestNumber: number): void {
+  // Recarga la traza del requerimiento abierto sin vaciar la sección (para no perder el
+  // contexto mientras llegan los pasos nuevos).
+  refreshTrace(): void {
+    const req = this.selectedRequest();
+    if (!req || this.traceInFlight || this.isLoadingTrace()) return;
+    this.loadTrace(req.requestNumber, true);
+  }
+
+  private loadTrace(requestNumber: number, silent = false): void {
     if (this.traceInFlight) return;
     this.traceInFlight = true;
-    this.isLoadingTrace.set(true);
+    if (silent) {
+      this.isRefreshingTrace.set(true);
+    } else {
+      this.isLoadingTrace.set(true);
+    }
     this.traceError.set(null);
 
     this.requestsService.getRequestTrace(requestNumber).subscribe({
@@ -486,14 +509,16 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.traceError.set('No se pudo cargar el detalle del requerimiento.');
-        this.isLoadingTrace.set(false);
-        this.traceInFlight = false;
+        this.finishTraceLoad();
       },
-      complete: () => {
-        this.isLoadingTrace.set(false);
-        this.traceInFlight = false;
-      },
+      complete: () => this.finishTraceLoad(),
     });
+  }
+
+  private finishTraceLoad(): void {
+    this.isLoadingTrace.set(false);
+    this.isRefreshingTrace.set(false);
+    this.traceInFlight = false;
   }
 
   formatDateTime(value: string): string {
@@ -540,6 +565,28 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
       }
     }
     return this.prettifyText(JSON.stringify(this.unwrapNestedJson(parsed), null, 2));
+  }
+
+  // Misma salida que formatJson() pero como HTML escapado con <mark> en los marcadores
+  // del flujo (FIRST_NAME_1, EMAIL_1, …). Se sanitiza siempre antes de inyectarlo con
+  // [innerHTML]: el texto se escapa primero y solo se añaden las etiquetas <mark>.
+  formatJsonHtml(value: unknown): string {
+    const text = this.formatJson(value);
+    if (!text) return '';
+    const highlighted = this.escapeHtml(text).replace(
+      JSON_TOKEN_PATTERN,
+      (token) => `<mark class="json-token">${token}</mark>`,
+    );
+    return this.sanitizer.sanitize(SecurityContext.HTML, highlighted) ?? '';
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // Convierte strings que en realidad contienen JSON anidado en objetos/arrays reales,

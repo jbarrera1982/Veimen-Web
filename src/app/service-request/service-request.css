@@ -631,6 +631,25 @@
   color: var(--vm-ink);
 }
 
+/* Botón de refresco de trazas (cabecera del modal): centra el spinner y muestra el
+   tooltip hacia abajo, porque el modal recorta lo que sobresale por arriba del header. */
+.trace-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trace-refresh-btn::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+
+.trace-refresh-btn .spinner-small {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-width: 2px;
+}
+
 .trace-state {
   padding: 2rem;
   text-align: center;
@@ -795,6 +814,15 @@
   font-family: var(--vm-mono);
   font-size: 0.75rem;
   line-height: 1.5;
+}
+
+/* Marcadores del flujo (FIRST_NAME_1, EMAIL_1, …) resaltados en los paneles JSON. */
+.json-token {
+  padding: 0 0.2rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--vm-teal) 26%, transparent);
+  color: var(--vm-teal-bright);
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
