@@ -6,107 +6,258 @@ $raw_mail = file_get_contents("php://stdin");
 $webhook_url = "https://n8n.veimen.net/webhook/email-agent";
 
 
-// --- FUNCIONES PARA EXTRAER LOS CAMPOS ---
+// ============================================================
+// FUNCIONES
+// ============================================================
 
 function get_header($header_name, $mail) {
-    // Busca la cabecera (ej. Subject:, From:) ignorando mayúsculas/minúsculas
+
     $header_name_quoted = preg_quote($header_name, '/');
+
     if (preg_match('/^' . $header_name_quoted . ':\s*(.*)$/mi', $mail, $match)) {
-        // Usar mb_decode_mimeheader es mucho más seguro que imap_utf8 en hosting compartido
+
         return trim(mb_decode_mimeheader($match[1]));
     }
+
     return '';
 }
 
-function get_clean_body($mail) {
-    // Separar cabeceras principales del cuerpo del mensaje
+
+// ============================================================
+// EXTRAER BODY TEXT/PLAIN Y BODY HTML
+// ============================================================
+
+function get_bodies($mail) {
+
+    // Separar headers principales del body
     $parts = preg_split("/\r\n\r\n|\n\n/", $mail, 2);
+
     $body = isset($parts[1]) ? $parts[1] : $mail;
 
-    // Intentar extraer la sección text/plain si el correo es multipartes
-    if (preg_match('/Content-Type:\s*text\/plain[^;\r\n]*.*?\r?\n\r?\n(.*?)(?=\r?\n--|$)/s', $body, $match)) {
-        $text = $match[1];
-    } else {
-        // Si no es multipartes, tomamos todo el cuerpo
-        $text = $body;
+    $text_plain = '';
+    $text_html = '';
+
+    // --------------------------------------------------------
+    // Buscar text/plain
+    // --------------------------------------------------------
+
+    if (preg_match(
+        '/Content-Type:\s*text\/plain[^;\r\n]*.*?\r?\n\r?\n(.*?)(?=\r?\n--|$)/is',
+        $body,
+        $match
+    )) {
+
+        $text_plain = $match[1];
+
+        // Decodificar quoted-printable
+        $text_plain = quoted_printable_decode($text_plain);
+
+        // Decodificar Base64 si corresponde
+        if (preg_match('/Content-Transfer-Encoding:\s*base64/i', $match[0])) {
+            $text_plain = base64_decode($match[1]);
+        }
+
+        $text_plain = trim($text_plain);
     }
 
-    // Decodificar si viene en formato quoted-printable (=3D, etc.)
-    $text = quoted_printable_decode($text);
 
-    return trim($text);
+    // --------------------------------------------------------
+    // Buscar text/html
+    // --------------------------------------------------------
+
+    if (preg_match(
+        '/Content-Type:\s*text\/html[^;\r\n]*.*?\r?\n\r?\n(.*?)(?=\r?\n--|$)/is',
+        $body,
+        $match
+    )) {
+
+        $text_html = $match[1];
+
+        // Decodificar quoted-printable
+        $text_html = quoted_printable_decode($text_html);
+
+        // Decodificar Base64 si corresponde
+        if (preg_match('/Content-Transfer-Encoding:\s*base64/i', $match[0])) {
+            $text_html = base64_decode($match[1]);
+        }
+
+        $text_html = trim($text_html);
+    }
+
+
+    // --------------------------------------------------------
+    // Si no encontramos text/plain
+    // pero el correo no es multipart,
+    // usar el body como texto
+    // --------------------------------------------------------
+
+    if (empty($text_plain) && empty($text_html)) {
+
+        $text_plain = quoted_printable_decode($body);
+
+        $text_plain = trim($text_plain);
+    }
+
+
+    // --------------------------------------------------------
+    // Si solo existe HTML, generar también texto plano
+    // --------------------------------------------------------
+
+    if (empty($text_plain) && !empty($text_html)) {
+
+        $text_plain = strip_tags($text_html);
+
+        // Convertir entidades HTML
+        $text_plain = html_entity_decode(
+            $text_plain,
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+
+        // Limpiar espacios
+        $text_plain = preg_replace('/\s+/', ' ', $text_plain);
+
+        $text_plain = trim($text_plain);
+    }
+
+
+    return array(
+        'text' => $text_plain,
+        'html' => $text_html
+    );
 }
 
-// Extraer los datos específicos
-$from = get_header('From', $raw_mail);
-$subject = get_header('Subject', $raw_mail);
-$body = get_clean_body($raw_mail);
 
-// Extraer el Message-ID y quitarle los signos < y >
+// ============================================================
+// EXTRAER DATOS
+// ============================================================
+
+$from = get_header('From', $raw_mail);
+
+$subject = get_header('Subject', $raw_mail);
+
+
+// Obtener ambos cuerpos
+$bodies = get_bodies($raw_mail);
+
+$body = $bodies['text'];
+$body_html = $bodies['html'];
+
+
+// ============================================================
+// MESSAGE-ID
+// ============================================================
+
 $message_id = get_header('Message-ID', $raw_mail);
+
 $message_id = trim($message_id, '<>');
 
 if (empty($message_id)) {
     $message_id = uniqid();
 }
 
-// --- NUEVO: Extraer y dar formato ISO 8601 con milisegundos y zona horaria ---
+
+// ============================================================
+// FECHA DEL CORREO
+// ============================================================
+
 $date_header = get_header('Date', $raw_mail);
 
 try {
+
     if (!empty($date_header)) {
-        // Intentar parsear la fecha que trae el correo
+
         $dateTime = new DateTime($date_header);
+
     } else {
-        // Si no trae fecha, usar el momento actual del servidor
+
         $dateTime = new DateTime('now');
     }
+
 } catch (Exception $e) {
-    // Fallback por si la fecha del correo viene corrupta
+
     $dateTime = new DateTime('now');
 }
 
-// Formato deseado: 2026-10-29T05:39:25.203-04:00
-// Nota: 'v' representa los milisegundos (000) y 'P' representa la zona horaria con dos puntos (ej. -04:00)
+
+// Formato ISO 8601 con milisegundos
 $receipt_date = $dateTime->format('Y-m-d\TH:i:s.vP');
 
-// --- CORRECCIÓN: Forzar conversión limpia a UTF-8 para evitar fallos en json_encode ---
-$from = mb_convert_encoding($from, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
-$subject = mb_convert_encoding($subject, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
-$body = mb_convert_encoding($body, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
 
-// Registrar en el log de depuración para verificar qué se extrajo
-//$log_msg = date('Y-m-d H:i:s') . " - Parseado -> From: $from | Subject: $subject | Longitud Body: " . strlen($body) . "\n";
-//file_put_contents(__DIR__ . '/pipe_debug.log', $log_msg, FILE_APPEND);
+// ============================================================
+// CONVERSIÓN UTF-8
+// ============================================================
 
-// Preparar los datos estructurados en formato JSON
-$data = json_encode(array(
-    "message_id" => $message_id,
-    "receipt_date" => $receipt_date,
-    "from" => $from,
-    "subject" => $subject,
-    "body" => $body
-));
+$from = mb_convert_encoding(
+    $from,
+    'UTF-8',
+    'UTF-8, ISO-8859-1, WINDOWS-1252'
+);
 
-// Verificar si hubo error al generar el JSON
-//if ($data === false) {
-    //file_put_contents(__DIR__ . '/pipe_debug.log', date('Y-m-d H:i:s') . " - ERROR JSON: " . json_last_error_msg() . "\n", FILE_APPEND);
-//}
+$subject = mb_convert_encoding(
+    $subject,
+    'UTF-8',
+    'UTF-8, ISO-8859-1, WINDOWS-1252'
+);
 
-// Enviar mediante cURL al webhook
+$body = mb_convert_encoding(
+    $body,
+    'UTF-8',
+    'UTF-8, ISO-8859-1, WINDOWS-1252'
+);
+
+$body_html = mb_convert_encoding(
+    $body_html,
+    'UTF-8',
+    'UTF-8, ISO-8859-1, WINDOWS-1252'
+);
+
+
+// ============================================================
+// JSON
+// ============================================================
+
+$data = json_encode(
+    array(
+        "message_id" => $message_id,
+        "receipt_date" => $receipt_date,
+        "from" => $from,
+        "subject" => $subject,
+
+        // Texto plano
+        "body" => $body,
+
+        // HTML original
+        "body_html" => $body_html
+    ),
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+);
+
+
+// ============================================================
+// ENVIAR A N8N
+// ============================================================
+
 $ch = curl_init($webhook_url);
+
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Content-Type: application/json',
-    'Content-Length: ' . strlen($data))
+
+curl_setopt(
+    $ch,
+    CURLOPT_HTTPHEADER,
+    array(
+        'Content-Type: application/json',
+        'Content-Length: ' . strlen($data)
+    )
 );
+
 $response = curl_exec($ch);
+
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
 curl_close($ch);
 
-// Guardar la respuesta del webhook en el log
-//$log_response = date('Y-m-d H:i:s') . " - HTTP Code: $http_code - Response: $response\n";
-//file_put_contents(__DIR__ . '/pipe_debug.log', $log_response, FILE_APPEND);
 ?>
