@@ -617,12 +617,59 @@
   color: var(--vm-muted);
 }
 
-.message-block p {
+.message-block > p {
   margin: 0;
   font-size: 0.875rem;
   color: var(--vm-ink);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* Mensaje original en HTML (body_html): se renderiza con [innerHTML] sanitizado.
+   Las reglas usan :where() para no competir con los estilos del propio correo. */
+.message-block .message-html {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--vm-ink);
+  overflow-wrap: anywhere;
+}
+
+.message-block .message-html :where(p, ul, ol, blockquote, pre, table) {
+  margin: 0 0 0.6rem;
+}
+
+.message-block .message-html :where(p, ul, ol, blockquote, pre, table):last-child {
+  margin-bottom: 0;
+}
+
+.message-block .message-html img {
+  max-width: 100%;
+  height: auto;
+}
+
+.message-block .message-html a {
+  color: var(--vm-blue-ink);
+  text-decoration: underline;
+}
+
+.message-block .message-html table {
+  border-collapse: collapse;
+  max-width: 100%;
+}
+
+.message-block .message-html :where(th, td) {
+  border: 1px solid var(--vm-line);
+  padding: 0.25rem 0.5rem;
+}
+
+.message-block .message-html blockquote {
+  border-left: 3px solid var(--vm-line-strong);
+  padding-left: 0.75rem;
+  color: var(--vm-muted);
+}
+
+.message-block .message-html pre {
+  white-space: pre-wrap;
 }
 
 .trace-section h3 {

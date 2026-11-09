@@ -10,6 +10,8 @@ export interface RequestItem {
   from: string;
   subject: string;
   originalMessage: string;
+  // Contenido HTML del mensaje (service_request.body_html). Puede venir null.
+  bodyHtml: string | null;
   receiptDate: string;
   n8nWorkflow: string;
   status: string;
@@ -29,6 +31,8 @@ interface RawRequestItem {
   from: string;
   subject: string;
   originalMessage: string;
+  // Contenido HTML del mensaje (service_request.body_html). Puede venir null.
+  bodyHtml: string | null;
   receiptDate: string;
   n8nWorkflow: string;
   status: string;
@@ -166,6 +170,7 @@ export class RequestsService {
             from: item.from,
             subject: item.subject,
             originalMessage: item.originalMessage,
+            bodyHtml: item.bodyHtml ?? null,
             receiptDate: item.receiptDate,
             n8nWorkflow: item.n8nWorkflow,
             status: STATUS_LABELS[item.status?.toLowerCase().trim()] ?? item.status,

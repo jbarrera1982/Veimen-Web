@@ -34,6 +34,7 @@ interface RawRequest {
   from: string;
   subject: string;
   originalMessage: string;
+  bodyHtml: string | null;
   receiptDate: string;
   n8nWorkflow: string;
   status: string;
@@ -53,6 +54,7 @@ function rawRequest(partial: Partial<RawRequest> = {}): RawRequest {
     from: 'barrerajc@hotmail.com',
     subject: 'asunto',
     originalMessage: 'mensaje',
+    bodyHtml: null,
     receiptDate: '2026-09-04T13:46:17',
     n8nWorkflow: 'AgenteAtencioAlClienteIntakeAS',
     status: 'Received',
@@ -460,6 +462,54 @@ describe('ServiceRequestComponent', () => {
     expect(component.traceError()).toBeNull();
     expect(component.traceSteps()).toHaveLength(1);
     expect(component.traceSteps()[0].node).toBe('Agente 2 - Inapropiados');
+  });
+
+  it('should render body_html as HTML in the original message', () => {
+    fixture.detectChanges();
+    flushResponse([rawRequest({ requestNumber: 202, bodyHtml: '<p>Hola <b>mundo</b></p>' })]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([rawTrace()]);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement.querySelector('.message-block .message-html');
+    expect(html).toBeTruthy();
+    expect(html.innerHTML).toContain('<b>mundo</b>');
+    // El fallback en texto plano no se renderiza cuando hay HTML.
+    expect(fixture.nativeElement.querySelector('.message-block > p')).toBeNull();
+  });
+
+  it('should fall back to originalMessage when body_html is missing or empty', () => {
+    fixture.detectChanges();
+    flushResponse([
+      rawRequest({ requestNumber: 202, bodyHtml: '   ', originalMessage: 'Texto plano' }),
+    ]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([rawTrace()]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.message-html')).toBeNull();
+    const paragraph = fixture.nativeElement.querySelector('.message-block > p');
+    expect(paragraph.textContent).toContain('Texto plano');
+  });
+
+  it('should sanitize the HTML from body_html before rendering it', () => {
+    fixture.detectChanges();
+    flushResponse([
+      rawRequest({
+        requestNumber: 202,
+        bodyHtml: '<p>Hola</p><script>alert(1)</script><img src="x" onerror="alert(1)">',
+      }),
+    ]);
+
+    component.openDetail(component.requests()[0]);
+    flushTrace([rawTrace()]);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement.querySelector('.message-html') as HTMLElement;
+    expect(html.querySelector('script')).toBeNull();
+    expect(html.querySelector('img')?.getAttribute('onerror')).toBeNull();
   });
 
   it('should sort trace steps by traceId, not by sequence', () => {

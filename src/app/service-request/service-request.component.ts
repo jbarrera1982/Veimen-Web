@@ -124,6 +124,15 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   readonly PERMISSIONS = PERMISSIONS;
 
+  // Contenido HTML del mensaje (columna service_request.body_html). Se sanitiza siempre
+  // antes de inyectarlo con [innerHTML]; si el listado no trae HTML, el modal cae a
+  // originalMessage (ver template).
+  readonly messageHtml = computed<string | null>(() => {
+    const html = this.selectedRequest()?.bodyHtml?.trim();
+    if (!html) return null;
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+  });
+
   // La sección de traza solo se muestra (y se pide al backend) con el permiso 'trace.read'.
   readonly canSeeTrace = computed(() => this.permissions.has(PERMISSIONS.traceRead));
 

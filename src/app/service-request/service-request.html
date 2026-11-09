@@ -346,10 +346,14 @@
               </div>
             }
           </dl>
-          @if (req.originalMessage) {
+          @if (messageHtml() || req.originalMessage) {
             <div class="message-block">
               <h3>Mensaje original</h3>
-              <p>{{ req.originalMessage }}</p>
+              @if (messageHtml(); as html) {
+                <div class="message-html" [innerHTML]="html"></div>
+              } @else {
+                <p>{{ req.originalMessage }}</p>
+              }
             </div>
           }
         </section>
