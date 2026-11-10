@@ -245,6 +245,23 @@ describe('PromptsListComponent', () => {
     expect(component.sortedPrompts().map((p) => p.promptId)).toEqual([1]);
   });
 
+  it('should dim inactive prompts with the row-inactive class', () => {
+    fixture.detectChanges();
+    flushResponse([
+      rawPrompt(),
+      rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta', active: false }),
+    ]);
+
+    selectFilter(2, 'all');
+
+    const rows = fixture.debugElement.queryAll(By.css('.prompts-table tbody tr'));
+    const inactive = rows.find((row: any) => row.nativeElement.textContent.includes('Respuesta'));
+    const active = rows.find((row: any) => row.nativeElement.textContent.includes('Extracto'));
+
+    expect(inactive.nativeElement.classList.contains('row-inactive')).toBe(true);
+    expect(active.nativeElement.classList.contains('row-inactive')).toBe(false);
+  });
+
   it('should clear filters and restore all results', () => {
     fixture.detectChanges();
     flushResponse([rawPrompt(), rawPrompt({ promptId: 2, code: 'P-002', name: 'Respuesta' })]);

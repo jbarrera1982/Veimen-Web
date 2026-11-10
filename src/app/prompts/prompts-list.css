@@ -234,6 +234,35 @@
   outline-offset: -2px;
 }
 
+/* Los prompts inactivos se atenúan para distinguirlos de los activos. */
+.prompts-table tbody tr.row-inactive td {
+  color: var(--vm-faint);
+}
+
+.prompts-table tbody tr.row-inactive .row-btn {
+  color: var(--vm-faint);
+  border-color: var(--vm-line);
+}
+
+.prompts-table tbody tr.row-inactive .row-btn-danger {
+  color: var(--vm-danger);
+  opacity: 0.6;
+}
+
+/* Al pasar el mouse la fila recupera algo de contraste sin perder la atenuación. */
+.prompts-table tbody tr.row-inactive:hover td {
+  color: var(--vm-muted);
+}
+
+.prompts-table tbody tr.row-inactive:hover .row-btn {
+  color: var(--vm-muted);
+}
+
+.prompts-table tbody tr.row-inactive:hover .row-btn-danger {
+  opacity: 0.85;
+  color: var(--vm-danger);
+}
+
 .row-btn {
   padding: 0.35rem 0.7rem;
   border: 1px solid var(--vm-line-strong);

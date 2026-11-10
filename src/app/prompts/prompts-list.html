@@ -111,6 +111,7 @@
             @for (prompt of pagedPrompts(); track prompt.promptId) {
               <tr
                 class="clickable-row"
+                [class.row-inactive]="!prompt.active"
                 tabindex="0"
                 (click)="openPrompt(prompt)"
                 (keydown.enter)="openPrompt(prompt)"
