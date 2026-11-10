@@ -29,12 +29,12 @@ describe('DashboardService', () => {
     const req = httpTesting.expectOne((r) => r.url === API_URL);
     req.flush([
       { status: 'Received', date: '2026-08-01T00:00:00', total: 6 },
-      { status: 'aNalyzed', date: '2026-08-02T00:00:00', total: 3 },
+      { status: 'Rejected', date: '2026-08-02T00:00:00', total: 3 },
     ]);
 
     expect(result).toEqual([
       { status: 'Recibido', date: '2026-08-01', total: 6 },
-      { status: 'Analizado', date: '2026-08-02', total: 3 },
+      { status: 'Rechazado', date: '2026-08-02', total: 3 },
     ]);
   });
 

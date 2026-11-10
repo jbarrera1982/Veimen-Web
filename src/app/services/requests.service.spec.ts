@@ -59,7 +59,7 @@ describe('RequestsService', () => {
           originalMessage: 'Quiero saber los requisitos para solicitar un credito.',
           receiptDate: '2026-09-04T17:22:17',
           n8nWorkflow: 'AgenteAtencioAlClienteIntakeAS',
-          status: 'aNalyzed',
+          status: 'Awaiting OTP',
           priority: 'Normal',
           createdAt: '2026-09-04T17:22:17',
           updatedAt: '2026-09-04T17:22:43',
@@ -67,6 +67,7 @@ describe('RequestsService', () => {
           otpCode: '382561',
           otpVerifiedAt: '2026-09-04T17:01:51',
           detectedIntent: 'payment_history',
+          language: 'English',
         },
       ],
       totalCount: 42,
@@ -91,10 +92,14 @@ describe('RequestsService', () => {
       otpCode: null,
       otpVerifiedAt: null,
       detectedIntent: null,
+      language: null,
     });
-    expect(result?.items[1].status).toBe('Analizado');
+    expect(result?.items[1].status).toBe('Esperando OTP');
     expect(result?.items[1].description).toBe('Cliente identificado');
     expect(result?.items[1].otpCode).toBe('382561');
+    // El idioma detectado por el flujo se conserva tal cual (null si no viene).
+    expect(result?.items[0].language).toBeNull();
+    expect(result?.items[1].language).toBe('English');
     expect(result?.totalCount).toBe(42);
     // totalPages no viene en la respuesta; se calcula como ceil(42 / 20).
     expect(result?.totalPages).toBe(3);

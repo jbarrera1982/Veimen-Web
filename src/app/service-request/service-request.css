@@ -383,10 +383,42 @@
   min-width: 14rem;
 }
 
+.subject-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 .subject {
   display: block;
   font-weight: 500;
   color: var(--vm-ink);
+}
+
+/* Idioma del requerimiento (solo se muestra cuando no es español). */
+.lang-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--vm-line-strong);
+  border-radius: 9999px;
+  background: var(--vm-wash);
+  color: var(--vm-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.lang-flag {
+  font-size: 0.8rem;
+  line-height: 1;
+  /* Windows no trae banderas emoji; main.ts registra esta fuente local (Twemoji) solo
+     cuando el sistema no las pinta, y aquí se le da prioridad. */
+  font-family:
+    'Twemoji Country Flags', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
 }
 
 .description {

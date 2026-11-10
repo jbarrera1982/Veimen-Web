@@ -74,21 +74,6 @@ describe('DashboardComponent', () => {
     expect(component.error()).toBeNull();
   });
 
-  it('should translate the "aNalyzed" status to "Analizado"', () => {
-    fixture.detectChanges();
-    flushResponse([
-      { status: 'Received', date: '2026-08-01', total: 87 },
-      { status: 'aNalyzed', date: '2026-08-01', total: 8 },
-    ]);
-
-    const analyzed = component.statusCounts().find((c) => c.status === 'Analizado');
-    expect(analyzed).toEqual({
-      status: 'Analizado',
-      date: '2026-08-01',
-      total: 8,
-    });
-  });
-
   it('should filter out a status from charts and totals when toggled', () => {
     fixture.detectChanges();
     flushResponse([

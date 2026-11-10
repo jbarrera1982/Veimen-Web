@@ -196,7 +196,15 @@
                 <td class="col-date">{{ formatDateTime(item.receiptDate) }}</td>
                 <td class="col-from">{{ item.from }}</td>
                 <td class="col-subject">
-                  <span class="subject">{{ item.subject }}</span>
+                  <div class="subject-row">
+                    <span class="subject">{{ item.subject }}</span>
+                    @if (languageFlag(item.language); as lang) {
+                      <span class="lang-badge" [title]="'Idioma del requerimiento: ' + lang.label">
+                        <span class="lang-flag" aria-hidden="true">{{ lang.flag }}</span>
+                        <span class="lang-label">{{ lang.label }}</span>
+                      </span>
+                    }
+                  </div>
                   @if (item.description) {
                     <span class="description">{{ item.description }}</span>
                   }

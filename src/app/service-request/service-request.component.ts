@@ -32,6 +32,55 @@ function toDateInputValue(date: Date): string {
 // en los paneles de entrada/salida para poder localizarlos de un vistazo.
 const JSON_TOKEN_PATTERN = /\b(?:FIRST_NAME|LAST_NAME|EMAIL|PHONE|LOAN_NUMBER)_\d+\b/g;
 
+// El español es el idioma por defecto de la aplicación, así que nunca se marca. Estos son
+// los valores que se aceptan como español en `service_request.language`.
+const SPANISH_LANGUAGE_VALUES = new Set([
+  'spa',
+  'spanish',
+  'español',
+  'espanol',
+  'castellano',
+  'castilian',
+]);
+
+// Idiomas que se marcan con bandera junto al asunto del listado: [códigos ISO y nombres
+// aceptados, bandera, nombre a mostrar]. Los códigos también se aceptan con región
+// ('en-GB', 'pt-BR'). Los no listados se muestran con un globo y el valor recibido.
+const LANGUAGE_MARKS: ReadonlyArray<readonly [readonly string[], string, string]> = [
+  // El inglés se representa con la bandera de Estados Unidos (inglés de EE. UU.).
+  [['en', 'eng', 'english', 'inglés', 'ingles'], '🇺🇸', 'Inglés'],
+  [['pt', 'por', 'portuguese', 'portugués', 'portugues'], '🇵🇹', 'Portugués'],
+  [['fr', 'fra', 'fre', 'french', 'francés', 'frances'], '🇫🇷', 'Francés'],
+  [['de', 'deu', 'ger', 'german', 'alemán', 'aleman'], '🇩🇪', 'Alemán'],
+  [['it', 'ita', 'italian', 'italiano'], '🇮🇹', 'Italiano'],
+  [
+    ['nl', 'nld', 'dut', 'dutch', 'neerlandés', 'neerlandes', 'holandés', 'holandes'],
+    '🇳🇱',
+    'Neerlandés',
+  ],
+  [['sv', 'swe', 'swedish', 'sueco'], '🇸🇪', 'Sueco'],
+  [['da', 'dan', 'danish', 'danés', 'danes'], '🇩🇰', 'Danés'],
+  [['nb', 'nn', 'no', 'nor', 'norwegian', 'noruego'], '🇳🇴', 'Noruego'],
+  [['fi', 'fin', 'finnish', 'finés', 'fines'], '🇫🇮', 'Finés'],
+  [['ru', 'rus', 'russian', 'ruso'], '🇷🇺', 'Ruso'],
+  [['uk', 'ukr', 'ukrainian', 'ucraniano'], '🇺🇦', 'Ucraniano'],
+  [['pl', 'pol', 'polish', 'polaco'], '🇵🇱', 'Polaco'],
+  [['cs', 'ces', 'cze', 'czech', 'checo'], '🇨🇿', 'Checo'],
+  [['ro', 'ron', 'rum', 'romanian', 'rumano'], '🇷🇴', 'Rumano'],
+  [['hu', 'hun', 'hungarian', 'húngaro', 'hungaro'], '🇭🇺', 'Húngaro'],
+  [['el', 'ell', 'gre', 'greek', 'griego'], '🇬🇷', 'Griego'],
+  [['tr', 'tur', 'turkish', 'turco'], '🇹🇷', 'Turco'],
+  [['ar', 'ara', 'arabic', 'árabe', 'arabe'], '🇸🇦', 'Árabe'],
+  [['he', 'heb', 'hebrew', 'hebreo'], '🇮🇱', 'Hebreo'],
+  [['hi', 'hin', 'hindi'], '🇮🇳', 'Hindi'],
+  [['zh', 'zho', 'chi', 'chinese', 'chino'], '🇨🇳', 'Chino'],
+  [['ja', 'jpn', 'japanese', 'japonés', 'japones'], '🇯🇵', 'Japonés'],
+  [['ko', 'kor', 'korean', 'coreano'], '🇰🇷', 'Coreano'],
+  [['vi', 'vie', 'vietnamese', 'vietnamita'], '🇻🇳', 'Vietnamita'],
+  [['th', 'tha', 'thai', 'tailandés', 'tailandes'], '🇹🇭', 'Tailandés'],
+  [['id', 'ind', 'indonesian', 'indonesio'], '🇮🇩', 'Indonesio'],
+];
+
 @Component({
   selector: 'app-service-request',
   standalone: true,
@@ -563,6 +612,31 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     return `${Math.round(value * 100)}%`;
   }
 
+  // Bandera del idioma del requerimiento (columna Asunto). Devuelve null para el español
+  // (idioma por defecto de la aplicación) y cuando el flujo no informó idioma: solo se
+  // marca lo que llega en otro idioma. El backend guarda el valor tal cual lo detecta el
+  // flujo (código ISO como 'en-US' o el nombre, p. ej. 'English'), así que se normaliza.
+  languageFlag(language: string | null): { flag: string; label: string } | null {
+    const value = language?.trim();
+    if (!value) return null;
+
+    const key = value.toLowerCase().replace(/_/g, '-').replace(/\s+/g, ' ');
+    if (key === 'es' || key.startsWith('es-') || SPANISH_LANGUAGE_VALUES.has(key)) {
+      return null;
+    }
+
+    const match = LANGUAGE_MARKS.find(
+      ([codes, names]) =>
+        codes.some((code) => key === code || key.startsWith(`${code}-`)) || names.includes(key),
+    );
+    if (match) {
+      return { flag: match[1], label: match[2] };
+    }
+
+    // Idioma no reconocido: se muestra igualmente (globo) con el valor que envió el flujo.
+    return { flag: '🌐', label: value.length > 24 ? `${value.slice(0, 24)}…` : value };
+  }
+
   formatJson(value: unknown): string {
     if (value == null || value === '') return '';
     let parsed: unknown = value;
@@ -573,7 +647,27 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
         return this.prettifyText(value);
       }
     }
-    return this.prettifyText(JSON.stringify(this.unwrapNestedJson(parsed), null, 2));
+    const unwrapped = this.unwrapNestedJson(parsed);
+    // Si la entrada/salida es texto plano (p. ej. `"Hola"`), se muestra tal cual: sin las
+    // comillas que la envuelven, que solo son sintaxis JSON y no forman parte del contenido.
+    if (typeof unwrapped === 'string') {
+      return this.prettifyText(this.stripEnclosingQuotes(unwrapped));
+    }
+    return this.prettifyText(JSON.stringify(unwrapped, null, 2));
+  }
+
+  // Quita las comillas que envuelven todo el texto cuando lo que hay dentro es un string
+  // JSON válido (`"texto"`), sin tocar textos que solo empiezan o terminan con comilla.
+  private stripEnclosingQuotes(text: string): string {
+    const trimmed = text.trim();
+    if (trimmed.length < 2 || !trimmed.startsWith('"') || !trimmed.endsWith('"')) return text;
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (typeof parsed === 'string') return parsed;
+    } catch {
+      // No es un string JSON válido: se conserva el texto original.
+    }
+    return text;
   }
 
   // Misma salida que formatJson() pero como HTML escapado con <mark> en los marcadores

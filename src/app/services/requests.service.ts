@@ -22,6 +22,9 @@ export interface RequestItem {
   otpCode: string | null;
   otpVerifiedAt: string | null;
   detectedIntent: string | null;
+  // Idioma detectado por el flujo (service_request.language): nombre o código ISO.
+  // null/vacío = no informado.
+  language: string | null;
 }
 
 // La API .NET serializa en camelCase (System.Text.Json por defecto).
@@ -43,6 +46,7 @@ interface RawRequestItem {
   otpCode: string | null;
   otpVerifiedAt: string | null;
   detectedIntent: string | null;
+  language: string | null;
 }
 
 export interface DateRange {
@@ -181,6 +185,7 @@ export class RequestsService {
             otpCode: item.otpCode,
             otpVerifiedAt: item.otpVerifiedAt,
             detectedIntent: item.detectedIntent,
+            language: item.language ?? null,
           }));
           const page = response?.page ?? options.page ?? 1;
           const pageSize = response?.pageSize ?? options.pageSize ?? items.length;

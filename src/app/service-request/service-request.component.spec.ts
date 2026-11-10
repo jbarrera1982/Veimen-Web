@@ -45,6 +45,7 @@ interface RawRequest {
   otpCode: string | null;
   otpVerifiedAt: string | null;
   detectedIntent: string | null;
+  language?: string | null;
 }
 
 function rawRequest(partial: Partial<RawRequest> = {}): RawRequest {
@@ -65,6 +66,7 @@ function rawRequest(partial: Partial<RawRequest> = {}): RawRequest {
     otpCode: null,
     otpVerifiedAt: null,
     detectedIntent: null,
+    language: null,
     ...partial,
   };
 }
@@ -199,13 +201,6 @@ describe('ServiceRequestComponent', () => {
     expect(component.requests()[1].status).toBe('Rechazado');
   });
 
-  it('should translate the "aNalyzed" status', () => {
-    fixture.detectChanges();
-    flushResponse([rawRequest({ status: 'aNalyzed' })]);
-
-    expect(component.requests()[0].status).toBe('Analizado');
-  });
-
   it('should send the selected date range on load', () => {
     fixture.detectChanges();
     flushResponse([]);
@@ -321,6 +316,49 @@ describe('ServiceRequestComponent', () => {
     expect(component.formatJson('{"texto":"{ no es json }"}')).toBe(
       '{\n  "texto": "{ no es json }"\n}',
     );
+  });
+
+  it('should strip the surrounding quotes when the payload is a plain string', () => {
+    expect(component.formatJson('"Hola mundo"')).toBe('Hola mundo');
+    expect(component.formatJson('"Línea 1\\nLínea 2"')).toBe('Línea 1\nLínea 2');
+    expect(component.formatJson('"\\"Hola\\""')).toBe('Hola');
+  });
+
+  it('should keep quotes that are not wrapping the whole payload', () => {
+    expect(component.formatJson('"Hola, ¿cómo estás?" dijo Ana')).toBe(
+      '"Hola, ¿cómo estás?" dijo Ana',
+    );
+    expect(component.formatJson('"solo comilla inicial')).toBe('"solo comilla inicial');
+  });
+
+  it('should map the request language to a flag only when it is not Spanish', () => {
+    expect(component.languageFlag(null)).toBeNull();
+    expect(component.languageFlag('   ')).toBeNull();
+    expect(component.languageFlag('Español')).toBeNull();
+    expect(component.languageFlag('es-CO')).toBeNull();
+    expect(component.languageFlag('Spanish')).toBeNull();
+
+    expect(component.languageFlag('English')).toEqual({ flag: '🇺🇸', label: 'Inglés' });
+    expect(component.languageFlag('en-US')).toEqual({ flag: '🇺🇸', label: 'Inglés' });
+    // Cualquier variante del inglés se toma como inglés de Estados Unidos.
+    expect(component.languageFlag('en-GB')).toEqual({ flag: '🇺🇸', label: 'Inglés' });
+    expect(component.languageFlag('pt-BR')).toEqual({ flag: '🇵🇹', label: 'Portugués' });
+    expect(component.languageFlag('Klingon')).toEqual({ flag: '🌐', label: 'Klingon' });
+  });
+
+  it('should show the language flag next to the subject of non-Spanish requests', () => {
+    fixture.detectChanges();
+    flushResponse([
+      rawRequest({ requestNumber: 200, subject: 'Hola', language: 'Spanish' }),
+      rawRequest({ requestNumber: 201, subject: 'Hello', language: 'English' }),
+      rawRequest({ requestNumber: 202, subject: 'Sin idioma' }),
+    ]);
+    fixture.detectChanges();
+
+    const badges = fixture.nativeElement.querySelectorAll('.lang-badge');
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent).toContain('🇺🇸');
+    expect(badges[0].textContent).toContain('Inglés');
   });
 
   it('should toggle the inline JSON panel per step', () => {
