@@ -18,6 +18,7 @@ const user = {
   profileName: 'Admin',
   clientId: null,
   clientName: null,
+  language: 'Español',
   lastLoginAt: null,
   createdAt: '2026-09-01T10:00:00Z',
 };

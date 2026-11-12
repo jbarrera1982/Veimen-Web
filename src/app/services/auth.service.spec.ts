@@ -14,6 +14,7 @@ const user: UserDto = {
   fullName: 'Alice Wonder',
   active: true,
   clientId: null,
+  language: 'Inglés',
   lastLoginAt: '2026-09-15T10:00:00Z',
 };
 
@@ -29,7 +30,7 @@ const authResponse: AuthResponse = {
 
 // login/refresh cargan los permisos del usuario tras persistir la sesión.
 const PERMISSIONS_URL = `${API}/api/auth/me/permissions`;
-const PERMISSIONS_DTO = { profile: 'Admin', permissions: ['prompts.read'] };
+const PERMISSIONS_DTO = { profile: 'Admin', language: 'Inglés', permissions: ['prompts.read'] };
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -54,6 +55,10 @@ describe('AuthService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should default the language to Español when there is no claim', () => {
+    expect(service.language()).toBe('Español');
+  });
+
   it('should login and persist the session', () => {
     service.login('alice', 'secret').subscribe({
       next: (resp) => expect(resp).toEqual(authResponse),
@@ -70,6 +75,7 @@ describe('AuthService', () => {
 
     expect(service.currentUser()).toEqual(user);
     expect(service.isAuthenticated()).toBe(true);
+    expect(service.language()).toBe('Inglés');
     expect(service.getAccessToken()).toBe('access-123');
     expect(service.getRefreshToken()).toBe('refresh-456');
     expect(localStorage.getItem('veimen-web.accessToken')).toBe('access-123');

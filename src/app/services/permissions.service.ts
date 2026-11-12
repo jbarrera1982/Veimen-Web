@@ -24,6 +24,8 @@ export const PERMISSIONS = {
 
 export interface UserPermissionsDto {
   profile: string | null;
+  // Idioma preferido leído del claim 'language' del access token.
+  language?: string | null;
   permissions: string[];
 }
 
@@ -33,6 +35,7 @@ export class PermissionsService {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
   readonly profile = signal<string | null>(null);
+  readonly language = signal<string | null>(null);
   readonly permissions = signal<readonly string[]>([]);
   // true cuando ya se consultaron los permisos al menos una vez (con éxito o error).
   readonly loaded = signal(false);
@@ -52,6 +55,7 @@ export class PermissionsService {
     return this.http.get<UserPermissionsDto>(`${this.apiBaseUrl}/api/auth/me/permissions`).pipe(
       tap((dto) => {
         this.profile.set(dto.profile);
+        this.language.set(dto.language ?? null);
         this.permissions.set(dto.permissions);
         this.loaded.set(true);
       }),
@@ -60,6 +64,7 @@ export class PermissionsService {
         // Ante un error no bloqueamos el arranque ni la navegación: se marca como
         // cargado sin permisos, así guards/directivas ocultan todo en vez de fallar.
         this.profile.set(null);
+        this.language.set(null);
         this.permissions.set([]);
         this.loaded.set(true);
         return of(undefined);
@@ -69,6 +74,7 @@ export class PermissionsService {
 
   clear(): void {
     this.profile.set(null);
+    this.language.set(null);
     this.permissions.set([]);
     this.loaded.set(false);
   }

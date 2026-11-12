@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ManagedUser, UsersService, Profile } from './users.service';
+import {
+  ManagedUser,
+  UsersService,
+  Profile,
+  USER_LANGUAGES,
+  DEFAULT_USER_LANGUAGE,
+} from './users.service';
 import { Client, ClientsService } from '../services/clients.service';
 import { ClientContextService } from '../services/client-context.service';
 
@@ -35,6 +41,7 @@ export class UserFormComponent {
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly languages = USER_LANGUAGES;
 
   readonly form = this.fb.group({
     username: ['', [Validators.required, Validators.maxLength(50)]],
@@ -44,6 +51,7 @@ export class UserFormComponent {
     fullName: ['', [Validators.maxLength(150)]],
     profileId: [0 as number, [Validators.required, Validators.min(1)]],
     clientId: [0 as number],
+    language: [DEFAULT_USER_LANGUAGE, [Validators.required, Validators.maxLength(100)]],
     active: [true],
   });
 
@@ -86,7 +94,7 @@ export class UserFormComponent {
 
     if (!this.isEdit()) {
       // Crear usuario nuevo.
-      const { username, password, email, phone, fullName, profileId, clientId, active } =
+      const { username, password, email, phone, fullName, profileId, clientId, language, active } =
         this.form.value;
       const selectedClient = this.contextClientId() ?? Number(clientId ?? 0);
       this.users
@@ -98,6 +106,7 @@ export class UserFormComponent {
           fullName: (fullName ?? '').trim() || null,
           profileId: Number(profileId),
           clientId: selectedClient > 0 ? selectedClient : null,
+          language: language ?? DEFAULT_USER_LANGUAGE,
           active: active ?? true,
         })
         .subscribe({
@@ -114,7 +123,7 @@ export class UserFormComponent {
       return;
     }
 
-    const { email, phone, fullName, profileId, clientId, active } = this.form.value;
+    const { email, phone, fullName, profileId, clientId, language, active } = this.form.value;
     this.users
       .update(current.userId, {
         email: (email ?? '').trim(),
@@ -124,6 +133,7 @@ export class UserFormComponent {
         profileId: Number(profileId),
         // 0 = quitar el cliente ("Todos"); > 0 = asignar.
         clientId: this.contextClientId() ?? Number(clientId ?? 0),
+        language: language ?? DEFAULT_USER_LANGUAGE,
         active: active ?? true,
       })
       .subscribe({
@@ -185,6 +195,7 @@ export class UserFormComponent {
             fullName: found.fullName ?? '',
             profileId: found.profileId ?? 0,
             clientId: found.clientId ?? 0,
+            language: found.language ?? DEFAULT_USER_LANGUAGE,
             active: found.active,
           });
         } else {

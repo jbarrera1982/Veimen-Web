@@ -8,6 +8,7 @@ const API = environment.apiBaseUrl;
 
 const dto: UserPermissionsDto = {
   profile: 'Admin',
+  language: 'Inglés',
   permissions: [PERMISSIONS.promptsRead, PERMISSIONS.promptsWrite],
 };
 
@@ -42,6 +43,7 @@ describe('PermissionsService', () => {
     req.flush(dto);
 
     expect(service.profile()).toBe('Admin');
+    expect(service.language()).toBe('Inglés');
     expect(service.permissions()).toEqual(dto.permissions);
     expect(service.loaded()).toBe(true);
     expect(service.has(PERMISSIONS.promptsRead)).toBe(true);
@@ -62,6 +64,7 @@ describe('PermissionsService', () => {
 
     expect(service.loaded()).toBe(true);
     expect(service.profile()).toBeNull();
+    expect(service.language()).toBeNull();
     expect(service.permissions()).toEqual([]);
     expect(service.has(PERMISSIONS.promptsRead)).toBe(false);
   });
@@ -74,6 +77,7 @@ describe('PermissionsService', () => {
 
     expect(service.loaded()).toBe(false);
     expect(service.profile()).toBeNull();
+    expect(service.language()).toBeNull();
     expect(service.permissions()).toEqual([]);
   });
 });

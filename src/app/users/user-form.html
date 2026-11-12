@@ -75,6 +75,15 @@
         <input id="edit-fullname" type="text" formControlName="fullName" autocomplete="off" />
       </div>
 
+      <div class="form-field">
+        <label for="edit-language">Idioma</label>
+        <select id="edit-language" formControlName="language">
+          @for (language of languages; track language) {
+            <option [ngValue]="language">{{ language }}</option>
+          }
+        </select>
+      </div>
+
       @if (!isEdit()) {
         <div class="form-field">
           <label for="new-password">Contraseña</label>

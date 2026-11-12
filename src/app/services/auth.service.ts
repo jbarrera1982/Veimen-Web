@@ -23,6 +23,8 @@ export interface UserDto {
   fullName: string | null;
   active: boolean;
   clientId: number | null;
+  // Idioma preferido: "Español" (por defecto) o "Inglés".
+  language?: string | null;
   lastLoginAt: string | null;
 }
 
@@ -60,6 +62,12 @@ export class AuthService {
 
   readonly currentUser = signal<UserDto | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
+
+  // Idioma preferido del usuario, disponible en toda la aplicación. Prioriza el claim
+  // 'language' del access token (PermissionsService) y cae al usuario persistido.
+  readonly language = computed(
+    () => this.permissions.language() ?? this.currentUser()?.language ?? 'Español',
+  );
 
   constructor() {
     if (this.isBrowser) {

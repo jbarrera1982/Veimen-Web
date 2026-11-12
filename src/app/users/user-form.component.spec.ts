@@ -18,6 +18,7 @@ const user = {
   profileName: 'Admin',
   clientId: null,
   clientName: null,
+  language: 'Español',
   lastLoginAt: null,
   createdAt: '2026-09-01T10:00:00Z',
 };
@@ -117,6 +118,7 @@ describe('UserFormComponent', () => {
       fullName: 'Alice',
       profileId: 1,
       clientId: null,
+      language: 'Español',
       active: true,
     });
     req.flush({ ...user, userId: 2, username: 'alice' });
@@ -139,6 +141,7 @@ describe('UserFormComponent', () => {
     expect(component.user()?.username).toBe('bob');
     expect(component.form.value.email).toBe('bob@example.com');
     expect(component.form.value.profileId).toBe(1);
+    expect(component.form.value.language).toBe('Español');
   });
 
   it('should update the user including the email and navigate back', async () => {
@@ -150,7 +153,11 @@ describe('UserFormComponent', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    component.form.patchValue({ email: 'nuevo@example.com', fullName: 'Bobby' });
+    component.form.patchValue({
+      email: 'nuevo@example.com',
+      fullName: 'Bobby',
+      language: 'Inglés',
+    });
     component.submit();
 
     const req = httpTesting.expectOne(`${API}/api/users/1`);
@@ -161,6 +168,7 @@ describe('UserFormComponent', () => {
       fullName: 'Bobby',
       profileId: 1,
       clientId: 0,
+      language: 'Inglés',
       active: true,
     });
     req.flush({ ...user, email: 'nuevo@example.com' });

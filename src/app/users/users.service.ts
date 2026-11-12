@@ -14,9 +14,16 @@ export interface ManagedUser {
   profileName: string | null;
   clientId: number | null;
   clientName: string | null;
+  // Idioma preferido: "Español" (por defecto) o "Inglés".
+  language: string | null;
   lastLoginAt: string | null;
   createdAt: string;
 }
+
+// Idiomas soportados por el formulario de usuarios. La API guarda el nombre en
+// español y usa "Español" como valor por defecto.
+export const USER_LANGUAGES = ['Español', 'Inglés'] as const;
+export const DEFAULT_USER_LANGUAGE = 'Español';
 
 export interface Profile {
   profileId: number;
@@ -33,6 +40,7 @@ export interface CreateUserPayload {
   profileId: number;
   active?: boolean;
   clientId?: number | null;
+  language?: string;
 }
 
 export interface UpdateUserPayload {
@@ -43,6 +51,8 @@ export interface UpdateUserPayload {
   active?: boolean;
   // 0 = quitar el cliente ("Todos"); > 0 = asignar; ausente = no cambiar.
   clientId?: number;
+  // "Español" o "Inglés"; ausente = no cambiar.
+  language?: string;
 }
 
 @Injectable({ providedIn: 'root' })

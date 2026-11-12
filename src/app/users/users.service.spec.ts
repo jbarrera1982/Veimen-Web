@@ -17,6 +17,7 @@ const user: ManagedUser = {
   profileName: 'Admin',
   clientId: null,
   clientName: null,
+  language: 'Español',
   lastLoginAt: null,
   createdAt: '2026-09-01T10:00:00Z',
 };
@@ -63,6 +64,7 @@ describe('UsersService', () => {
       password: 'password123',
       fullName: 'Bob',
       profileId: 1,
+      language: 'Inglés',
     };
     service.create(payload).subscribe((created) => expect(created).toEqual(user));
 
