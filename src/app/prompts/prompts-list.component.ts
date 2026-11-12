@@ -14,6 +14,7 @@ import { PromptsService, Prompt } from '../services/prompts.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { ClientContextService } from '../services/client-context.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
+import { TranslationService } from '../i18n/translation.service';
 
 type SortColumn =
   | 'promptId'
@@ -51,6 +52,9 @@ function readStoredSearch(): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PromptsListComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+  readonly t = this.i18n.t;
+
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -65,17 +69,17 @@ export class PromptsListComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = PAGE_SIZE;
 
-  readonly sortOptions: { value: SortColumn; label: string }[] = [
+  readonly sortOptions = computed<{ value: SortColumn; label: string }[]>(() => [
     { value: 'promptId', label: 'ID' },
-    { value: 'secuence', label: 'Secuencia' },
-    { value: 'code', label: 'Código' },
-    { value: 'name', label: 'Nombre' },
-    { value: 'description', label: 'Descripción' },
-    { value: 'agentGroup', label: 'Grupo' },
-    { value: 'type', label: 'Tipo' },
-    { value: 'llmModel', label: 'Modelo' },
-    { value: 'version', label: 'Versión' },
-  ];
+    { value: 'secuence', label: this.t('prompts.sequence') },
+    { value: 'code', label: this.t('prompts.code') },
+    { value: 'name', label: this.t('prompts.name') },
+    { value: 'description', label: this.t('prompts.description') },
+    { value: 'agentGroup', label: this.t('prompts.group') },
+    { value: 'type', label: this.t('prompts.type') },
+    { value: 'llmModel', label: this.t('prompts.model') },
+    { value: 'version', label: this.t('prompts.version') },
+  ]);
 
   readonly filteredPrompts = computed(() => {
     const term = this.searchText().trim().toLowerCase();
@@ -130,7 +134,7 @@ export class PromptsListComponent implements OnInit {
     if (total === 0) return '';
     const start = (this.page() - 1) * this.pageSize + 1;
     const end = Math.min(this.page() * this.pageSize, total);
-    return `Mostrando ${start}–${end} de ${total}`;
+    return this.t('prompts.pageInfo', { start, end, total });
   });
 
   readonly types = computed(() => [...new Set(this.prompts().map((p) => p.type))].sort());
@@ -197,7 +201,7 @@ export class PromptsListComponent implements OnInit {
       },
       error: () => {
         if (seq !== this.loadSeq) return;
-        this.error.set('No se pudieron cargar los prompts. Verifica la conexión con el servidor.');
+        this.error.set(this.t('prompts.loadError'));
         this.isLoading.set(false);
         this.isRefreshing.set(false);
       },
@@ -288,15 +292,14 @@ export class PromptsListComponent implements OnInit {
   }
 
   removePrompt(prompt: Prompt): void {
-    if (!window.confirm(`¿Eliminar el prompt ${prompt.name}?`)) {
+    if (!window.confirm(this.t('prompts.confirmDelete', { name: prompt.name }))) {
       return;
     }
 
     this.error.set(null);
     this.promptsService.deletePrompt(prompt.promptId).subscribe({
       next: () => this.prompts.update((list) => list.filter((p) => p.promptId !== prompt.promptId)),
-      error: () =>
-        this.error.set(`No se pudo eliminar el prompt ${prompt.name}. Inténtalo de nuevo.`),
+      error: () => this.error.set(this.t('prompts.deleteErrorName', { name: prompt.name })),
     });
   }
 }

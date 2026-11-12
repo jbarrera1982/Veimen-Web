@@ -184,7 +184,7 @@ describe('TokensDashboardComponent', () => {
     load();
 
     const series = component.timelineSeries();
-    expect(series.map((s) => s.name)).toEqual(['Input', 'Output']);
+    expect(series.map((s) => s.name)).toEqual(['Entrada', 'Salida']);
     expect(series[0].series).toEqual([
       { name: '2026-09-01', value: 3000 },
       { name: '2026-09-02', value: 500 },
@@ -266,7 +266,7 @@ describe('TokensDashboardComponent', () => {
     const headers = Array.from<Element>(
       fixture.nativeElement.querySelectorAll('.detail-table thead th'),
     ).map((th) => th.textContent?.trim());
-    expect(headers).toEqual(['Modelo', 'Input', 'Output', 'Total']);
+    expect(headers).toEqual(['Modelo', 'Entrada', 'Salida', 'Total']);
 
     const modelCells = Array.from<Element>(
       fixture.nativeElement.querySelectorAll('.detail-table tbody tr td:first-child'),
@@ -283,8 +283,8 @@ describe('TokensDashboardComponent', () => {
     load();
 
     expect(component.legendItems()).toEqual([
-      { name: 'Input', color: component.seriesScheme.domain?.[0] },
-      { name: 'Output', color: component.seriesScheme.domain?.[1] },
+      { name: 'Entrada', color: component.seriesScheme.domain?.[0] },
+      { name: 'Salida', color: component.seriesScheme.domain?.[1] },
     ]);
   });
 
@@ -293,8 +293,8 @@ describe('TokensDashboardComponent', () => {
 
     const items = fixture.nativeElement.querySelectorAll('.mini-legend li');
     expect(Array.from<Element>(items).map((li) => li.textContent?.trim())).toEqual([
-      'Input',
-      'Output',
+      'Entrada',
+      'Salida',
     ]);
     // La leyenda interna de ngx-charts queda desactivada para evitar el desborde.
     expect(fixture.nativeElement.querySelector('.chart-legend')).toBeNull();

@@ -1,16 +1,16 @@
 <div class="processing-dashboard">
   <header class="dashboard-topbar">
     <div class="topbar-title">
-      <h1>Procesamiento</h1>
-      <p class="subtitle">Correos recibidos vs requerimientos generados por fecha</p>
+      <h1>{{ t('processing.title') }}</h1>
+      <p class="subtitle">{{ t('processing.subtitle') }}</p>
       @if (lastUpdated(); as updated) {
-        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+        <p class="last-updated">{{ t('common.lastUpdated', { time: formatTime(updated) }) }}</p>
       }
     </div>
 
     <div class="topbar-dates date-filters">
       <label class="date-field">
-        <span>Desde</span>
+        <span>{{ t('dashboard.from') }}</span>
         <input
           type="date"
           [value]="startDate() ?? ''"
@@ -18,7 +18,7 @@
         />
       </label>
       <label class="date-field">
-        <span>Hasta</span>
+        <span>{{ t('dashboard.to') }}</span>
         <input
           type="date"
           [value]="endDate() ?? ''"
@@ -30,8 +30,8 @@
         type="button"
         (click)="applyDateRange()"
         [disabled]="isRefreshing()"
-        data-tooltip="Filtrar"
-        aria-label="Filtrar"
+        [attr.data-tooltip]="t('common.filter')"
+        [attr.aria-label]="t('common.filter')"
       >
         <svg
           width="14"
@@ -49,7 +49,7 @@
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
       <button
@@ -57,8 +57,8 @@
         type="button"
         (click)="refresh()"
         [disabled]="isRefreshing()"
-        data-tooltip="Recargar"
-        aria-label="Recargar"
+        [attr.data-tooltip]="t('common.reload')"
+        [attr.aria-label]="t('common.reload')"
       >
         <svg
           width="14"
@@ -80,46 +80,48 @@
   @if (isLoading()) {
     <div class="loading">
       <span class="spinner spinner-large"></span>
-      Cargando datos…
+      {{ t('common.loadingData') }}
     </div>
   } @else if (error(); as err) {
     <div class="error">
       <p>{{ err }}</p>
-      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+      <button class="refresh-btn" type="button" (click)="refresh()">{{ t('common.retry') }}</button>
     </div>
   } @else {
     <section class="stats-row">
       <div class="stat-card">
-        <span>Correos recibidos</span>
+        <span>{{ t('processing.mails') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().mails) }}</strong>
-        <small class="stat-hint">{{ formatNumber(totals().mailDays) }} días con correos</small>
+        <small class="stat-hint">{{
+          t('common.daysWithMails', { count: formatNumber(totals().mailDays) })
+        }}</small>
       </div>
       <div class="stat-card">
-        <span>Requerimientos generados</span>
+        <span>{{ t('processing.requests') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().requests) }}</strong>
         <small class="stat-hint">
-          {{ formatNumber(totals().requestDays) }} días con requerimientos
+          {{ t('common.daysWithRequests', { count: formatNumber(totals().requestDays) }) }}
         </small>
       </div>
       <div class="stat-card">
-        <span>Conversión</span>
+        <span>{{ t('processing.conversion') }}</span>
         <strong class="stat-value">{{ formatConversion(totals().conversion) }}</strong>
-        <small class="stat-hint">Requerimientos ÷ correos</small>
+        <small class="stat-hint">{{ t('processing.conversionHint') }}</small>
       </div>
       <div class="stat-card">
-        <span>Balance</span>
+        <span>{{ t('processing.balance') }}</span>
         <strong class="stat-value">{{ formatBalance(totals().balance) }}</strong>
-        <small class="stat-hint">Requerimientos − correos</small>
+        <small class="stat-hint">{{ t('processing.balanceHint') }}</small>
       </div>
     </section>
 
     @if (rows().length === 0) {
-      <div class="chart-empty-empty">No se registró procesamiento en el rango seleccionado.</div>
+      <div class="chart-empty-empty">{{ t('processing.noProcessing') }}</div>
     } @else {
       <section class="charts-grid">
         <div class="chart-card chart-card-wide">
           <div class="chart-card-head">
-            <h2>Evolución diaria</h2>
+            <h2>{{ t('processing.dailyTrend') }}</h2>
             <ul class="mini-legend">
               @for (item of legendItems(); track item.name) {
                 <li>
@@ -152,13 +154,13 @@
               }
             </div>
           } @else {
-            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+            <div class="chart-empty">{{ t('common.noData') }}</div>
           }
         </div>
 
         <div class="chart-card chart-card-wide">
           <div class="chart-card-head">
-            <h2>Comparativa por día</h2>
+            <h2>{{ t('processing.dailyComparison') }}</h2>
             <ul class="mini-legend">
               @for (item of legendItems(); track item.name) {
                 <li>
@@ -197,16 +199,16 @@
       </section>
 
       <section class="detail-card">
-        <h2>Detalle por fecha</h2>
+        <h2>{{ t('processing.detailByDate') }}</h2>
         <div class="table-scroll">
           <table class="detail-table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th class="num">Correos</th>
-                <th class="num">Requerimientos</th>
-                <th class="num">Conversión</th>
-                <th class="num">Balance</th>
+                <th>{{ t('common.date') }}</th>
+                <th class="num">{{ t('processing.mailsSeries') }}</th>
+                <th class="num">{{ t('processing.requestsSeries') }}</th>
+                <th class="num">{{ t('processing.conversion') }}</th>
+                <th class="num">{{ t('processing.balance') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -226,14 +228,14 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="table-empty">No hay datos en el rango seleccionado.</td>
+                  <td colspan="5" class="table-empty">{{ t('common.noData') }}</td>
                 </tr>
               }
             </tbody>
             @if (detailRows().length) {
               <tfoot>
                 <tr>
-                  <td class="strong">Total</td>
+                  <td class="strong">{{ t('common.total') }}</td>
                   <td class="num strong">{{ formatNumber(totals().mails) }}</td>
                   <td class="num strong">{{ formatNumber(totals().requests) }}</td>
                   <td class="num strong">{{ formatConversion(totals().conversion) }}</td>
@@ -245,7 +247,11 @@
         </div>
         @if (hasMoreRows()) {
           <button class="more-btn" type="button" (click)="showMore()">
-            Ver más ({{ formatNumber(dailyDetail().length - detailRows().length) }} restantes)
+            {{
+              t('common.showMore', {
+                count: formatNumber(dailyDetail().length - detailRows().length),
+              })
+            }}
           </button>
         }
       </section>

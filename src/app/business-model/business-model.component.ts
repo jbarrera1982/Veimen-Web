@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { TranslationService } from '../i18n/translation.service';
 
 // Documento estático alojado en /public/TUCOOP_Gestion_de_Valor.pdf. El builder lo
 // copia a la raíz del output, así que se resuelve contra el <base href="/"> del index.html.
@@ -14,6 +15,9 @@ const BUSINESS_MODEL_PDF = 'TUCOOP_Gestion_de_Valor.pdf';
 })
 export class BusinessModelComponent {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   // El iframe exige un recurso de confianza: Angular bloquea [src] en el contexto
   // RESOURCE_URL salvo que se marque explícitamente.

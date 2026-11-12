@@ -14,6 +14,7 @@ import { PERMISSIONS, PermissionsService } from '../services/permissions.service
 import { PendingReviewService } from '../services/pending-review.service';
 import { PendingProcessingService } from '../services/pending-processing.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-shell',
@@ -30,8 +31,10 @@ export class ShellComponent implements OnInit, OnDestroy {
   private readonly clientContext = inject(ClientContextService);
   private readonly pendingReview = inject(PendingReviewService);
   private readonly pendingProcessing = inject(PendingProcessingService);
+  private readonly i18n = inject(TranslationService);
 
   readonly PERMISSIONS = PERMISSIONS;
+  readonly t = this.i18n.t;
 
   readonly isMenuOpen = signal(false);
 

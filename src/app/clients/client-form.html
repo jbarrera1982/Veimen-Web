@@ -1,6 +1,6 @@
 <div class="client-form">
   <header class="client-form-header">
-    <h1>{{ isEdit() ? 'Editar cliente' : 'Nuevo cliente' }}</h1>
+    <h1>{{ isEdit() ? t('clientForm.editTitle') : t('clientForm.newTitle') }}</h1>
     @if (error(); as err) {
       <p class="form-error">{{ err }}</p>
     }
@@ -9,37 +9,37 @@
   @if (isLoading()) {
     <div class="form-state">
       <span class="spinner"></span>
-      Cargando cliente…
+      {{ t('clientForm.loading') }}
     </div>
   } @else {
     <form class="client-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <label class="field field-full">
-        <span>Nombre *</span>
+        <span>{{ t('clientForm.name') }}</span>
         <input formControlName="name" type="text" maxlength="100" />
       </label>
 
       <label class="field">
-        <span>Email entrante</span>
+        <span>{{ t('clientForm.inboundEmail') }}</span>
         <input formControlName="inboundEmail" type="email" maxlength="100" />
       </label>
 
       <label class="field">
-        <span>Email saliente</span>
+        <span>{{ t('clientForm.outboundEmail') }}</span>
         <input formControlName="outboundEmail" type="email" maxlength="100" />
       </label>
 
       <label class="field">
-        <span>Email analista</span>
+        <span>{{ t('clientForm.analystEmail') }}</span>
         <input formControlName="analystEmail" type="email" maxlength="100" />
       </label>
 
       <label class="field">
-        <span>Project ID</span>
+        <span>{{ t('clientForm.projectId') }}</span>
         <input formControlName="projectId" type="text" maxlength="100" autocomplete="off" />
       </label>
 
       <label class="field field-check">
-        <span>Activo</span>
+        <span>{{ t('clientForm.active') }}</span>
         <input formControlName="active" type="checkbox" />
       </label>
 
@@ -49,7 +49,7 @@
 
       <div class="form-actions field-full">
         <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
-          Cancelar
+          {{ t('common.cancel') }}
         </button>
         <button
           type="submit"
@@ -58,9 +58,9 @@
         >
           @if (isSaving()) {
             <span class="spinner"></span>
-            Guardando…
+            {{ t('common.saving') }}
           } @else {
-            {{ isEdit() ? 'Guardar cambios' : 'Crear cliente' }}
+            {{ isEdit() ? t('clientForm.save') : t('clientForm.create') }}
           }
         </button>
       </div>

@@ -1,12 +1,12 @@
 <div class="clients">
   <header class="clients-header">
     <div>
-      <h1>Clientes</h1>
-      <p class="clients-subtitle">Administra parámetros del cliente.</p>
+      <h1>{{ t('clients.title') }}</h1>
+      <p class="clients-subtitle">{{ t('clients.subtitle') }}</p>
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
     </div>
@@ -16,7 +16,7 @@
       type="button"
       (click)="newClient()"
     >
-      Nuevo cliente
+      {{ t('clients.new') }}
     </button>
   </header>
 
@@ -30,21 +30,21 @@
   @if (isLoading()) {
     <div class="state">
       <span class="spinner spinner-large"></span>
-      Cargando clientes…
+      {{ t('clients.loading') }}
     </div>
   } @else {
     <div class="filters-bar">
       <input
         class="search-input"
         type="search"
-        placeholder="Buscar por nombre…"
+        [attr.placeholder]="t('clients.searchPlaceholder')"
         [value]="searchText()"
         (input)="onSearch($event)"
       />
       <select class="filter-select" [value]="statusFilter()" (change)="onStatusChange($event)">
-        <option value="all">Todos los estados</option>
-        <option value="active">Activos</option>
-        <option value="inactive">Inactivos</option>
+        <option value="all">{{ t('clients.allStatuses') }}</option>
+        <option value="active">{{ t('clients.activeOnly') }}</option>
+        <option value="inactive">{{ t('clients.inactiveOnly') }}</option>
       </select>
       <button
         class="btn-secondary"
@@ -52,22 +52,22 @@
         (click)="resetFilters()"
         [disabled]="!hasActiveFilters()"
       >
-        Limpiar filtros
+        {{ t('common.clearFilters') }}
       </button>
       <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="isRefreshing()">
-        ↩ Refrescar
+        {{ t('clients.refresh') }}
       </button>
     </div>
 
     @if (clients().length === 0) {
       <div class="state">
-        <p>No hay clientes registrados.</p>
+        <p>{{ t('clients.emptyRegistered') }}</p>
       </div>
     } @else if (sortedClients().length === 0) {
       <div class="state">
-        <p>No hay clientes que coincidan con los filtros.</p>
+        <p>{{ t('clients.empty') }}</p>
         <button class="btn-secondary" type="button" (click)="resetFilters()">
-          Limpiar filtros
+          {{ t('common.clearFilters') }}
         </button>
       </div>
     } @else {
@@ -75,8 +75,8 @@
         <table class="clients-table">
           <thead>
             <tr>
-              <th class="col-name">Nombre</th>
-              <th class="col-actions">Acciones</th>
+              <th class="col-name">{{ t('common.name') }}</th>
+              <th class="col-actions">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -95,21 +95,21 @@
                       type="button"
                       (click)="openClient(client); $event.stopPropagation()"
                     >
-                      Editar
+                      {{ t('common.edit') }}
                     </button>
                     <button
                       class="row-btn"
                       type="button"
                       (click)="toggleActive(client); $event.stopPropagation()"
                     >
-                      {{ client.active ? 'Desactivar' : 'Activar' }}
+                      {{ client.active ? t('clients.deactivate') : t('clients.activate') }}
                     </button>
                     <button
                       class="row-btn row-btn-danger"
                       type="button"
                       (click)="removeClient(client); $event.stopPropagation()"
                     >
-                      Eliminar
+                      {{ t('common.delete') }}
                     </button>
                   }
                 </td>
@@ -128,16 +128,18 @@
             (click)="prevPage()"
             [disabled]="page() === 1"
           >
-            « Anterior
+            « {{ t('common.previous') }}
           </button>
-          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <span class="page-indicator">{{
+            t('clients.page', { page: page(), total: totalPages() })
+          }}</span>
           <button
             class="btn-secondary"
             type="button"
             (click)="nextPage()"
             [disabled]="page() === totalPages()"
           >
-            Siguiente »
+            {{ t('common.next') }} »
           </button>
         </div>
       }

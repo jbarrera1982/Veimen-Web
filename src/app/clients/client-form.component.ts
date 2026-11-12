@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ClientPayload, ClientsService } from '../services/clients.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-client-form',
@@ -15,6 +16,9 @@ import { ClientPayload, ClientsService } from '../services/clients.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientFormComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+  readonly t = this.i18n.t;
+
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly error = signal<string | null>(null);
@@ -78,9 +82,10 @@ export class ClientFormComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.isSaving.set(false);
+        const name = payload.name?.trim() ?? '';
         const notice = this.isEdit()
-          ? `Cliente ${payload.name?.trim() ?? ''} actualizado.`
-          : `Cliente ${payload.name?.trim() ?? ''} creado.`;
+          ? this.t('clients.updatedName', { name })
+          : this.t('clients.createdName', { name });
         void this.router.navigate(['/clientes'], { state: { notice } });
       },
       error: (err: unknown) => {
@@ -120,9 +125,7 @@ export class ClientFormComponent implements OnInit {
 
   private extractMessage(err: unknown): string {
     if (!(err instanceof HttpErrorResponse)) {
-      return err instanceof Error && err.message
-        ? err.message
-        : 'Error inesperado. Inténtalo de nuevo.';
+      return err instanceof Error && err.message ? err.message : this.t('clientForm.genericError');
     }
 
     const body = err.error as { message?: string } | null;
@@ -133,20 +136,20 @@ export class ClientFormComponent implements OnInit {
     if (err.status === 400) {
       const fields = this.invalidFields(err.error);
       if (fields.length > 0) {
-        return `Revisa estos campos: ${fields.slice(0, 5).join(', ')}.`;
+        return this.t('clientForm.invalidFields', { fields: fields.slice(0, 5).join(', ') });
       }
-      return 'Los datos enviados no son válidos. Revisa los campos obligatorios.';
+      return this.t('clientForm.invalidData');
     }
     if (err.status === 403) {
-      return 'No tienes permiso para guardar clientes.';
+      return this.t('clientForm.forbidden');
     }
     if (err.status === 404) {
-      return 'El cliente ya no existe: puede que otro usuario lo haya eliminado. Vuelve al listado.';
+      return this.t('clientForm.notFound');
     }
     if (err.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      return this.t('clientForm.connectionError');
     }
-    return 'Ocurrió un error. Inténtalo de nuevo.';
+    return this.t('clientForm.genericError');
   }
 
   // El 400 del backend trae el ModelState: { errors: { name: ['…'], inboundEmail: ['…'] } }.

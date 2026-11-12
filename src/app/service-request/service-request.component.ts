@@ -20,6 +20,8 @@ import { PERMISSIONS, PermissionsService } from '../services/permissions.service
 import { ClientContextService } from '../services/client-context.service';
 import { PendingReviewService } from '../services/pending-review.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
+import { TranslationService } from '../i18n/translation.service';
+import type { TranslationKey } from '../i18n/translations';
 
 function toDateInputValue(date: Date): string {
   const y = date.getFullYear();
@@ -46,39 +48,39 @@ const SPANISH_LANGUAGE_VALUES = new Set([
 // Idiomas que se marcan con bandera junto al asunto del listado: [códigos ISO y nombres
 // aceptados, bandera, nombre a mostrar]. Los códigos también se aceptan con región
 // ('en-GB', 'pt-BR'). Los no listados se muestran con un globo y el valor recibido.
-const LANGUAGE_MARKS: ReadonlyArray<readonly [readonly string[], string, string]> = [
+const LANGUAGE_MARKS: ReadonlyArray<readonly [readonly string[], string, TranslationKey]> = [
   // El inglés se representa con la bandera de Estados Unidos (inglés de EE. UU.).
-  [['en', 'eng', 'english', 'inglés', 'ingles'], '🇺🇸', 'Inglés'],
-  [['pt', 'por', 'portuguese', 'portugués', 'portugues'], '🇵🇹', 'Portugués'],
-  [['fr', 'fra', 'fre', 'french', 'francés', 'frances'], '🇫🇷', 'Francés'],
-  [['de', 'deu', 'ger', 'german', 'alemán', 'aleman'], '🇩🇪', 'Alemán'],
-  [['it', 'ita', 'italian', 'italiano'], '🇮🇹', 'Italiano'],
+  [['en', 'eng', 'english', 'inglés', 'ingles'], '🇺🇸', 'language.en'],
+  [['pt', 'por', 'portuguese', 'portugués', 'portugues'], '🇵🇹', 'language.pt'],
+  [['fr', 'fra', 'fre', 'french', 'francés', 'frances'], '🇫🇷', 'language.fr'],
+  [['de', 'deu', 'ger', 'german', 'alemán', 'aleman'], '🇩🇪', 'language.de'],
+  [['it', 'ita', 'italian', 'italiano'], '🇮🇹', 'language.it'],
   [
     ['nl', 'nld', 'dut', 'dutch', 'neerlandés', 'neerlandes', 'holandés', 'holandes'],
     '🇳🇱',
-    'Neerlandés',
+    'language.nl',
   ],
-  [['sv', 'swe', 'swedish', 'sueco'], '🇸🇪', 'Sueco'],
-  [['da', 'dan', 'danish', 'danés', 'danes'], '🇩🇰', 'Danés'],
-  [['nb', 'nn', 'no', 'nor', 'norwegian', 'noruego'], '🇳🇴', 'Noruego'],
-  [['fi', 'fin', 'finnish', 'finés', 'fines'], '🇫🇮', 'Finés'],
-  [['ru', 'rus', 'russian', 'ruso'], '🇷🇺', 'Ruso'],
-  [['uk', 'ukr', 'ukrainian', 'ucraniano'], '🇺🇦', 'Ucraniano'],
-  [['pl', 'pol', 'polish', 'polaco'], '🇵🇱', 'Polaco'],
-  [['cs', 'ces', 'cze', 'czech', 'checo'], '🇨🇿', 'Checo'],
-  [['ro', 'ron', 'rum', 'romanian', 'rumano'], '🇷🇴', 'Rumano'],
-  [['hu', 'hun', 'hungarian', 'húngaro', 'hungaro'], '🇭🇺', 'Húngaro'],
-  [['el', 'ell', 'gre', 'greek', 'griego'], '🇬🇷', 'Griego'],
-  [['tr', 'tur', 'turkish', 'turco'], '🇹🇷', 'Turco'],
-  [['ar', 'ara', 'arabic', 'árabe', 'arabe'], '🇸🇦', 'Árabe'],
-  [['he', 'heb', 'hebrew', 'hebreo'], '🇮🇱', 'Hebreo'],
-  [['hi', 'hin', 'hindi'], '🇮🇳', 'Hindi'],
-  [['zh', 'zho', 'chi', 'chinese', 'chino'], '🇨🇳', 'Chino'],
-  [['ja', 'jpn', 'japanese', 'japonés', 'japones'], '🇯🇵', 'Japonés'],
-  [['ko', 'kor', 'korean', 'coreano'], '🇰🇷', 'Coreano'],
-  [['vi', 'vie', 'vietnamese', 'vietnamita'], '🇻🇳', 'Vietnamita'],
-  [['th', 'tha', 'thai', 'tailandés', 'tailandes'], '🇹🇭', 'Tailandés'],
-  [['id', 'ind', 'indonesian', 'indonesio'], '🇮🇩', 'Indonesio'],
+  [['sv', 'swe', 'swedish', 'sueco'], '🇸🇪', 'language.sv'],
+  [['da', 'dan', 'danish', 'danés', 'danes'], '🇩🇰', 'language.da'],
+  [['nb', 'nn', 'no', 'nor', 'norwegian', 'noruego'], '🇳🇴', 'language.no'],
+  [['fi', 'fin', 'finnish', 'finés', 'fines'], '🇫🇮', 'language.fi'],
+  [['ru', 'rus', 'russian', 'ruso'], '🇷🇺', 'language.ru'],
+  [['uk', 'ukr', 'ukrainian', 'ucraniano'], '🇺🇦', 'language.uk'],
+  [['pl', 'pol', 'polish', 'polaco'], '🇵🇱', 'language.pl'],
+  [['cs', 'ces', 'cze', 'czech', 'checo'], '🇨🇿', 'language.cs'],
+  [['ro', 'ron', 'rum', 'romanian', 'rumano'], '🇷🇴', 'language.ro'],
+  [['hu', 'hun', 'hungarian', 'húngaro', 'hungaro'], '🇭🇺', 'language.hu'],
+  [['el', 'ell', 'gre', 'greek', 'griego'], '🇬🇷', 'language.el'],
+  [['tr', 'tur', 'turkish', 'turco'], '🇹🇷', 'language.tr'],
+  [['ar', 'ara', 'arabic', 'árabe', 'arabe'], '🇸🇦', 'language.ar'],
+  [['he', 'heb', 'hebrew', 'hebreo'], '🇮🇱', 'language.he'],
+  [['hi', 'hin', 'hindi'], '🇮🇳', 'language.hi'],
+  [['zh', 'zho', 'chi', 'chinese', 'chino'], '🇨🇳', 'language.zh'],
+  [['ja', 'jpn', 'japanese', 'japonés', 'japones'], '🇯🇵', 'language.ja'],
+  [['ko', 'kor', 'korean', 'coreano'], '🇰🇷', 'language.ko'],
+  [['vi', 'vie', 'vietnamese', 'vietnamita'], '🇻🇳', 'language.vi'],
+  [['th', 'tha', 'thai', 'tailandés', 'tailandes'], '🇹🇭', 'language.th'],
+  [['id', 'ind', 'indonesian', 'indonesio'], '🇮🇩', 'language.id'],
 ];
 
 @Component({
@@ -90,6 +92,11 @@ const LANGUAGE_MARKS: ReadonlyArray<readonly [readonly string[], string, string]
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ServiceRequestComponent implements OnInit, OnDestroy {
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
+  readonly statusLabel = this.i18n.statusLabel;
+
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -130,7 +137,10 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
 
   readonly statusButtonLabel = computed(() => {
     const size = this.selectedStatuses().size;
-    return size === 0 ? 'Todas' : `${size} ${size === 1 ? 'estado' : 'estados'}`;
+    if (size === 0) return this.t('requests.allStatuses');
+    return this.t(size === 1 ? 'requests.statusCountSingular' : 'requests.statusCount', {
+      count: size,
+    });
   });
 
   readonly selectedRequest = signal<RequestItem | null>(null);
@@ -141,11 +151,8 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   readonly traceError = signal<string | null>(null);
 
   // Revisión manual (solo con estado 'Pendiente por revisión' y permiso 'trace.write').
-  // Estados destino permitidos por el backend (API value → etiqueta en español).
-  readonly reviewStatusOptions = [
-    { value: 'Rejected' as const, label: 'Rechazado' },
-    { value: 'Closed' as const, label: 'Cerrado' },
-  ];
+  // Estados destino permitidos por el backend (API value; la etiqueta se traduce al pintar).
+  readonly reviewStatusOptions = [{ value: 'Rejected' as const }, { value: 'Closed' as const }];
   readonly reviewStatus = signal<'Rejected' | 'Closed' | null>(null);
   readonly reviewObservations = signal('');
   readonly isSavingReview = signal(false);
@@ -328,7 +335,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
           this.lastUpdated.set(new Date());
         },
         error: () => {
-          this.error.set('No se pudieron cargar los datos. Verifica la conexión con el servidor.');
+          this.error.set(this.t('requests.loadError'));
           this.isLoading.set(false);
           this.isRefreshing.set(false);
           this.inFlight = false;
@@ -476,17 +483,20 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
             this.traceInFlight = false;
             this.loadTrace(req.requestNumber);
           }
-          this.showToast(`Requerimiento ${req.requestNumber} revisado correctamente.`, 'success');
+          this.showToast(
+            this.t('requests.reviewSuccess', { number: req.requestNumber }),
+            'success',
+          );
           // El requerimiento dejó de estar pendiente: actualiza el badge del menú.
           this.pendingReview.refresh();
         },
         error: (err) => {
           const message =
             err?.status === 409
-              ? 'El requerimiento ya no está pendiente de revisión.'
+              ? this.t('requests.reviewConflict')
               : err?.status === 404
-                ? 'El requerimiento no existe.'
-                : 'No se pudo registrar la revisión. Intenta de nuevo.';
+                ? this.t('requests.reviewNotFound')
+                : this.t('requests.reviewError');
           this.reviewError.set(message);
           this.showToast(message, 'error');
         },
@@ -509,15 +519,9 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () =>
-          this.showToast(
-            `Informe de auditoría solicitado para el requerimiento ${requestNumber}.`,
-            'success',
-          ),
+          this.showToast(this.t('requests.auditSuccess', { number: requestNumber }), 'success'),
         error: () =>
-          this.showToast(
-            `No se pudo generar el informe de auditoría del requerimiento ${requestNumber}.`,
-            'error',
-          ),
+          this.showToast(this.t('requests.auditError', { number: requestNumber }), 'error'),
       });
   }
 
@@ -566,7 +570,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
         this.traceSteps.set([...steps].sort((a, b) => a.traceId - b.traceId));
       },
       error: () => {
-        this.traceError.set('No se pudo cargar el detalle del requerimiento.');
+        this.traceError.set(this.t('requests.traceError'));
         this.finishTraceLoad();
       },
       complete: () => this.finishTraceLoad(),
@@ -580,23 +584,15 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
   }
 
   formatDateTime(value: string): string {
-    const [date, time] = value.replace('T', ' ').split(' ');
-    if (!time) return date;
-    const [y, m, d] = date.split('-');
-    return `${d}/${m}/${y} ${time.slice(0, 8)}`;
+    return this.i18n.formatDateTime(value);
   }
 
   formatTime(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleTimeString('es', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return this.i18n.formatTime(date);
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('es');
+    return this.i18n.formatNumber(value);
   }
 
   formatDuration(ms: number | null): string {
@@ -630,7 +626,7 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
         codes.some((code) => key === code || key.startsWith(`${code}-`)) || names.includes(key),
     );
     if (match) {
-      return { flag: match[1], label: match[2] };
+      return { flag: match[1], label: this.t(match[2]) };
     }
 
     // Idioma no reconocido: se muestra igualmente (globo) con el valor que envió el flujo.

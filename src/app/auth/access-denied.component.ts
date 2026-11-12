@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PermissionsService } from '../services/permissions.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-access-denied',
@@ -8,15 +9,15 @@ import { PermissionsService } from '../services/permissions.service';
   imports: [RouterLink],
   template: `
     <div class="access-denied">
-      <h1>Acceso denegado</h1>
-      <p>No tienes permiso para acceder a esta sección.</p>
+      <h1>{{ t('accessDenied.title') }}</h1>
+      <p>{{ t('accessDenied.message') }}</p>
       @if (profile(); as currentProfile) {
         <p class="profile-note">
-          Tu perfil actual es <strong>{{ currentProfile }}</strong
-          >. Contacta a un administrador si necesitas más accesos.
+          {{ t('accessDenied.profilePrefix') }} <strong>{{ currentProfile }}</strong
+          >. {{ t('accessDenied.profileSuffix') }}
         </p>
       }
-      <a routerLink="/" class="back-link">Volver al inicio</a>
+      <a routerLink="/" class="back-link">{{ t('accessDenied.back') }}</a>
     </div>
   `,
   styles: `
@@ -46,5 +47,7 @@ import { PermissionsService } from '../services/permissions.service';
 })
 export class AccessDeniedComponent {
   private readonly permissions = inject(PermissionsService);
+  private readonly i18n = inject(TranslationService);
+  readonly t = this.i18n.t;
   readonly profile = this.permissions.profile;
 }

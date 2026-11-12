@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { Client, ClientPayload, ClientsService } from '../services/clients.service';
 import { PERMISSIONS, PermissionsService } from '../services/permissions.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
+import { TranslationService } from '../i18n/translation.service';
 
 type SortColumn =
   'clientId' | 'name' | 'inboundEmail' | 'outboundEmail' | 'analystEmail' | 'active';
@@ -30,6 +31,9 @@ const PAGE_SIZE = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientsListComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+  readonly t = this.i18n.t;
+
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -86,7 +90,7 @@ export class ClientsListComponent implements OnInit {
     if (total === 0) return '';
     const start = (this.page() - 1) * this.pageSize + 1;
     const end = Math.min(this.page() * this.pageSize, total);
-    return `Mostrando ${start}–${end} de ${total}`;
+    return this.t('clients.pageInfo', { start, end, total });
   });
 
   readonly hasActiveFilters = computed(
@@ -179,7 +183,11 @@ export class ClientsListComponent implements OnInit {
 
   toggleActive(client: Client): void {
     const activate = !client.active;
-    if (!window.confirm(`¿${activate ? 'Activar' : 'Desactivar'} al cliente ${client.name}?`)) {
+    const confirmMessage = this.t(
+      activate ? 'clients.activateConfirm' : 'clients.deactivateConfirm',
+      { name: client.name },
+    );
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
@@ -193,14 +201,18 @@ export class ClientsListComponent implements OnInit {
           this.clients.update((list) =>
             list.map((c) => (c.clientId === client.clientId ? { ...c, active: activate } : c)),
           );
-          this.notice.set(`Cliente ${client.name} ${activate ? 'activado' : 'desactivado'}.`);
+          this.notice.set(
+            this.t(activate ? 'clients.activatedName' : 'clients.deactivatedName', {
+              name: client.name,
+            }),
+          );
         },
         error: (err) => this.error.set(this.extractMessage(err)),
       });
   }
 
   removeClient(client: Client): void {
-    if (!window.confirm(`¿Eliminar al cliente ${client.name}?`)) {
+    if (!window.confirm(this.t('clients.confirmDelete', { name: client.name }))) {
       return;
     }
 
@@ -210,7 +222,7 @@ export class ClientsListComponent implements OnInit {
     this.clientsService.deleteClient(client.clientId).subscribe({
       next: () => {
         this.clients.update((list) => list.filter((c) => c.clientId !== client.clientId));
-        this.notice.set(`Cliente ${client.name} eliminado.`);
+        this.notice.set(this.t('clients.deletedName', { name: client.name }));
       },
       error: (err) => this.error.set(this.extractMessage(err)),
     });
@@ -248,10 +260,8 @@ export class ClientsListComponent implements OnInit {
       if (body?.message) {
         return body.message;
       }
-      return err.status === 0
-        ? 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        : 'Ocurrió un error. Inténtalo de nuevo.';
+      return err.status === 0 ? this.t('clients.connectionError') : this.t('clients.genericError');
     }
-    return 'Error inesperado. Inténtalo de nuevo.';
+    return this.t('common.unexpectedError');
   }
 }

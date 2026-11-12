@@ -1,8 +1,8 @@
 <div class="business-model-page">
   <header class="page-header">
     <div class="page-heading">
-      <h1>Modelo de negocios</h1>
-      <p class="subtitle">Documento de referencia de TUCOOP Gestión de Valor.</p>
+      <h1>{{ t('businessModel.title') }}</h1>
+      <p class="subtitle">{{ t('businessModel.subtitle') }}</p>
     </div>
     <a class="btn-secondary" [href]="pdfHref" target="_blank" rel="noopener">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -22,9 +22,9 @@
           stroke-linejoin="round"
         />
       </svg>
-      Abrir en pestaña nueva
+      {{ t('businessModel.openNewTab') }}
     </a>
   </header>
 
-  <iframe class="pdf-frame" [src]="pdfUrl" title="Modelo de negocios TUCOOP"></iframe>
+  <iframe class="pdf-frame" [src]="pdfUrl" [title]="t('businessModel.iframeTitle')"></iframe>
 </div>

@@ -1,9 +1,11 @@
 <div class="service-request">
   <header class="service-request-header">
     <div class="header-text">
-      <h1>Requerimientos</h1>
+      <h1>{{ t('requests.title') }}</h1>
       @if (!isLoading() && !error()) {
-        <p class="subtitle">{{ formatNumber(totalCount()) }} Requerimientos</p>
+        <p class="subtitle">
+          {{ t('requests.subtitleCount', { count: formatNumber(totalCount()) }) }}
+        </p>
       }
     </div>
 
@@ -11,7 +13,7 @@
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
       <button
@@ -19,8 +21,8 @@
         type="button"
         (click)="refresh()"
         [disabled]="isRefreshing()"
-        data-tooltip="Recargar"
-        aria-label="Recargar"
+        [attr.data-tooltip]="t('common.reload')"
+        [attr.aria-label]="t('common.reload')"
       >
         <svg
           width="14"
@@ -37,14 +39,14 @@
         </svg>
       </button>
       @if (lastUpdated(); as updated) {
-        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+        <p class="last-updated">{{ t('common.lastUpdated', { time: formatTime(updated) }) }}</p>
       }
     </div>
   </header>
 
   <section class="date-filters">
     <label class="date-field">
-      <span>Desde</span>
+      <span>{{ t('dashboard.from') }}</span>
       <input
         type="date"
         [value]="startDate() ?? ''"
@@ -52,7 +54,7 @@
       />
     </label>
     <label class="date-field">
-      <span>Hasta</span>
+      <span>{{ t('dashboard.to') }}</span>
       <input
         type="date"
         [value]="endDate() ?? ''"
@@ -62,10 +64,10 @@
 
     <div class="search-field">
       <label class="search-input-wrap">
-        <span>Buscar</span>
+        <span>{{ t('requests.search') }}</span>
         <input
           type="search"
-          placeholder="Buscar..."
+          [attr.placeholder]="t('requests.searchPlaceholder')"
           [value]="search()"
           (input)="setSearch($any($event.target).value)"
           (keydown.enter)="applyDateRange()"
@@ -75,8 +77,8 @@
             class="search-clear"
             type="button"
             (click)="clearSearch()"
-            aria-label="Limpiar búsqueda"
-            title="Limpiar"
+            [attr.aria-label]="t('requests.clearSearch')"
+            [attr.title]="t('requests.clear')"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +103,7 @@
         [attr.aria-expanded]="statusDropdownOpen()"
         (click)="toggleStatusDropdown()"
       >
-        <span class="status-filter-label">Estado:</span>
+        <span class="status-filter-label">{{ t('requests.statusFilter') }}</span>
         <span class="status-filter-value">{{ statusButtonLabel() }}</span>
         <svg
           class="icon status-filter-chevron"
@@ -120,7 +122,7 @@
         <div class="status-dropdown" role="listbox" aria-multiselectable="true">
           <label class="status-option">
             <input type="checkbox" [checked]="isAllStatuses()" (change)="toggleAllStatuses()" />
-            <span>Todas</span>
+            <span>{{ t('requests.allStatuses') }}</span>
           </label>
           @for (status of statusOptions(); track status) {
             <label class="status-option">
@@ -129,7 +131,7 @@
                 [checked]="selectedStatuses().has(status)"
                 (change)="toggleStatusOption(status)"
               />
-              <span>{{ status }}</span>
+              <span>{{ statusLabel(status) }}</span>
             </label>
           }
         </div>
@@ -141,8 +143,8 @@
       type="button"
       (click)="applyDateRange()"
       [disabled]="isRefreshing()"
-      data-tooltip="Filtrar"
-      aria-label="Filtrar"
+      [attr.data-tooltip]="t('common.filter')"
+      [attr.aria-label]="t('common.filter')"
     >
       <svg
         width="14"
@@ -162,12 +164,12 @@
   @if (isLoading()) {
     <div class="loading">
       <span class="spinner spinner-large"></span>
-      Cargando datos…
+      {{ t('common.loadingData') }}
     </div>
   } @else if (error(); as err) {
     <div class="error">
       <p>{{ err }}</p>
-      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+      <button class="refresh-btn" type="button" (click)="refresh()">{{ t('common.retry') }}</button>
     </div>
   } @else {
     @if (visibleRequests().length) {
@@ -175,13 +177,13 @@
         <table class="requests-table">
           <thead>
             <tr>
-              <th class="col-number">N°</th>
-              <th class="col-date">Recepción</th>
-              <th class="col-from">De</th>
-              <th class="col-subject">Asunto</th>
-              <th class="col-status">Estado</th>
-              <th class="col-intent">Intención</th>
-              <th class="col-action">Auditoría</th>
+              <th class="col-number">{{ t('requests.colNumber') }}</th>
+              <th class="col-date">{{ t('requests.received') }}</th>
+              <th class="col-from">{{ t('requests.from') }}</th>
+              <th class="col-subject">{{ t('requests.subject') }}</th>
+              <th class="col-status">{{ t('common.status') }}</th>
+              <th class="col-intent">{{ t('requests.intent') }}</th>
+              <th class="col-action">{{ t('requests.audit') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -199,7 +201,10 @@
                   <div class="subject-row">
                     <span class="subject">{{ item.subject }}</span>
                     @if (languageFlag(item.language); as lang) {
-                      <span class="lang-badge" [title]="'Idioma del requerimiento: ' + lang.label">
+                      <span
+                        class="lang-badge"
+                        [title]="t('requests.languageTitle', { language: lang.label })"
+                      >
                         <span class="lang-flag" aria-hidden="true">{{ lang.flag }}</span>
                         <span class="lang-label">{{ lang.label }}</span>
                       </span>
@@ -210,7 +215,7 @@
                   }
                 </td>
                 <td class="col-status">
-                  <span class="status-badge">{{ item.status }}</span>
+                  <span class="status-badge">{{ statusLabel(item.status) }}</span>
                 </td>
                 <td class="col-intent">{{ item.detectedIntent }}</td>
                 <td class="col-action">
@@ -220,7 +225,7 @@
                     (click)="$event.stopPropagation(); runAudit(item.requestNumber)"
                     [disabled]="isAuditing(item.requestNumber)"
                   >
-                    Informe de auditoría
+                    {{ t('requests.auditReport') }}
                   </button>
                 </td>
               </tr>
@@ -236,31 +241,33 @@
             (click)="prevPage()"
             [disabled]="!hasPrevPage()"
           >
-            ‹ Anterior
+            ‹ {{ t('common.previous') }}
           </button>
-          <span class="page-info">Página {{ page() }} de {{ totalPages() }}</span>
+          <span class="page-info">{{
+            t('requests.page', { page: page(), total: totalPages() })
+          }}</span>
           <button
             class="refresh-btn page-btn"
             type="button"
             (click)="nextPage()"
             [disabled]="!hasNextPage()"
           >
-            Siguiente ›
+            {{ t('common.next') }} ›
           </button>
         </div>
       }
     } @else {
-      <div class="empty">No hay datos en el rango seleccionado.</div>
+      <div class="empty">{{ t('common.noData') }}</div>
     }
   }
 </div>
 
 @if (selectedRequest(); as req) {
   <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && closeDetail()">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del Requerimiento">
+    <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="t('requests.detailAria')">
       <header class="modal-header">
         <div class="modal-title">
-          <h2>Requerimiento #{{ req.requestNumber }}</h2>
+          <h2>{{ t('requests.detailTitle', { number: req.requestNumber }) }}</h2>
           <p class="modal-subtitle">{{ req.from }} · {{ formatDateTime(req.receiptDate) }}</p>
         </div>
         <div class="modal-actions">
@@ -270,7 +277,7 @@
             (click)="runAudit(req.requestNumber)"
             [disabled]="isAuditing(req.requestNumber)"
           >
-            Informe de auditoría
+            {{ t('requests.auditReport') }}
           </button>
           <ng-container *appHasPermission="PERMISSIONS.traceRead">
             <button
@@ -278,8 +285,8 @@
               class="refresh-btn btn-icon trace-refresh-btn"
               (click)="refreshTrace()"
               [disabled]="isLoadingTrace() || isRefreshingTrace()"
-              data-tooltip="Actualizar trazas"
-              aria-label="Actualizar trazas"
+              [attr.data-tooltip]="t('requests.refreshTraces')"
+              [attr.aria-label]="t('requests.refreshTraces')"
             >
               @if (isRefreshingTrace()) {
                 <span class="spinner spinner-small"></span>
@@ -300,7 +307,12 @@
               }
             </button>
           </ng-container>
-          <button class="modal-close" type="button" (click)="closeDetail()" aria-label="Cerrar">
+          <button
+            class="modal-close"
+            type="button"
+            (click)="closeDetail()"
+            [attr.aria-label]="t('common.close')"
+          >
             <svg
               class="icon"
               xmlns="http://www.w3.org/2000/svg"
@@ -320,43 +332,43 @@
         <section class="detail-summary">
           <dl class="summary-grid">
             <div class="summary-item">
-              <dt>Asunto</dt>
+              <dt>{{ t('requests.subject') }}</dt>
               <dd>{{ req.subject }}</dd>
             </div>
             <div class="summary-item">
-              <dt>Estado</dt>
+              <dt>{{ t('common.status') }}</dt>
               <dd>
-                <span class="status-badge">{{ req.status }}</span>
+                <span class="status-badge">{{ statusLabel(req.status) }}</span>
               </dd>
             </div>
             @if (req.priority) {
               <div class="summary-item">
-                <dt>Prioridad</dt>
+                <dt>{{ t('requests.priority') }}</dt>
                 <dd>{{ req.priority }}</dd>
               </div>
             }
             @if (req.channel) {
               <div class="summary-item">
-                <dt>Canal</dt>
+                <dt>{{ t('requests.channel') }}</dt>
                 <dd>{{ req.channel }}</dd>
               </div>
             }
             @if (req.detectedIntent) {
               <div class="summary-item">
-                <dt>Intención</dt>
+                <dt>{{ t('requests.intent') }}</dt>
                 <dd>{{ req.detectedIntent }}</dd>
               </div>
             }
             @if (req.description) {
               <div class="summary-item">
-                <dt>Descripción</dt>
+                <dt>{{ t('requests.description') }}</dt>
                 <dd>{{ req.description }}</dd>
               </div>
             }
           </dl>
           @if (messageHtml() || req.originalMessage) {
             <div class="message-block">
-              <h3>Mensaje original</h3>
+              <h3>{{ t('requests.originalMessage') }}</h3>
               @if (messageHtml(); as html) {
                 <div class="message-html" [innerHTML]="html"></div>
               } @else {
@@ -368,11 +380,15 @@
 
         @if (canReview() && req.status === PENDING_REVIEW_LABEL) {
           <section class="review-section">
-            <h3>Revisión</h3>
+            <h3>{{ t('requests.review') }}</h3>
             <div class="review-form">
               <div class="review-group">
-                <span class="review-label">Acción</span>
-                <div class="review-options" role="radiogroup" aria-label="Acción de revisión">
+                <span class="review-label">{{ t('requests.reviewAction') }}</span>
+                <div
+                  class="review-options"
+                  role="radiogroup"
+                  [attr.aria-label]="t('requests.reviewAria')"
+                >
                   @for (option of reviewStatusOptions; track option.value) {
                     <label class="review-option" (click)="$event.stopPropagation()">
                       <input
@@ -383,13 +399,15 @@
                         (change)="reviewStatus.set($any($event.target).value)"
                         [disabled]="isSavingReview()"
                       />
-                      <span>{{ option.label }}</span>
+                      <span>{{ statusLabel(option.value) }}</span>
                     </label>
                   }
                 </div>
               </div>
               <div class="review-group">
-                <label class="review-label" for="review-observations">Observaciones</label>
+                <label class="review-label" for="review-observations">{{
+                  t('requests.reviewObservations')
+                }}</label>
                 <textarea
                   id="review-observations"
                   class="review-textarea"
@@ -397,7 +415,7 @@
                   [value]="reviewObservations()"
                   (input)="setReviewObservations($any($event.target).value)"
                   [disabled]="isSavingReview()"
-                  placeholder="Describe el motivo de la revisión..."
+                  [attr.placeholder]="t('requests.reviewPlaceholder')"
                 ></textarea>
               </div>
               @if (reviewError(); as err) {
@@ -412,9 +430,9 @@
                 >
                   @if (isSavingReview()) {
                     <span class="spinner spinner-small"></span>
-                    Guardando...
+                    {{ t('common.saving') }}
                   } @else {
-                    Guardar
+                    {{ t('common.save') }}
                   }
                 </button>
               </div>
@@ -424,11 +442,11 @@
 
         <ng-container *appHasPermission="PERMISSIONS.traceRead">
           <section class="trace-section">
-            <h3>Traza</h3>
+            <h3>{{ t('requests.trace') }}</h3>
             @if (isLoadingTrace()) {
               <div class="trace-state">
                 <span class="spinner"></span>
-                Cargando trazabilidad…
+                {{ t('requests.loadingTrace') }}
               </div>
             } @else if (traceError(); as err) {
               <div class="trace-state trace-error">{{ err }}</div>
@@ -458,23 +476,23 @@
                       <dl class="summary-grid summary-grid-inline">
                         @if (step.durationMs !== null) {
                           <div class="summary-item">
-                            <dt>Duración</dt>
+                            <dt>{{ t('requests.duration') }}</dt>
                             <dd>{{ formatDuration(step.durationMs) }}</dd>
                           </div>
                         }
                         @if (step.confidence) {
                           <div class="summary-item">
-                            <dt>Confianza</dt>
+                            <dt>{{ t('requests.confidence') }}</dt>
                             <dd>{{ formatConfidence(step.confidence) }}</dd>
                           </div>
                         }
                         <div class="summary-item">
-                          <dt>Inicio</dt>
+                          <dt>{{ t('requests.start') }}</dt>
                           <dd>{{ formatDateTime(step.startDate) }}</dd>
                         </div>
                         @if (step.endDate) {
                           <div class="summary-item">
-                            <dt>Fin</dt>
+                            <dt>{{ t('requests.end') }}</dt>
                             <dd>{{ formatDateTime(step.endDate) }}</dd>
                           </div>
                         }
@@ -490,26 +508,28 @@
                           (click)="toggleJson(step)"
                         >
                           {{
-                            isJsonExpanded(step)
-                              ? 'Ocultar entrada / salida (JSON)'
-                              : 'Ver entrada / salida (JSON)'
+                            isJsonExpanded(step) ? t('requests.hideJson') : t('requests.showJson')
                           }}
                         </button>
                         @if (isJsonExpanded(step)) {
                           <div class="json-panel">
                             <section class="json-pane">
-                              <header class="json-pane-header">Entrada</header>
+                              <header class="json-pane-header">{{ t('requests.input') }}</header>
                               <pre
                                 [innerHTML]="
-                                  step.inputJson ? formatJsonHtml(step.inputJson) : 'Sin datos'
+                                  step.inputJson
+                                    ? formatJsonHtml(step.inputJson)
+                                    : t('requests.noDataShort')
                                 "
                               ></pre>
                             </section>
                             <section class="json-pane">
-                              <header class="json-pane-header">Salida</header>
+                              <header class="json-pane-header">{{ t('requests.output') }}</header>
                               <pre
                                 [innerHTML]="
-                                  step.outputJson ? formatJsonHtml(step.outputJson) : 'Sin datos'
+                                  step.outputJson
+                                    ? formatJsonHtml(step.outputJson)
+                                    : t('requests.noDataShort')
                                 "
                               ></pre>
                             </section>
@@ -521,7 +541,7 @@
                 }
               </ol>
             } @else {
-              <div class="trace-state">Sin trazabilidad registrada.</div>
+              <div class="trace-state">{{ t('requests.noTrace') }}</div>
             }
           </section>
         </ng-container>
@@ -530,8 +550,8 @@
   </div>
 }
 
-@if (toast(); as t) {
-  <div class="toast" [class.toast-error]="t.type === 'error'" role="status">
-    {{ t.message }}
+@if (toast(); as toastItem) {
+  <div class="toast" [class.toast-error]="toastItem.type === 'error'" role="status">
+    {{ toastItem.message }}
   </div>
 }

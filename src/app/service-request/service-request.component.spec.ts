@@ -290,8 +290,8 @@ describe('ServiceRequestComponent', () => {
   });
 
   it('should format datetime as dd/MM/yyyy HH:mm:ss', () => {
-    expect(component.formatDateTime('2026-09-04 13:46:17')).toBe('04/09/2026 13:46:17');
-    expect(component.formatDateTime('2026-09-04T13:46:17')).toBe('04/09/2026 13:46:17');
+    expect(component.formatDateTime('2026-09-04 13:46:17')).toBe('04/09/2026, 13:46:17');
+    expect(component.formatDateTime('2026-09-04T13:46:17')).toBe('04/09/2026, 13:46:17');
   });
 
   it('should pretty print JSON stored as string', () => {

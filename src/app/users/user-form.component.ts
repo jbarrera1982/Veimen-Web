@@ -12,6 +12,7 @@ import {
 } from './users.service';
 import { Client, ClientsService } from '../services/clients.service';
 import { ClientContextService } from '../services/client-context.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-user-form',
@@ -28,6 +29,9 @@ export class UserFormComponent {
   private readonly clientContext = inject(ClientContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   // Cliente fijo del contexto (asociado al usuario o seleccionado en el menú). Si existe,
   // el campo Cliente no se muestra y el usuario se guarda con este client_id.
@@ -110,7 +114,8 @@ export class UserFormComponent {
           active: active ?? true,
         })
         .subscribe({
-          next: (created) => this.onSaved(`Usuario ${created.username} creado correctamente.`),
+          next: (created) =>
+            this.onSaved(this.t('userForm.createdNotice', { username: created.username })),
           error: (err) => this.onError(err),
         });
       return;
@@ -179,6 +184,13 @@ export class UserFormComponent {
     return this.clients().filter((c) => c.active || c.clientId === current);
   }
 
+  /** Etiqueta visible del idioma; el valor enviado sigue siendo "Español"/"Inglés". */
+  languageLabel(language: string): string {
+    return language === 'Inglés'
+      ? this.t('userForm.languageEnglish')
+      : this.t('userForm.languageSpanish');
+  }
+
   private loadUser(userId: number): void {
     this.isLoading.set(true);
 
@@ -217,12 +229,12 @@ export class UserFormComponent {
         return body.message;
       }
       return err.status === 0
-        ? 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        : 'Ocurrió un error. Inténtalo de nuevo.';
+        ? this.t('userForm.connectionError')
+        : this.t('userForm.genericError');
     }
     if (err instanceof Error) {
-      return err.message ?? 'Error inesperado.';
+      return err.message ?? this.t('userForm.unexpectedError');
     }
-    return 'Error inesperado. Inténtalo de nuevo.';
+    return this.t('common.unexpectedError');
   }
 }

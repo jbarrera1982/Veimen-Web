@@ -1,10 +1,10 @@
 <div class="users-page">
   <header class="users-header">
     <div>
-      <h1>Usuarios</h1>
-      <p class="users-subtitle">Crea cuentas, asigna perfiles y administra el acceso.</p>
+      <h1>{{ t('users.title') }}</h1>
+      <p class="users-subtitle">{{ t('users.subtitle') }}</p>
     </div>
-    <a class="btn-primary" routerLink="/usuarios/nuevo">Nuevo usuario</a>
+    <a class="btn-primary" routerLink="/usuarios/nuevo">{{ t('users.new') }}</a>
   </header>
 
   @if (notice(); as notice) {
@@ -15,22 +15,22 @@
   }
 
   @if (isLoading()) {
-    <p class="users-loading">Cargando usuarios…</p>
+    <p class="users-loading">{{ t('users.loading') }}</p>
   } @else if (filteredUsers().length === 0) {
-    <p class="users-empty">No hay usuarios registrados.</p>
+    <p class="users-empty">{{ t('users.emptyRegistered') }}</p>
   } @else {
     <div class="users-table-wrap">
       <table class="users-table">
         <thead>
           <tr>
-            <th>Usuario</th>
-            <th>Correo</th>
-            <th>Nombre</th>
-            <th>Perfil</th>
-            <th>Cliente</th>
-            <th>Estado</th>
-            <th>Último acceso</th>
-            <th class="col-actions">Acciones</th>
+            <th>{{ t('users.username') }}</th>
+            <th>{{ t('users.email') }}</th>
+            <th>{{ t('users.fullName') }}</th>
+            <th>{{ t('users.profile') }}</th>
+            <th>{{ t('users.client') }}</th>
+            <th>{{ t('common.status') }}</th>
+            <th>{{ t('users.lastAccess') }}</th>
+            <th class="col-actions">{{ t('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -48,24 +48,24 @@
               <td>{{ clientName(user) }}</td>
               <td>
                 <span class="badge" [class.badge-inactive]="!user.active">
-                  {{ user.active ? 'Activo' : 'Inactivo' }}
+                  {{ user.active ? t('common.active') : t('common.inactive') }}
                 </span>
               </td>
-              <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'short') : '—' }}</td>
+              <td>{{ user.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—' }}</td>
               <td class="col-actions">
                 <button
                   type="button"
                   class="row-btn"
                   (click)="openEdit(user); $event.stopPropagation()"
                 >
-                  Editar
+                  {{ t('common.edit') }}
                 </button>
                 <button
                   type="button"
                   class="row-btn"
                   (click)="openPassword(user); $event.stopPropagation()"
                 >
-                  Contraseña
+                  {{ t('users.passwordAction') }}
                 </button>
                 <button
                   type="button"
@@ -73,7 +73,7 @@
                   [class.row-btn-danger]="user.active"
                   (click)="toggleActive(user); $event.stopPropagation()"
                 >
-                  {{ user.active ? 'Desactivar' : 'Activar' }}
+                  {{ user.active ? t('users.deactivate') : t('users.activate') }}
                 </button>
               </td>
             </tr>
@@ -87,14 +87,14 @@
     @if (dialog.kind === 'password') {
       <div class="dialog-backdrop" (click)="closeDialog()">
         <div class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-          <h2>Restablecer contraseña de {{ dialog.user.username }}</h2>
-          <p class="dialog-hint">Se cerrarán las sesiones activas de este usuario.</p>
+          <h2>{{ t('users.resetTitle', { username: dialog.user.username }) }}</h2>
+          <p class="dialog-hint">{{ t('users.resetHint') }}</p>
           @if (dialogError(); as dialogError) {
             <div class="users-message users-error" role="alert">{{ dialogError }}</div>
           }
           <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()" novalidate>
             <div class="form-field">
-              <label for="reset-password">Nueva contraseña</label>
+              <label for="reset-password">{{ t('users.resetPassword') }}</label>
               <input
                 id="reset-password"
                 type="password"
@@ -105,17 +105,19 @@
                 passwordForm.controls.newPassword.touched &&
                 passwordForm.controls.newPassword.errors?.['minlength']
               ) {
-                <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+                <span class="field-error">{{ t('changePassword.minLength') }}</span>
               }
             </div>
             <div class="dialog-actions">
-              <button type="button" class="btn-secondary" (click)="closeDialog()">Cancelar</button>
+              <button type="button" class="btn-secondary" (click)="closeDialog()">
+                {{ t('common.cancel') }}
+              </button>
               <button
                 type="submit"
                 class="btn-primary"
                 [disabled]="passwordForm.invalid || isSaving()"
               >
-                {{ isSaving() ? 'Guardando…' : 'Restablecer' }}
+                {{ isSaving() ? t('common.saving') : t('users.resetSubmit') }}
               </button>
             </div>
           </form>

@@ -1,29 +1,29 @@
 <div class="user-form-page">
   <header class="user-form-header">
     <div>
-      <h1>{{ isEdit() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
+      <h1>{{ isEdit() ? t('userForm.editTitle') : t('userForm.newTitle') }}</h1>
       @if (isEdit()) {
         @if (user(); as user) {
           <p class="subtitle">{{ user.username }}</p>
         }
       }
     </div>
-    <a class="btn-secondary" routerLink="/usuarios">Volver</a>
+    <a class="btn-secondary" routerLink="/usuarios">{{ t('userForm.back') }}</a>
   </header>
 
   @if (isLoading()) {
     <div class="user-form-loading">
       <span class="spinner spinner-large"></span>
-      Cargando usuario…
+      {{ t('userForm.loading') }}
     </div>
   } @else if ((error() && !user() && isEdit()) || notFound()) {
     <div class="user-form-error">
       @if (notFound()) {
-        <p>El usuario no existe.</p>
+        <p>{{ t('userForm.notFound') }}</p>
       } @else {
         <p>{{ error() }}</p>
       }
-      <a class="btn-secondary" routerLink="/usuarios">Volver al listado</a>
+      <a class="btn-secondary" routerLink="/usuarios">{{ t('userForm.backToList') }}</a>
     </div>
   } @else {
     <form class="user-form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
@@ -34,27 +34,27 @@
       @if (isEdit()) {
         @if (user(); as user) {
           <div class="form-field">
-            <label>Usuario</label>
+            <label>{{ t('userForm.usernameLabel') }}</label>
             <input type="text" [value]="user.username" disabled />
           </div>
         }
       } @else {
         <div class="form-field">
-          <label for="new-username">Usuario</label>
+          <label for="new-username">{{ t('userForm.usernameLabel') }}</label>
           <input id="new-username" type="text" formControlName="username" autocomplete="off" />
         </div>
       }
 
       <div class="form-field">
-        <label for="edit-email">Correo electrónico</label>
+        <label for="edit-email">{{ t('userForm.emailLabel') }}</label>
         <input id="edit-email" type="email" formControlName="email" autocomplete="off" />
         @if (form.controls.email.touched && form.controls.email.hasError('email')) {
-          <span class="field-error">El correo electrónico no es válido.</span>
+          <span class="field-error">{{ t('userForm.invalidEmail') }}</span>
         }
       </div>
 
       <div class="form-field">
-        <label for="edit-phone">Teléfono</label>
+        <label for="edit-phone">{{ t('userForm.phone') }}</label>
         <input
           id="edit-phone"
           type="tel"
@@ -66,27 +66,27 @@
           form.controls.phone.touched &&
           (form.controls.phone.hasError('pattern') || form.controls.phone.hasError('maxlength'))
         ) {
-          <span class="field-error">El teléfono no es válido (máximo 30 caracteres).</span>
+          <span class="field-error">{{ t('userForm.invalidPhone') }}</span>
         }
       </div>
 
       <div class="form-field">
-        <label for="edit-fullname">Nombre completo</label>
+        <label for="edit-fullname">{{ t('userForm.fullName') }}</label>
         <input id="edit-fullname" type="text" formControlName="fullName" autocomplete="off" />
       </div>
 
       <div class="form-field">
-        <label for="edit-language">Idioma</label>
+        <label for="edit-language">{{ t('userForm.language') }}</label>
         <select id="edit-language" formControlName="language">
           @for (language of languages; track language) {
-            <option [ngValue]="language">{{ language }}</option>
+            <option [ngValue]="language">{{ languageLabel(language) }}</option>
           }
         </select>
       </div>
 
       @if (!isEdit()) {
         <div class="form-field">
-          <label for="new-password">Contraseña</label>
+          <label for="new-password">{{ t('userForm.password') }}</label>
           <input
             id="new-password"
             type="password"
@@ -94,15 +94,15 @@
             autocomplete="new-password"
           />
           @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
-            <span class="field-error">La contraseña debe tener al menos 8 caracteres.</span>
+            <span class="field-error">{{ t('userForm.passwordMinLength') }}</span>
           }
         </div>
       }
 
       <div class="form-field">
-        <label for="edit-profile">Perfil</label>
+        <label for="edit-profile">{{ t('userForm.profile') }}</label>
         <select id="edit-profile" formControlName="profileId">
-          <option [ngValue]="0" disabled>Selecciona un perfil</option>
+          <option [ngValue]="0" disabled>{{ t('userForm.selectProfile') }}</option>
           @for (profile of profiles(); track profile.profileId) {
             <option [ngValue]="profile.profileId">{{ profile.name }}</option>
           }
@@ -111,9 +111,9 @@
 
       @if (contextClientId() === null) {
         <div class="form-field">
-          <label for="edit-client">Cliente</label>
+          <label for="edit-client">{{ t('userForm.client') }}</label>
           <select id="edit-client" formControlName="clientId">
-            <option [ngValue]="0">Todos</option>
+            <option [ngValue]="0">{{ t('common.all') }}</option>
             @for (client of clientOptions(); track client.clientId) {
               <option [ngValue]="client.clientId">{{ client.name }}</option>
             }
@@ -125,15 +125,17 @@
         <div class="form-field form-check">
           <label>
             <input type="checkbox" formControlName="active" />
-            Usuario activo
+            {{ t('userForm.activeUser') }}
           </label>
         </div>
       }
 
       <div class="form-actions">
-        <a class="btn-secondary" routerLink="/usuarios">Cancelar</a>
+        <a class="btn-secondary" routerLink="/usuarios">{{ t('common.cancel') }}</a>
         <button type="submit" class="btn-primary" [disabled]="form.invalid || isSaving()">
-          {{ isSaving() ? 'Guardando…' : isEdit() ? 'Guardar cambios' : 'Crear usuario' }}
+          {{
+            isSaving() ? t('common.saving') : isEdit() ? t('userForm.save') : t('userForm.create')
+          }}
         </button>
       </div>
     </form>

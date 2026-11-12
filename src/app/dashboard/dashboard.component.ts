@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   untracked,
+  inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -12,6 +13,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from './chart-view.directive';
 import { DashboardService, StatusCount } from '../services/dashboard.service';
 import { ClientContextService } from '../services/client-context.service';
+import { TranslationService } from '../i18n/translation.service';
 import type { Color } from '@swimlane/ngx-charts';
 import { ScaleType } from '@swimlane/ngx-charts';
 
@@ -65,6 +67,11 @@ function toDateInputValue(date: Date): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
+  readonly statusLabel = this.i18n.statusLabel;
+
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -161,7 +168,7 @@ export class DashboardComponent implements OnInit {
           this.lastUpdated.set(new Date());
         },
         error: () => {
-          this.error.set('No se pudieron cargar los datos. Verifica la conexión con el webhook.');
+          this.error.set(this.t('dashboard.loadError'));
           this.isLoading.set(false);
           this.isRefreshing.set(false);
           this.inFlight = false;
@@ -227,11 +234,11 @@ export class DashboardComponent implements OnInit {
     }));
   }
   readonly barData = computed<ChartDatum[]>(() =>
-    this.visibleByStatus().map((d) => ({ name: d.status, value: d.total })),
+    this.visibleByStatus().map((d) => ({ name: this.statusLabel(d.status), value: d.total })),
   );
 
   readonly pieData = computed<ChartDatum[]>(() =>
-    this.visibleByStatus().map((d) => ({ name: d.status, value: d.total })),
+    this.visibleByStatus().map((d) => ({ name: this.statusLabel(d.status), value: d.total })),
   );
 
   // Set de ticks fijo para el eje Y del gráfico de barras (ver niceIntegerTicks).
@@ -289,7 +296,7 @@ export class DashboardComponent implements OnInit {
     const series = [...byDate.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, value]) => ({ name: date, value }));
-    return [{ name: 'Total', series }];
+    return [{ name: this.t('common.total'), series }];
   });
 
   readonly timelineTicks = computed(() => {
@@ -350,7 +357,11 @@ export class DashboardComponent implements OnInit {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('es');
+    return this.i18n.formatNumber(value);
+  }
+
+  formatPercent(value: number): string {
+    return this.i18n.formatPercent(value);
   }
 
   formatXAxis(value: string): string {
@@ -359,8 +370,7 @@ export class DashboardComponent implements OnInit {
   }
 
   formatDate(value: string): string {
-    const parts = value.split('-');
-    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+    return this.i18n.formatDate(value);
   }
 
   formatYAxis(value: number): string {
@@ -368,12 +378,7 @@ export class DashboardComponent implements OnInit {
   }
 
   formatTime(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleTimeString('es', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return this.i18n.formatTime(date);
   }
 
   get scheme(): Readonly<Color> {

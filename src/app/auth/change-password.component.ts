@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-change-password',
@@ -21,6 +22,9 @@ import { AuthService } from '../services/auth.service';
 export class ChangePasswordComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   readonly isSubmitting = signal(false);
   readonly error = signal<string | null>(null);
@@ -73,8 +77,8 @@ export class ChangePasswordComponent {
       if (body?.message) {
         return body.message;
       }
-      return 'No se pudo cambiar la contraseña. Inténtalo de nuevo.';
+      return this.t('changePassword.error');
     }
-    return 'Error inesperado. Inténtalo de nuevo.';
+    return this.t('common.unexpectedError');
   }
 }

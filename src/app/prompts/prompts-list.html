@@ -1,12 +1,12 @@
 <div class="prompts">
   <header class="prompts-header">
     <div>
-      <h1>Prompts</h1>
-      <p class="prompts-subtitle">Administra los prompts de los agentes.</p>
+      <h1>{{ t('prompts.title') }}</h1>
+      <p class="prompts-subtitle">{{ t('prompts.subtitle') }}</p>
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
     </div>
@@ -16,45 +16,47 @@
       type="button"
       (click)="newPrompt()"
     >
-      Nuevo prompt
+      {{ t('prompts.new') }}
     </button>
   </header>
 
   @if (isLoading()) {
     <div class="state">
       <span class="spinner spinner-large"></span>
-      Cargando prompts…
+      {{ t('prompts.loading') }}
     </div>
   } @else if (error(); as err) {
     <div class="state state-error">
       <p>{{ err }}</p>
-      <button class="btn-secondary" type="button" (click)="refresh()">Reintentar</button>
+      <button class="btn-secondary" type="button" (click)="refresh()">
+        {{ t('common.retry') }}
+      </button>
     </div>
   } @else {
     <div class="filters-bar">
       <input
         class="search-input"
         type="search"
-        placeholder="Buscar por código, nombre, grupo…"
+        [attr.placeholder]="t('prompts.searchPlaceholder')"
         [value]="searchText()"
         (input)="onSearch($event)"
       />
       <select class="filter-select" [value]="typeFilter()" (change)="onTypeChange($event)">
-        <option value="all">Todos los tipos</option>
+        <option value="all">{{ t('prompts.allTypes') }}</option>
         @for (type of types(); track type) {
           <option [value]="type">{{ type }}</option>
         }
       </select>
       <select class="filter-select" [value]="groupFilter()" (change)="onGroupChange($event)">
-        <option value="all">Todos los grupos</option>
+        <option value="all">{{ t('prompts.allGroups') }}</option>
         @for (group of groups(); track group) {
           <option [value]="group">{{ group }}</option>
         }
       </select>
       <select class="filter-select" [value]="statusFilter()" (change)="onStatusChange($event)">
-        <option value="all">Todos los estados</option>
-        <option value="active">Activos</option>
-        <option value="inactive">Inactivos</option>
+        <option value="all">{{ t('clients.allStatuses') }}</option>
+        <option value="active">{{ t('prompts.statusActive') }}</option>
+        <option value="inactive">{{ t('prompts.statusInactive') }}</option>
       </select>
       <button
         class="btn-secondary"
@@ -62,36 +64,36 @@
         (click)="resetFilters()"
         [disabled]="!hasActiveFilters()"
       >
-        Limpiar filtros
+        {{ t('common.clearFilters') }}
       </button>
     </div>
 
     <div class="sort-bar">
       <label class="sort-label">
-        Ordenar por
+        {{ t('prompts.sortBy') }}
         <select class="filter-select" [value]="sortColumn()" (change)="onSortChange($event)">
-          @for (option of sortOptions; track option.value) {
+          @for (option of sortOptions(); track option.value) {
             <option [value]="option.value">{{ option.label }}</option>
           }
         </select>
       </label>
       <button class="btn-secondary" type="button" (click)="toggleSortDirection()">
-        {{ sortDirection() === 'asc' ? '↑ Ascendente' : '↓ Descendente' }}
+        {{ sortDirection() === 'asc' ? t('prompts.sortAsc') : t('prompts.sortDesc') }}
       </button>
       <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="isRefreshing()">
-        ↩ Refrescar
+        {{ t('prompts.refresh') }}
       </button>
     </div>
 
     @if (prompts().length === 0) {
       <div class="state">
-        <p>No hay prompts registrados.</p>
+        <p>{{ t('prompts.emptyRegistered') }}</p>
       </div>
     } @else if (sortedPrompts().length === 0) {
       <div class="state">
-        <p>No hay prompts que coincidan con la búsqueda.</p>
+        <p>{{ t('prompts.emptySearch') }}</p>
         <button class="btn-secondary" type="button" (click)="resetFilters()">
-          Limpiar filtros
+          {{ t('common.clearFilters') }}
         </button>
       </div>
     } @else {
@@ -99,12 +101,12 @@
         <table class="prompts-table">
           <thead>
             <tr>
-              <th class="col-secuence">Secuencia</th>
-              <th class="col-name">Nombre</th>
-              <th class="col-group">Grupo agente</th>
-              <th class="col-code">Código</th>
-              <th class="col-version">Versión</th>
-              <th class="col-actions">Acciones</th>
+              <th class="col-secuence">{{ t('prompts.sequence') }}</th>
+              <th class="col-name">{{ t('prompts.name') }}</th>
+              <th class="col-group">{{ t('prompts.groupAgent') }}</th>
+              <th class="col-code">{{ t('prompts.code') }}</th>
+              <th class="col-version">{{ t('prompts.version') }}</th>
+              <th class="col-actions">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -128,7 +130,7 @@
                     type="button"
                     (click)="openPrompt(prompt); $event.stopPropagation()"
                   >
-                    Editar
+                    {{ t('common.edit') }}
                   </button>
                   <button
                     *appHasPermission="PERMISSIONS.promptsWrite"
@@ -136,7 +138,7 @@
                     type="button"
                     (click)="removePrompt(prompt); $event.stopPropagation()"
                   >
-                    Eliminar
+                    {{ t('common.delete') }}
                   </button>
                 </td>
               </tr>
@@ -154,16 +156,18 @@
             (click)="prevPage()"
             [disabled]="page() === 1"
           >
-            « Anterior
+            « {{ t('common.previous') }}
           </button>
-          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <span class="page-indicator">{{
+            t('prompts.page', { page: page(), total: totalPages() })
+          }}</span>
           <button
             class="btn-secondary"
             type="button"
             (click)="nextPage()"
             [disabled]="page() === totalPages()"
           >
-            Siguiente »
+            {{ t('common.next') }} »
           </button>
         </div>
       }

@@ -1,16 +1,16 @@
 <div class="tokens-dashboard">
   <header class="dashboard-topbar">
     <div class="topbar-title">
-      <h1>Consumo de tokens</h1>
-      <p class="subtitle">Llamadas LLM por día y nodo de la traza</p>
+      <h1>{{ t('tokens.title') }}</h1>
+      <p class="subtitle">{{ t('tokens.subtitle') }}</p>
       @if (lastUpdated(); as updated) {
-        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+        <p class="last-updated">{{ t('common.lastUpdated', { time: formatTime(updated) }) }}</p>
       }
     </div>
 
     <div class="topbar-dates date-filters">
       <label class="date-field">
-        <span>Desde</span>
+        <span>{{ t('dashboard.from') }}</span>
         <input
           type="date"
           [value]="startDate() ?? ''"
@@ -18,7 +18,7 @@
         />
       </label>
       <label class="date-field">
-        <span>Hasta</span>
+        <span>{{ t('dashboard.to') }}</span>
         <input
           type="date"
           [value]="endDate() ?? ''"
@@ -30,8 +30,8 @@
         type="button"
         (click)="applyDateRange()"
         [disabled]="isRefreshing()"
-        data-tooltip="Filtrar"
-        aria-label="Filtrar"
+        [attr.data-tooltip]="t('common.filter')"
+        [attr.aria-label]="t('common.filter')"
       >
         <svg
           width="14"
@@ -49,7 +49,7 @@
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
       <button
@@ -57,8 +57,8 @@
         type="button"
         (click)="refresh()"
         [disabled]="isRefreshing()"
-        data-tooltip="Recargar"
-        aria-label="Recargar"
+        [attr.data-tooltip]="t('common.reload')"
+        [attr.aria-label]="t('common.reload')"
       >
         <svg
           width="14"
@@ -80,57 +80,59 @@
   @if (isLoading()) {
     <div class="loading">
       <span class="spinner spinner-large"></span>
-      Cargando datos…
+      {{ t('common.loadingData') }}
     </div>
   } @else if (error(); as err) {
     <div class="error">
       <p>{{ err }}</p>
-      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+      <button class="refresh-btn" type="button" (click)="refresh()">{{ t('common.retry') }}</button>
     </div>
   } @else {
     @if (costError(); as costErr) {
-      <p class="warning">{{ costErr }} Las tarjetas de costo no están disponibles.</p>
+      <p class="warning">{{ costErr }} {{ t('tokens.costCardsUnavailable') }}</p>
     }
 
     <section class="stats-row">
       <div class="stat-card">
-        <span>Total de tokens</span>
+        <span>{{ t('tokens.totalTokens') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().total) }}</strong>
       </div>
       <div class="stat-card">
-        <span>Tokens de entrada</span>
+        <span>{{ t('tokens.inputTokens') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().input) }}</strong>
       </div>
       <div class="stat-card">
-        <span>Tokens de salida</span>
+        <span>{{ t('tokens.outputTokens') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().output) }}</strong>
       </div>
       <div class="stat-card">
-        <span>Promedio por día activo</span>
+        <span>{{ t('tokens.avgPerDay') }}</span>
         <strong class="stat-value">{{ formatNumber(totals().avgPerDay) }}</strong>
-        <small class="stat-hint">{{ totals().dayCount }} días con consumo</small>
+        <small class="stat-hint">{{
+          t('tokens.daysWithUsage', { count: totals().dayCount })
+        }}</small>
       </div>
     </section>
 
     @if (showCostCards()) {
       <section class="stats-row stats-row-costs">
         <div class="stat-card">
-          <span>Promedio diario de consumo en {{ costCurrencyLabel() }}</span>
+          <span>{{ t('tokens.costAvgPrefix', { currency: costCurrencyLabel() }) }}</span>
           <strong class="stat-value">{{ formatAmount(costTotals().avgPerDay) }}</strong>
-          <small class="stat-hint">{{ costTotals().dayCount }} días con costo</small>
+          <small class="stat-hint">{{
+            t('tokens.costDays', { count: costTotals().dayCount })
+          }}</small>
         </div>
         <div class="stat-card">
-          <span>Monto acumulado en el mes en {{ costCurrencyLabel() }}</span>
+          <span>{{ t('tokens.costTotalPrefix', { currency: costCurrencyLabel() }) }}</span>
           <strong class="stat-value">{{ formatAmount(costTotals().amount) }}</strong>
-          <small class="stat-hint">En el rango seleccionado</small>
+          <small class="stat-hint">{{ t('tokens.inRange') }}</small>
         </div>
       </section>
 
       @if (otherCurrencies().length) {
         <p class="notice">
-          Los importes no se suman entre monedas: se muestra
-          <strong>{{ primaryCurrency().toUpperCase() }}</strong
-          >. Además:
+          {{ t('tokens.currencyNotice', { currency: primaryCurrency().toUpperCase() }) }}
           @for (c of otherCurrencies(); track c.currency; let last = $last) {
             <span>{{ c.currency.toUpperCase() }} {{ formatAmount(c.amount) }}</span>
             @if (!last) {
@@ -143,13 +145,13 @@
 
     @if (rows().length === 0) {
       <div class="chart-empty-empty">
-        No se registró consumo de tokens en el rango seleccionado.
+        {{ t('tokens.noConsumption') }}
       </div>
     } @else {
       <section class="charts-grid">
         <div class="chart-card chart-card-wide">
           <div class="chart-card-head">
-            <h2>Evolución diaria (input vs output)</h2>
+            <h2>{{ t('tokens.dailyTrend') }}</h2>
             <ul class="mini-legend">
               @for (item of legendItems(); track item.name) {
                 <li>
@@ -182,12 +184,12 @@
               }
             </div>
           } @else {
-            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+            <div class="chart-empty">{{ t('common.noData') }}</div>
           }
         </div>
 
         <div class="chart-card chart-card-wide">
-          <h2>Tokens por modelo</h2>
+          <h2>{{ t('tokens.byModel') }}</h2>
           @if (byModel().length) {
             <div class="chart-canvas chart-canvas-standard" chartView #modelView="chartView">
               @if (modelView.dims(); as view) {
@@ -207,12 +209,12 @@
               }
             </div>
           } @else {
-            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+            <div class="chart-empty">{{ t('common.noData') }}</div>
           }
         </div>
 
         <div class="chart-card chart-card-wide">
-          <h2>Tokens por nodo</h2>
+          <h2>{{ t('tokens.byNode') }}</h2>
           @if (byNode().length) {
             <div class="chart-canvas chart-canvas-standard" chartView #nodeView="chartView">
               @if (nodeView.dims(); as view) {
@@ -232,21 +234,21 @@
               }
             </div>
           } @else {
-            <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+            <div class="chart-empty">{{ t('common.noData') }}</div>
           }
         </div>
       </section>
 
       <section class="detail-card">
-        <h2>Detalle por modelo</h2>
+        <h2>{{ t('tokens.detailByModel') }}</h2>
         <div class="table-scroll">
           <table class="detail-table">
             <thead>
               <tr>
-                <th>Modelo</th>
-                <th class="num">Input</th>
-                <th class="num">Output</th>
-                <th class="num">Total</th>
+                <th>{{ t('tokens.model') }}</th>
+                <th class="num">{{ t('tokens.input') }}</th>
+                <th class="num">{{ t('tokens.output') }}</th>
+                <th class="num">{{ t('common.total') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -259,14 +261,14 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="table-empty">No hay filas para el rango seleccionado.</td>
+                  <td colspan="4" class="table-empty">{{ t('tokens.noRows') }}</td>
                 </tr>
               }
             </tbody>
             @if (detailRows().length) {
               <tfoot>
                 <tr>
-                  <td class="strong">Total</td>
+                  <td class="strong">{{ t('common.total') }}</td>
                   <td class="num strong">{{ formatNumber(totals().input) }}</td>
                   <td class="num strong">{{ formatNumber(totals().output) }}</td>
                   <td class="num strong">{{ formatNumber(totals().total) }}</td>
@@ -277,7 +279,11 @@
         </div>
         @if (hasMoreRows()) {
           <button class="more-btn" type="button" (click)="showMore()">
-            Ver más ({{ formatNumber(modelDetail().length - detailRows().length) }} restantes)
+            {{
+              t('common.showMore', {
+                count: formatNumber(modelDetail().length - detailRows().length),
+              })
+            }}
           </button>
         }
       </section>

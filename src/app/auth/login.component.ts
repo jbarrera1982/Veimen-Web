@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,9 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   readonly isSubmitting = signal(false);
   readonly error = signal<string | null>(null);
@@ -57,9 +61,9 @@ export class LoginComponent {
         return body.message;
       }
       return err.status === 0
-        ? 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        : 'Credenciales inválidas.';
+        ? this.t('login.connectionError')
+        : this.t('login.invalidCredentials');
     }
-    return 'Error inesperado. Inténtalo de nuevo.';
+    return this.t('login.unexpectedError');
   }
 }

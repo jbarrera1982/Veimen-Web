@@ -1,7 +1,15 @@
 <div class="prompt-form">
   <header class="prompt-form-header">
     <div class="prompt-form-heading">
-      <h1>{{ isEdit() ? 'Editar prompt' : isClone() ? 'Clonar prompt' : 'Nuevo prompt' }}</h1>
+      <h1>
+        {{
+          isEdit()
+            ? t('promptForm.editTitle')
+            : isClone()
+              ? t('promptForm.cloneTitle')
+              : t('promptForm.newTitle')
+        }}
+      </h1>
       @if (error(); as err) {
         <p class="form-error">{{ err }}</p>
       }
@@ -15,11 +23,11 @@
             (click)="clone()"
             [disabled]="isSaving()"
           >
-            Clonar
+            {{ t('promptForm.clone') }}
           </button>
         }
         <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
-          Cancelar
+          {{ t('common.cancel') }}
         </button>
         <button
           type="submit"
@@ -29,9 +37,15 @@
         >
           @if (isSaving()) {
             <span class="spinner"></span>
-            Guardando…
+            {{ t('common.saving') }}
           } @else {
-            {{ isEdit() ? 'Guardar cambios' : isClone() ? 'Crear clon' : 'Crear prompt' }}
+            {{
+              isEdit()
+                ? t('promptForm.save')
+                : isClone()
+                  ? t('promptForm.createClone')
+                  : t('promptForm.create')
+            }}
           }
         </button>
       </div>
@@ -41,7 +55,7 @@
   @if (isLoading()) {
     <div class="form-state">
       <span class="spinner"></span>
-      Cargando prompt…
+      {{ t('promptForm.loading') }}
     </div>
   } @else {
     <form
@@ -54,117 +68,117 @@
       <input type="hidden" formControlName="promptId" />
 
       <label class="field field-readonly">
-        <span>ID</span>
+        <span>{{ t('promptForm.id') }}</span>
         <input formControlName="promptId" type="number" readonly />
       </label>
 
       @if (contextClientId() === null) {
         <label class="field">
-          <span>Cliente *</span>
+          <span>{{ t('common.client') }} *</span>
           <select formControlName="clientId">
-            <option [ngValue]="null">Selecciona un cliente</option>
+            <option [ngValue]="null">{{ t('promptForm.clientSelect') }}</option>
             @for (client of clientOptions(); track client.clientId) {
               <option [ngValue]="client.clientId">{{ client.name }}</option>
             }
           </select>
           @if (form.controls.clientId.touched && form.controls.clientId.invalid) {
-            <small class="form-error">Selecciona el cliente del prompt.</small>
+            <small class="form-error">{{ t('promptForm.clientRequired') }}</small>
           }
         </label>
       }
 
       <label class="field">
-        <span>Grupo de agente *</span>
+        <span>{{ t('promptForm.group') }}</span>
         <input formControlName="agentGroup" type="text" />
       </label>
 
       <label class="field">
-        <span>Código *</span>
+        <span>{{ t('promptForm.code') }}</span>
         <input formControlName="code" type="text" />
       </label>
 
       <label class="field">
-        <span>Nombre *</span>
+        <span>{{ t('promptForm.name') }}</span>
         <input formControlName="name" type="text" />
       </label>
 
       <label class="field">
-        <span>Secuencia</span>
+        <span>{{ t('promptForm.sequence') }}</span>
         <input formControlName="secuence" type="number" />
       </label>
 
       <label class="field">
-        <span>Tipo *</span>
+        <span>{{ t('promptForm.type') }}</span>
         <input formControlName="type" type="text" />
       </label>
 
       <label class="field">
-        <span>Modelo LLM *</span>
+        <span>{{ t('promptForm.model') }}</span>
         <input formControlName="llmModel" type="text" />
       </label>
 
       <label class="field">
-        <span>Versión *</span>
+        <span>{{ t('promptForm.version') }}</span>
         <input formControlName="version" type="text" />
       </label>
 
       <label class="field field-full">
-        <span>Descripción</span>
+        <span>{{ t('promptForm.description') }}</span>
         <textarea formControlName="description" rows="2"></textarea>
       </label>
 
       <label class="field field-full">
-        <span>System prompt *</span>
+        <span>{{ t('promptForm.prompt') }}</span>
         <textarea formControlName="systemPrompt" rows="5"></textarea>
       </label>
 
       <label class="field field-full">
-        <span>User prompt</span>
+        <span>{{ t('promptForm.userPrompt') }}</span>
         <textarea formControlName="userPrompt" rows="4"></textarea>
       </label>
 
       <label class="field">
-        <span>Temperatura</span>
+        <span>{{ t('promptForm.temperature') }}</span>
         <input formControlName="temperature" type="number" step="0.1" min="0" max="2" />
       </label>
 
       <label class="field">
-        <span>Max tokens</span>
+        <span>{{ t('promptForm.maxTokens') }}</span>
         <input formControlName="maxTokens" type="number" min="1" />
       </label>
 
       <label class="field">
-        <span>Activo</span>
+        <span>{{ t('promptForm.active') }}</span>
         <input formControlName="active" type="checkbox" />
       </label>
 
       <label class="field field-full">
-        <span>Observaciones</span>
+        <span>{{ t('promptForm.observations') }}</span>
         <textarea formControlName="observations" rows="2"></textarea>
       </label>
 
       <label class="field field-full">
-        <span>Schema output</span>
+        <span>{{ t('promptForm.schemaOutput') }}</span>
         <textarea formControlName="schemaOutput" rows="4"></textarea>
       </label>
 
       <fieldset class="field field-full field-metadata">
-        <legend>Auditoría</legend>
+        <legend>{{ t('promptForm.audit') }}</legend>
         <div class="metadata-row">
           <label class="field">
-            <span>Creado por</span>
+            <span>{{ t('promptForm.createdBy') }}</span>
             <input formControlName="createdBy" type="text" readonly />
           </label>
           <label class="field">
-            <span>Creado el</span>
+            <span>{{ t('promptForm.createdAt') }}</span>
             <input formControlName="createdAt" type="text" readonly />
           </label>
           <label class="field">
-            <span>Actualizado por</span>
+            <span>{{ t('promptForm.updatedBy') }}</span>
             <input formControlName="updatedBy" type="text" readonly />
           </label>
           <label class="field">
-            <span>Actualizado el</span>
+            <span>{{ t('promptForm.updatedAt') }}</span>
             <input formControlName="updatedAt" type="text" readonly />
           </label>
         </div>

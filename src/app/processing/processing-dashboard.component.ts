@@ -16,6 +16,7 @@ import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { ClientContextService } from '../services/client-context.service';
 import { MailService, type MailComparison } from '../services/mail.service';
 import { PendingProcessingService } from '../services/pending-processing.service';
+import { TranslationService } from '../i18n/translation.service';
 
 interface ChartSeries {
   name: string;
@@ -66,6 +67,10 @@ function toDateInputValue(date: Date): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProcessingDashboardComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
+
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -165,9 +170,7 @@ export class ProcessingDashboardComponent implements OnInit {
           this.lastUpdated.set(new Date());
         },
         error: () => {
-          this.error.set(
-            'No se pudo cargar la comparativa de procesamiento. Verifica tu sesión e inténtalo de nuevo.',
-          );
+          this.error.set(this.t('processing.loadError'));
           this.isLoading.set(false);
           this.isRefreshing.set(false);
           this.inFlight = false;
@@ -212,11 +215,11 @@ export class ProcessingDashboardComponent implements OnInit {
     const sorted = [...this.rows()].sort((a, b) => a.date.localeCompare(b.date));
     return [
       {
-        name: 'Correos',
+        name: this.t('processing.mailsSeries'),
         series: sorted.map((row) => ({ name: row.date, value: row.mails })),
       },
       {
-        name: 'Requerimientos',
+        name: this.t('processing.requestsSeries'),
         series: sorted.map((row) => ({ name: row.date, value: row.requests })),
       },
     ];
@@ -239,8 +242,8 @@ export class ProcessingDashboardComponent implements OnInit {
     return sorted.map((row) => ({
       name: row.date,
       series: [
-        { name: 'Correos', value: row.mails },
-        { name: 'Requerimientos', value: row.requests },
+        { name: this.t('processing.mailsSeries'), value: row.mails },
+        { name: this.t('processing.requestsSeries'), value: row.requests },
       ],
     }));
   });
@@ -297,7 +300,7 @@ export class ProcessingDashboardComponent implements OnInit {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('es');
+    return this.i18n.formatNumber(value);
   }
 
   /** Balance con signo explícito cuando es positivo (+2). */
@@ -308,10 +311,10 @@ export class ProcessingDashboardComponent implements OnInit {
 
   formatConversion(value: number | null): string {
     if (value === null) return '—';
-    return `${value.toLocaleString('es', {
+    return `${new Intl.NumberFormat(this.i18n.locale(), {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    })} %`;
+    }).format(value)} %`;
   }
 
   /** Eje Y de ngx-charts: siempre entero. */
@@ -321,22 +324,15 @@ export class ProcessingDashboardComponent implements OnInit {
 
   /** Eje X de la línea/barras: "2026-10-20" → "20/10". */
   formatXAxis(value: string): string {
-    const parts = value.split('-');
-    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : value;
+    return this.i18n.formatMonthDay(value);
   }
 
   /** Tabla: "2026-10-20" → "20/10/2026". */
   formatDate(value: string): string {
-    const parts = value.split('-');
-    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+    return this.i18n.formatDate(value);
   }
 
   formatTime(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleTimeString('es', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return this.i18n.formatTime(date);
   }
 }

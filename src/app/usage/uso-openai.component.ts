@@ -16,6 +16,7 @@ import { ScaleType } from '@swimlane/ngx-charts';
 import { ChartViewDirective } from '../dashboard/chart-view.directive';
 import { UsageService, type CompletionUsage, type CostEntry } from '../services/usage.service';
 import { ClientContextService } from '../services/client-context.service';
+import { TranslationService } from '../i18n/translation.service';
 
 interface ChartDatum {
   name: string;
@@ -108,6 +109,9 @@ export class UsoOpenAiComponent implements OnInit {
   // El filtro de cliente es global: vive en la cabecera del menú (ClientContextService)
   // y este componente solo lo consume. Ya no hay selector propio de clientes.
   private readonly clientContext = inject(ClientContextService);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
@@ -218,9 +222,7 @@ export class UsoOpenAiComponent implements OnInit {
       usage: this.usageService.getCompletionsUsage(range).pipe(
         catchError(() => {
           if (!isStale()) {
-            this.usageError.set(
-              'No se pudo cargar el consumo de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
-            );
+            this.usageError.set(this.t('usage.usageLoadError'));
           }
           return of(null);
         }),
@@ -228,9 +230,7 @@ export class UsoOpenAiComponent implements OnInit {
       costs: this.usageService.getCosts(range).pipe(
         catchError(() => {
           if (!isStale()) {
-            this.costError.set(
-              'No se pudieron cargar los costos de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
-            );
+            this.costError.set(this.t('usage.costsLoadError'));
           }
           return of(null);
         }),
@@ -309,11 +309,11 @@ export class UsoOpenAiComponent implements OnInit {
     const sorted = [...dates].sort((a, b) => a.localeCompare(b));
     return [
       {
-        name: 'Entrada',
+        name: this.t('usage.input'),
         series: sorted.map((date) => ({ name: date, value: input.get(date) ?? 0 })),
       },
       {
-        name: 'Salida',
+        name: this.t('usage.output'),
         series: sorted.map((date) => ({ name: date, value: output.get(date) ?? 0 })),
       },
     ];
@@ -702,12 +702,12 @@ export class UsoOpenAiComponent implements OnInit {
   // -----------------------
 
   formatNumber(value: number): string {
-    return value.toLocaleString('es');
+    return this.i18n.formatNumber(value);
   }
 
   /** Importe con decimales: los costos por día suelen ser fracciones de centavo. */
   formatAmount(value: number): string {
-    return new Intl.NumberFormat('es', {
+    return new Intl.NumberFormat(this.i18n.locale(), {
       minimumFractionDigits: 2,
       maximumFractionDigits: 4,
     }).format(value);
@@ -715,24 +715,22 @@ export class UsoOpenAiComponent implements OnInit {
 
   /** Versión compacta para ejes: 12 400 → "12,4 k". */
   formatYAxis(value: number): string {
-    return new Intl.NumberFormat('es', {
+    return new Intl.NumberFormat(this.i18n.locale(), {
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(value);
   }
 
   formatXAxis(value: string): string {
-    const parts = value.split('-');
-    return parts.length === 3 ? `${parts[1]}/${parts[2]}` : value;
+    return this.i18n.formatMonthDay(value);
+  }
+
+  formatDate(value: string): string {
+    return this.i18n.formatDate(value);
   }
 
   formatTime(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleTimeString('es', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return this.i18n.formatTime(date);
   }
 
   // -----------------------

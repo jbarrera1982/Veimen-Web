@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { ManagedUser, UsersService } from './users.service';
 import { ClientContextService } from '../services/client-context.service';
+import { TranslationService } from '../i18n/translation.service';
 
 type Dialog = { kind: 'password'; user: ManagedUser } | null;
 
@@ -20,7 +21,10 @@ export class UsersComponent {
   private readonly fb = inject(FormBuilder);
   private readonly users = inject(UsersService);
   private readonly clientContext = inject(ClientContextService);
+  private readonly i18n = inject(TranslationService);
   readonly router = inject(Router);
+
+  readonly t = this.i18n.t;
 
   readonly usersList = signal<ManagedUser[]>([]);
   readonly filteredUsers = computed(() => {
@@ -95,7 +99,7 @@ export class UsersComponent {
         next: () => {
           this.isSaving.set(false);
           this.dialog.set(null);
-          this.notice.set(`Contraseña de ${current.user.username} restablecida.`);
+          this.notice.set(this.t('users.passwordResetNotice', { username: current.user.username }));
         },
         error: (err) => {
           this.dialogError.set(this.extractMessage(err));
@@ -108,8 +112,9 @@ export class UsersComponent {
     const activate = !user.active;
     if (
       !window.confirm(
-        `¿${activate ? 'Activar' : 'Desactivar'} al usuario ${user.username}?` +
-          (activate ? '' : ' Se cerrarán sus sesiones activas.'),
+        this.t(activate ? 'users.activateConfirm' : 'users.deactivateConfirm', {
+          username: user.username,
+        }),
       )
     ) {
       return;
@@ -124,18 +129,26 @@ export class UsersComponent {
             list.map((u) => (u.userId === updated.userId ? updated : u)),
           ),
         );
-        this.notice.set(`Usuario ${updated.username} ${activate ? 'activado' : 'desactivado'}.`);
+        this.notice.set(
+          this.t(activate ? 'users.activatedName' : 'users.deactivatedName', {
+            username: updated.username,
+          }),
+        );
       },
       error: (err) => this.error.set(this.extractMessage(err)),
     });
   }
 
   profileName(user: ManagedUser): string {
-    return user.profileName ?? 'Sin perfil';
+    return user.profileName ?? this.t('users.noProfile');
   }
 
   clientName(user: ManagedUser): string {
-    return user.clientName ?? 'Todos';
+    return user.clientName ?? this.t('common.all');
+  }
+
+  formatDateTime(value: string): string {
+    return this.i18n.formatDateTime(value);
   }
 
   private readNavigationNotice(): string | null {
@@ -158,11 +171,9 @@ export class UsersComponent {
       if (body?.message) {
         return body.message;
       }
-      return err.status === 0
-        ? 'No se pudo conectar con el servidor. Verifica tu conexión.'
-        : 'Ocurrió un error. Inténtalo de nuevo.';
+      return err.status === 0 ? this.t('users.connectionError') : this.t('users.genericError');
     }
-    return 'Error inesperado. Inténtalo de nuevo.';
+    return this.t('common.unexpectedError');
   }
 }
 

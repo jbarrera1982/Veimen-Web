@@ -1,15 +1,15 @@
 <div class="dashboard">
   <header class="dashboard-topbar">
     <div class="topbar-title">
-      <h1>Gestión de requerimientos por correo electrónico</h1>
+      <h1>{{ t('dashboard.title') }}</h1>
       @if (lastUpdated(); as updated) {
-        <p class="last-updated">Última actualización: {{ formatTime(updated) }}</p>
+        <p class="last-updated">{{ t('common.lastUpdated', { time: formatTime(updated) }) }}</p>
       }
     </div>
 
     <div class="topbar-dates date-filters">
       <label class="date-field">
-        <span>Desde</span>
+        <span>{{ t('dashboard.from') }}</span>
         <input
           type="date"
           [value]="startDate() ?? ''"
@@ -17,7 +17,7 @@
         />
       </label>
       <label class="date-field">
-        <span>Hasta</span>
+        <span>{{ t('dashboard.to') }}</span>
         <input
           type="date"
           [value]="endDate() ?? ''"
@@ -29,8 +29,8 @@
         type="button"
         (click)="applyDateRange()"
         [disabled]="isRefreshing()"
-        data-tooltip="Filtrar"
-        aria-label="Filtrar"
+        [attr.data-tooltip]="t('common.filter')"
+        [attr.aria-label]="t('common.filter')"
       >
         <svg
           width="14"
@@ -48,7 +48,7 @@
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
-          Actualizando…
+          {{ t('common.refreshing') }}
         </span>
       }
       <button
@@ -56,8 +56,8 @@
         type="button"
         (click)="refresh()"
         [disabled]="isRefreshing()"
-        data-tooltip="Recargar"
-        aria-label="Recargar"
+        [attr.data-tooltip]="t('common.reload')"
+        [attr.aria-label]="t('common.reload')"
       >
         <svg
           width="14"
@@ -79,31 +79,29 @@
   @if (isLoading()) {
     <div class="loading">
       <span class="spinner spinner-large"></span>
-      Cargando datos…
+      {{ t('common.loadingData') }}
     </div>
   } @else if (error(); as err) {
     <div class="error">
       <p>{{ err }}</p>
-      <button class="refresh-btn" type="button" (click)="refresh()">Reintentar</button>
+      <button class="refresh-btn" type="button" (click)="refresh()">{{ t('common.retry') }}</button>
     </div>
   } @else {
     <section class="stats-row">
       <div class="stat-card">
-        <span>Requerimientos recibidos</span>
+        <span>{{ t('dashboard.received') }}</span>
         <strong class="stat-value">{{ formatNumber(receivedTotal()) }}</strong>
       </div>
       <div class="stat-card">
-        <span>Casos cerrados</span>
+        <span>{{ t('dashboard.closed') }}</span>
         <strong class="stat-value">
-          {{ formatNumber(closedTotal()) }} ({{
-            closedPercentage().toLocaleString('es', { maximumFractionDigits: 1 })
-          }}%)
+          {{ formatNumber(closedTotal()) }} ({{ formatPercent(closedPercentage()) }}%)
         </strong>
       </div>
     </section>
 
     <section class="filters">
-      <span class="filters-label">Mostrar:</span>
+      <span class="filters-label">{{ t('dashboard.show') }}</span>
       @for (chip of filterChips(); track chip.status) {
         <button
           class="filter-chip"
@@ -113,7 +111,7 @@
           [attr.aria-pressed]="!chip.hidden"
         >
           <span class="chip-dot"></span>
-          {{ chip.status }}
+          {{ statusLabel(chip.status) }}
           <span class="chip-count">{{ formatNumber(chip.total) }}</span>
           @if (chip.hidden) {
             <span class="chip-blank">✕</span>
@@ -121,13 +119,15 @@
         </button>
       }
       @if (hasHiddenFilters()) {
-        <button class="reset-btn" type="button" (click)="resetFilters()">Limpiar filtro</button>
+        <button class="reset-btn" type="button" (click)="resetFilters()">
+          {{ t('dashboard.clearFilter') }}
+        </button>
       }
     </section>
 
     <section class="charts-grid">
       <div class="chart-card chart-card-timeline">
-        <h2>Evolución por fecha</h2>
+        <h2>{{ t('dashboard.timeline') }}</h2>
         @if (timelineSeries()[0].series.length) {
           <div class="chart-canvas chart-canvas-timeline" chartView #lineView="chartView">
             @if (lineView.dims(); as view) {
@@ -151,12 +151,12 @@
             }
           </div>
         } @else {
-          <div class="chart-empty">No hay datos en el rango seleccionado.</div>
+          <div class="chart-empty">{{ t('common.noData') }}</div>
         }
       </div>
 
       <div class="chart-card">
-        <h2>Distribución por estado</h2>
+        <h2>{{ t('dashboard.byStatus') }}</h2>
         @if (barData().length) {
           <div class="chart-canvas chart-canvas-standard" chartView #barView="chartView">
             @if (barView.dims(); as view) {
@@ -177,12 +177,12 @@
             }
           </div>
         } @else {
-          <div class="chart-empty">No hay estados seleccionados.</div>
+          <div class="chart-empty">{{ t('dashboard.noStatuses') }}</div>
         }
       </div>
 
       <div class="chart-card">
-        <h2>Proporción por estado</h2>
+        <h2>{{ t('dashboard.proportion') }}</h2>
         @if (pieData().length) {
           <div class="chart-canvas chart-canvas-standard" chartView #pieView="chartView">
             @if (pieView.dims(); as view) {
@@ -200,19 +200,19 @@
             }
           </div>
         } @else {
-          <div class="chart-empty">No hay estados seleccionados.</div>
+          <div class="chart-empty">{{ t('dashboard.noStatuses') }}</div>
         }
       </div>
     </section>
 
     <section class="detail-card">
-      <h2>Requerimientos por fecha</h2>
+      <h2>{{ t('dashboard.requirementsByDate') }}</h2>
       <div class="table-scroll">
         <table class="detail-table">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th class="num">Requerimientos</th>
+              <th>{{ t('common.date') }}</th>
+              <th class="num">{{ t('dashboard.requirements') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -223,14 +223,14 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="2" class="table-empty">No hay datos en el rango seleccionado.</td>
+                <td colspan="2" class="table-empty">{{ t('common.noData') }}</td>
               </tr>
             }
           </tbody>
           @if (detailRows().length) {
             <tfoot>
               <tr>
-                <td class="strong">Total</td>
+                <td class="strong">{{ t('common.total') }}</td>
                 <td class="num strong">{{ formatNumber(total()) }}</td>
               </tr>
             </tfoot>
@@ -239,7 +239,11 @@
       </div>
       @if (hasMoreRows()) {
         <button class="more-btn" type="button" (click)="showMore()">
-          Ver más ({{ formatNumber(dailyDetail().length - detailRows().length) }} restantes)
+          {{
+            t('common.showMore', {
+              count: formatNumber(dailyDetail().length - detailRows().length),
+            })
+          }}
         </button>
       }
     </section>

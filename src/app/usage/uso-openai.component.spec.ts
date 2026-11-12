@@ -572,7 +572,7 @@ describe('UsoOpenAiComponent', () => {
     expect(headers).toContain('Costo');
 
     const firstRow = fixture.nativeElement.querySelector('.detail-table tbody tr');
-    expect(firstRow.textContent).toContain('2026-09-02');
+    expect(firstRow.textContent).toContain('02/09/2026');
   });
 
   it('should render the legend next to the consumption chart title', () => {

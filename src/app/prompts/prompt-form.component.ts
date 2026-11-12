@@ -8,6 +8,7 @@ import { PromptPayload, PromptsService } from '../services/prompts.service';
 import { AuthService } from '../services/auth.service';
 import { ClientContextService } from '../services/client-context.service';
 import { Client } from '../services/clients.service';
+import { TranslationService } from '../i18n/translation.service';
 
 @Component({
   selector: 'app-prompt-form',
@@ -27,6 +28,9 @@ export class PromptFormComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly clientContext = inject(ClientContextService);
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
 
   // Cliente fijo del contexto (asociado al usuario o seleccionado en el menú). Si existe,
   // el campo Cliente no se muestra y el prompt se guarda con este client_id.
@@ -175,7 +179,7 @@ export class PromptFormComponent implements OnInit {
         this.applyClientContext();
       },
       error: () => {
-        this.error.set('No se pudo cargar el prompt. Verifica la conexión con el servidor.');
+        this.error.set(this.t('promptForm.loadError'));
         this.isLoading.set(false);
       },
       complete: () => {
@@ -186,28 +190,26 @@ export class PromptFormComponent implements OnInit {
 
   private extractMessage(err: unknown): string {
     if (!(err instanceof HttpErrorResponse)) {
-      return err instanceof Error && err.message
-        ? err.message
-        : 'Error inesperado. Inténtalo de nuevo.';
+      return err instanceof Error && err.message ? err.message : this.t('promptForm.genericError');
     }
 
     if (err.status === 400) {
       const fields = this.invalidFields(err.error);
       if (fields.length > 0) {
-        return `Revisa estos campos: ${fields.slice(0, 5).join(', ')}.`;
+        return this.t('promptForm.invalidFields', { fields: fields.slice(0, 5).join(', ') });
       }
-      return 'Los datos enviados no son válidos. Revisa los campos obligatorios.';
+      return this.t('promptForm.invalidData');
     }
     if (err.status === 403) {
-      return 'No tienes permiso para guardar prompts.';
+      return this.t('promptForm.forbidden');
     }
     if (err.status === 404) {
-      return 'El prompt ya no existe: puede que otro usuario lo haya eliminado. Vuelve al listado.';
+      return this.t('promptForm.notFound');
     }
     if (err.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      return this.t('promptForm.connectionError');
     }
-    return 'Ocurrió un error. Inténtalo de nuevo.';
+    return this.t('promptForm.genericError');
   }
 
   // El 400 del backend trae el ModelState: { errors: { name: ['…'], agentGroup: ['…'] } }.

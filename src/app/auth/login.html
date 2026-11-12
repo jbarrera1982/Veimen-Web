@@ -5,8 +5,8 @@
       <span class="brand-name">Veimen</span>
     </div>
 
-    <h1 class="auth-title">Inicia sesión</h1>
-    <p class="auth-subtitle">Accede con tu usuario o correo.</p>
+    <h1 class="auth-title">{{ t('login.title') }}</h1>
+    <p class="auth-subtitle">{{ t('login.subtitle') }}</p>
 
     @if (error(); as error) {
       <div class="auth-message auth-error" role="alert">{{ error }}</div>
@@ -14,7 +14,7 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="form-field">
-        <label for="identifier">Usuario o correo</label>
+        <label for="identifier">{{ t('login.identifier') }}</label>
         <input
           id="identifier"
           type="text"
@@ -25,7 +25,7 @@
       </div>
 
       <div class="form-field">
-        <label for="password">Contraseña</label>
+        <label for="password">{{ t('login.password') }}</label>
         <input
           id="password"
           type="password"
@@ -37,9 +37,9 @@
       <button class="btn-primary" type="submit" [disabled]="form.invalid || isSubmitting()">
         @if (isSubmitting()) {
           <span class="spinner" aria-hidden="true"></span>
-          Entrando…
+          {{ t('login.submitting') }}
         } @else {
-          Entrar
+          {{ t('login.submit') }}
         }
       </button>
     </form>

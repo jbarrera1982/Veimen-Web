@@ -18,6 +18,7 @@ import { TokensService, type TokenUsage } from '../services/tokens.service';
 import { UsageService, type CostEntry } from '../services/usage.service';
 import { ClientContextService } from '../services/client-context.service';
 import { PermissionsService, PERMISSIONS } from '../services/permissions.service';
+import { TranslationService } from '../i18n/translation.service';
 
 interface ChartDatum {
   name: string;
@@ -72,6 +73,9 @@ function toDateInputValue(date: Date): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TokensDashboardComponent implements OnInit {
+  private readonly i18n = inject(TranslationService);
+
+  readonly t = this.i18n.t;
   readonly isLoading = signal(true);
   readonly isRefreshing = signal(false);
   readonly error = signal<string | null>(null);
@@ -184,9 +188,7 @@ export class TokensDashboardComponent implements OnInit {
             })
             .pipe(
               catchError(() => {
-                this.costError.set(
-                  'No se pudieron cargar los costos de OpenAI. Verifica tu sesión e inténtalo de nuevo.',
-                );
+                this.costError.set(this.t('tokens.costLoadError'));
                 return of(null);
               }),
             )
@@ -201,9 +203,7 @@ export class TokensDashboardComponent implements OnInit {
         this.lastUpdated.set(new Date());
       },
       error: () => {
-        this.error.set(
-          'No se pudo cargar el consumo de tokens. Verifica tu sesión e inténtalo de nuevo.',
-        );
+        this.error.set(this.t('tokens.loadError'));
         this.isLoading.set(false);
         this.isRefreshing.set(false);
         this.inFlight = false;
@@ -321,11 +321,11 @@ export class TokensDashboardComponent implements OnInit {
     const sorted = [...dates].sort((a, b) => a.localeCompare(b));
     return [
       {
-        name: 'Input',
+        name: this.t('tokens.seriesInput'),
         series: sorted.map((date) => ({ name: date, value: input.get(date) ?? 0 })),
       },
       {
-        name: 'Output',
+        name: this.t('tokens.seriesOutput'),
         series: sorted.map((date) => ({ name: date, value: output.get(date) ?? 0 })),
       },
     ];
@@ -399,12 +399,12 @@ export class TokensDashboardComponent implements OnInit {
   }
 
   formatNumber(value: number): string {
-    return value.toLocaleString('es');
+    return this.i18n.formatNumber(value);
   }
 
   /** Importe con decimales: los costos por día suelen ser fracciones de centavo. */
   formatAmount(value: number): string {
-    return new Intl.NumberFormat('es', {
+    return new Intl.NumberFormat(this.i18n.locale(), {
       minimumFractionDigits: 2,
       maximumFractionDigits: 4,
     }).format(value);
@@ -412,24 +412,18 @@ export class TokensDashboardComponent implements OnInit {
 
   /** Versión compacta para ejes: 12 400 → "12,4 k". */
   formatYAxis(value: number): string {
-    return new Intl.NumberFormat('es', {
+    return new Intl.NumberFormat(this.i18n.locale(), {
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(value);
   }
 
   formatXAxis(value: string): string {
-    const parts = value.split('-');
-    return parts.length === 3 ? `${parts[1]}/${parts[2]}` : value;
+    return this.i18n.formatMonthDay(value);
   }
 
   formatTime(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleTimeString('es', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return this.i18n.formatTime(date);
   }
 
   private schemeFor(size: number): Color {
