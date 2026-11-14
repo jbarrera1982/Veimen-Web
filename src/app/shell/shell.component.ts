@@ -14,7 +14,11 @@ import { PERMISSIONS, PermissionsService } from '../services/permissions.service
 import { PendingReviewService } from '../services/pending-review.service';
 import { PendingProcessingService } from '../services/pending-processing.service';
 import { HasPermissionDirective } from '../auth/has-permission.directive';
-import { TranslationService } from '../i18n/translation.service';
+import { TranslationService, normalizeLanguage } from '../i18n/translation.service';
+
+// Idiomas que el usuario puede elegir en Preferencias. El backend guarda el nombre
+// en español ("Español"/"Inglés") y el token lo transporta en el claim `language`.
+const USER_LANGUAGE_OPTIONS = ['Español', 'Inglés'] as const;
 
 @Component({
   selector: 'app-shell',
@@ -38,7 +42,27 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   readonly isMenuOpen = signal(false);
 
+  // Preferencias del usuario (engranaje junto a la tarjeta del usuario).
+  readonly isSettingsOpen = signal(false);
+  readonly isLanguageOpen = signal(false);
+  readonly isSavingLanguage = signal(false);
+  readonly languageError = signal<string | null>(null);
+
   readonly currentUser = this.auth.currentUser;
+
+  // Idioma activo y opciones del submenú "Idioma".
+  readonly currentLanguage = this.i18n.language;
+  readonly languageOptions = computed(() =>
+    USER_LANGUAGE_OPTIONS.map((value) => ({
+      value,
+      // Las etiquetas ya existen para el formulario de usuarios ("Español"/"Inglés").
+      label: this.t(value === 'Inglés' ? 'userForm.languageEnglish' : 'userForm.languageSpanish'),
+    })),
+  );
+  readonly currentLanguageLabel = computed(
+    () =>
+      this.languageOptions().find((option) => this.isCurrentLanguage(option.value))?.label ?? '',
+  );
 
   // Badge de "Requerimientos": cantidad de pendientes de revisión.
   readonly pendingReviewCount = this.pendingReview.count;
@@ -128,6 +152,50 @@ export class ShellComponent implements OnInit, OnDestroy {
   /** Click en el badge de Procesamiento: abre la comparativa de correos vs requerimientos. */
   openProcessing(): void {
     void this.router.navigate(['/procesamiento']);
+  }
+
+  /** Abre/cierra el panel de Preferencias del engranaje. */
+  toggleSettings(): void {
+    const open = !this.isSettingsOpen();
+    this.isSettingsOpen.set(open);
+    if (!open) {
+      this.isLanguageOpen.set(false);
+    }
+    this.languageError.set(null);
+  }
+
+  /** Muestra u oculta el submenú "Idioma" dentro de Preferencias. */
+  toggleLanguageMenu(): void {
+    this.isLanguageOpen.update((open) => !open);
+  }
+
+  /** Indica si la opción corresponde al idioma activo del usuario. */
+  isCurrentLanguage(value: string): boolean {
+    return normalizeLanguage(value) === this.currentLanguage();
+  }
+
+  /**
+   * Guarda el idioma elegido en la base (vía API) y lo aplica a toda la aplicación:
+   * el backend reemite el access token con el claim `language` nuevo.
+   */
+  selectLanguage(value: string): void {
+    if (this.isSavingLanguage() || this.isCurrentLanguage(value)) {
+      return;
+    }
+
+    this.isSavingLanguage.set(true);
+    this.languageError.set(null);
+
+    this.auth.updateLanguage(value).subscribe({
+      next: () => {
+        this.isSavingLanguage.set(false);
+        this.isLanguageOpen.set(false);
+      },
+      error: () => {
+        this.isSavingLanguage.set(false);
+        this.languageError.set(this.t('shell.languageError'));
+      },
+    });
   }
 
   toggleMenu(): void {

@@ -46,6 +46,14 @@ export interface AuthResponse {
   user: UserDto;
 }
 
+// Respuesta de PATCH /api/auth/me/language: el access token se reemite con el
+// claim 'language' nuevo y el refresh token se conserva.
+export interface UpdateLanguageResponse {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  user: UserDto;
+}
+
 export const AUTH_ALLOW_ANON = new HttpContextToken<boolean>(() => false);
 
 const ACCESS_TOKEN_KEY = 'veimen-web.accessToken';
@@ -144,6 +152,28 @@ export class AuthService {
     return this.http
       .post<void>(`${this.apiBaseUrl}/api/auth/change-password`, { currentPassword, newPassword })
       .pipe(map(() => undefined));
+  }
+
+  /**
+   * Cambia el idioma preferido del usuario actual (lo guarda en la base y reemite el
+   * access token con el claim `language` nuevo). Tras persistir la sesión se recargan
+   * los permisos, que es de donde `TranslationService` lee el idioma: la UI se
+   * retraduce al instante, sin volver a iniciar sesión.
+   */
+  updateLanguage(language: string): Observable<UserDto> {
+    return this.http
+      .patch<UpdateLanguageResponse>(`${this.apiBaseUrl}/api/auth/me/language`, { language })
+      .pipe(
+        tap((resp) => {
+          if (this.isBrowser) {
+            this.write(ACCESS_TOKEN_KEY, resp.accessToken);
+            this.write(ACCESS_TOKEN_EXPIRY_KEY, resp.accessTokenExpiresAt);
+          }
+          this.currentUser.set(resp.user);
+          this.storeUser(resp.user);
+        }),
+        switchMap((resp) => this.permissions.load().pipe(map(() => resp.user))),
+      );
   }
 
   getAccessToken(): string | null {

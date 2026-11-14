@@ -465,6 +465,97 @@ describe('ShellComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/procesamiento']);
   });
 
+  it('should open the preferences panel from the gear next to the user', () => {
+    const gear = fixture.nativeElement.querySelector('.user-settings');
+    expect(gear).toBeTruthy();
+    expect(gear.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('.settings-panel')).toBeNull();
+
+    gear.click();
+    fixture.detectChanges();
+
+    expect(component.isSettingsOpen()).toBe(true);
+    expect(gear.getAttribute('aria-expanded')).toBe('true');
+    expect(fixture.nativeElement.querySelector('.settings-panel')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.settings-item').textContent).toContain('Idioma');
+  });
+
+  it('should reveal the language options when the Idioma item is clicked', () => {
+    fixture.nativeElement.querySelector('.user-settings').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.settings-submenu')).toBeNull();
+
+    fixture.nativeElement.querySelector('.settings-item').click();
+    fixture.detectChanges();
+
+    const options = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('.settings-option'),
+    );
+    expect(options.map((option) => option.textContent?.trim())).toEqual(['Español', 'Inglés']);
+    expect(options[0].classList.contains('is-active')).toBe(true);
+    expect(options[1].classList.contains('is-active')).toBe(false);
+  });
+
+  it('should save the selected language and retranslate the UI immediately', () => {
+    fixture.nativeElement.querySelector('.user-settings').click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.settings-item').click();
+    fixture.detectChanges();
+
+    const options = fixture.nativeElement.querySelectorAll('.settings-option');
+    options[1].click();
+    fixture.detectChanges();
+
+    // Se guarda en la base vía API y el backend reemite el token con el claim nuevo.
+    const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/auth/me/language`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ language: 'Inglés' });
+    req.flush({
+      accessToken: 'new-access',
+      accessTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      user: { ...USER, language: 'Inglés' },
+    });
+
+    httpTesting.expectOne(`${environment.apiBaseUrl}/api/auth/me/permissions`).flush({
+      profile: 'Admin',
+      language: 'Inglés',
+      permissions: ALL_PERMISSIONS,
+    });
+    fixture.detectChanges();
+
+    expect(component.currentLanguage()).toBe('en');
+    expect(component.isLanguageOpen()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.settings-submenu')).toBeNull();
+
+    // La interfaz ya está en inglés (el submenú también).
+    const labels = Array.from<Element>(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav .nav-link'),
+    ).map((link) => link.textContent?.trim());
+    expect(labels).toContain('Requests');
+    expect(labels).not.toContain('Requerimientos');
+  });
+
+  it('should show an inline error when the language cannot be saved', () => {
+    fixture.nativeElement.querySelector('.user-settings').click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.settings-item').click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelectorAll('.settings-option')[1].click();
+    fixture.detectChanges();
+
+    httpTesting
+      .expectOne(`${environment.apiBaseUrl}/api/auth/me/language`)
+      .flush('Server error', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(component.isSavingLanguage()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.settings-error').textContent).toContain(
+      'No se pudo actualizar el idioma',
+    );
+  });
+
   it('should log out and navigate to login', () => {
     const auth = TestBed.inject(AuthService);
     const logoutSpy = vi.spyOn(auth, 'logout').mockReturnValue(of(undefined));

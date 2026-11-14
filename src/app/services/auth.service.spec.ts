@@ -202,6 +202,30 @@ describe('AuthService', () => {
     req.flush(null);
   });
 
+  it('should update the language and re-issue the access token', () => {
+    localStorage.setItem('veimen-web.refreshToken', 'refresh-456');
+
+    service.updateLanguage('Inglés').subscribe({
+      next: (updated) => expect(updated.language).toBe('Inglés'),
+      error: () => expect.unreachable('should not error'),
+    });
+
+    const req = httpTesting.expectOne(`${API}/api/auth/me/language`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ language: 'Inglés' });
+    req.flush({ accessToken: 'new-access', accessTokenExpiresAt: expiresAt, user });
+
+    // Tras guardar el idioma se recargan los permisos (traen el claim 'language' nuevo).
+    httpTesting.expectOne(PERMISSIONS_URL).flush(PERMISSIONS_DTO);
+
+    expect(service.getAccessToken()).toBe('new-access');
+    // El refresh token se conserva: la sesión no se rota al cambiar el idioma.
+    expect(service.getRefreshToken()).toBe('refresh-456');
+    expect(service.currentUser()).toEqual(user);
+    expect(service.language()).toBe('Inglés');
+    expect(localStorage.getItem('veimen-web.user')).toBe(JSON.stringify(user));
+  });
+
   it('should report an expired access token', () => {
     localStorage.setItem(
       'veimen-web.accessTokenExpiry',
