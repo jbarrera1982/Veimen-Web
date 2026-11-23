@@ -1,0 +1,40 @@
+@if (caseLabel(); as label) {
+  <div class="eval-backdrop" role="presentation" (click)="close()">
+    <section
+      class="eval-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="t('emails.evaluationTitle')"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="eval-header">
+        <div class="eval-heading">
+          <h2>{{ t('emails.evaluationTitle') }}</h2>
+          <p class="eval-subtitle">{{ label }}</p>
+        </div>
+        <button type="button" class="eval-close" (click)="close()">
+          {{ t('common.close') }}
+        </button>
+      </header>
+
+      <div class="eval-body">
+        @if (isLoading()) {
+          <div class="eval-state">
+            <span class="spinner spinner-large"></span>
+            {{ t('emails.evaluating') }}
+          </div>
+        } @else if (error(); as err) {
+          <div class="eval-state eval-state-error">
+            <p>{{ err }}</p>
+          </div>
+        } @else if (hasNoContent()) {
+          <div class="eval-state">
+            <p>{{ t('emails.evaluationEmpty') }}</p>
+          </div>
+        } @else {
+          <pre class="eval-output">{{ formattedResult() }}</pre>
+        }
+      </div>
+    </section>
+  </div>
+}

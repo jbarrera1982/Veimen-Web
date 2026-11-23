@@ -20,6 +20,8 @@ export const PERMISSIONS = {
   clientsRead: 'clients.read',
   clientsWrite: 'clients.write',
   mailScan: 'mail.scan',
+  emailEvaluationRead: 'email-evaluation.read',
+  emailEvaluationWrite: 'email-evaluation.write',
 } as const;
 
 export interface UserPermissionsDto {

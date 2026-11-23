@@ -1,0 +1,176 @@
+<div class="emails">
+  <header class="emails-header">
+    <div>
+      <h1>{{ t('emails.title') }}</h1>
+      <p class="emails-subtitle">{{ t('emails.subtitle') }}</p>
+      @if (isRefreshing()) {
+        <span class="refreshing-badge">
+          <span class="spinner"></span>
+          {{ t('common.refreshing') }}
+        </span>
+      }
+    </div>
+    <button
+      *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+      class="btn-new"
+      type="button"
+      (click)="newCase()"
+    >
+      {{ t('emails.new') }}
+    </button>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state">
+      <span class="spinner spinner-large"></span>
+      {{ t('emails.loading') }}
+    </div>
+  } @else if (error(); as err) {
+    <div class="state state-error">
+      <p>{{ err }}</p>
+      <button class="btn-secondary" type="button" (click)="refresh()">
+        {{ t('common.retry') }}
+      </button>
+    </div>
+  } @else {
+    <div class="filters-bar">
+      <input
+        class="search-input"
+        type="search"
+        [attr.placeholder]="t('emails.searchPlaceholder')"
+        [value]="searchText()"
+        (input)="onSearch($event)"
+      />
+      <select class="filter-select" [value]="scenarioFilter()" (change)="onScenarioChange($event)">
+        <option value="all">{{ t('emails.allScenarios') }}</option>
+        @for (scenario of scenarios(); track scenario) {
+          <option [value]="scenario">{{ scenario }}</option>
+        }
+      </select>
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="resetFilters()"
+        [disabled]="!hasActiveFilters()"
+      >
+        {{ t('common.clearFilters') }}
+      </button>
+      <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="isRefreshing()">
+        {{ t('common.reload') }}
+      </button>
+    </div>
+
+    @if (cases().length === 0 && !hasActiveFilters()) {
+      <div class="state">
+        <p>{{ t('emails.emptyRegistered') }}</p>
+      </div>
+    } @else if (cases().length === 0) {
+      <div class="state">
+        <p>{{ t('emails.emptySearch') }}</p>
+        <button class="btn-secondary" type="button" (click)="resetFilters()">
+          {{ t('common.clearFilters') }}
+        </button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="emails-table">
+          <thead>
+            <tr>
+              <th class="col-case">{{ t('emails.caseId') }}</th>
+              <th class="col-scenario">{{ t('emails.scenario') }}</th>
+              <th class="col-from">{{ t('emails.from') }}</th>
+              <th class="col-subject">{{ t('emails.subject') }}</th>
+              <th class="col-preview">{{ t('emails.preview') }}</th>
+              <th class="col-client">{{ t('emails.client') }}</th>
+              <th class="col-actions">{{ t('common.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of cases(); track item.id) {
+              <tr
+                class="clickable-row"
+                tabindex="0"
+                (click)="openCase(item)"
+                (keydown.enter)="openCase(item)"
+              >
+                <td class="col-case">{{ item.case }}</td>
+                <td class="col-scenario">{{ item.scenario || '—' }}</td>
+                <td class="col-from">{{ item.from }}</td>
+                <td class="col-subject">{{ item.subject || '—' }}</td>
+                <td class="col-preview">{{ item.contentPreview || '—' }}</td>
+                <td class="col-client">{{ clientLabel(item.clientId) }}</td>
+                <td class="col-actions">
+                  <button
+                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+                    class="row-btn"
+                    type="button"
+                    (click)="openCase(item); $event.stopPropagation()"
+                  >
+                    {{ t('common.edit') }}
+                  </button>
+                  <button
+                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+                    class="row-btn"
+                    type="button"
+                    (click)="duplicateCase(item, $event)"
+                  >
+                    {{ t('emails.duplicate') }}
+                  </button>
+                  <button
+                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+                    class="row-btn row-btn-accent"
+                    type="button"
+                    (click)="evaluate(item, $event)"
+                  >
+                    {{ t('emails.evaluate') }}
+                  </button>
+                  <button
+                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+                    class="row-btn row-btn-danger"
+                    type="button"
+                    (click)="removeCase(item, $event)"
+                  >
+                    {{ t('common.delete') }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <span class="page-info">{{ pageInfo() }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="prevPage()"
+            [disabled]="page() === 1"
+          >
+            « {{ t('common.previous') }}
+          </button>
+          <span class="page-indicator">{{
+            t('emails.page', { page: page(), total: totalPages() })
+          }}</span>
+          <button
+            class="btn-secondary"
+            type="button"
+            (click)="nextPage()"
+            [disabled]="page() === totalPages()"
+          >
+            {{ t('common.next') }} »
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <app-email-evaluation-result
+    [caseLabel]="evaluationLabel()"
+    [isLoading]="isEvaluating()"
+    [error]="evaluationError()"
+    [result]="evaluationResult()"
+    (closed)="closeEvaluation()"
+  />
+</div>

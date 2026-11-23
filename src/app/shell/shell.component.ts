@@ -96,6 +96,7 @@ export class ShellComponent implements OnInit, OnDestroy {
       ...(this.hasAssociatedClient() ? [] : [PERMISSIONS.clientsRead]),
       PERMISSIONS.usersManage,
       PERMISSIONS.promptsRead,
+      PERMISSIONS.emailEvaluationRead,
     ),
   );
 

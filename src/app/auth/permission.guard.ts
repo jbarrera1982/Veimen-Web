@@ -71,6 +71,9 @@ export function firstAccessiblePath(
   if (has(PERMISSIONS.promptsRead)) {
     return '/prompts';
   }
+  if (has(PERMISSIONS.emailEvaluationRead)) {
+    return '/emails-evaluacion';
+  }
   if (has(PERMISSIONS.businessModelRead)) {
     return '/business-model';
   }

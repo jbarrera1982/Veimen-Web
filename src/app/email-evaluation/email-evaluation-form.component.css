@@ -1,0 +1,258 @@
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.email-form-header {
+  position: sticky;
+  top: 3.5rem; /* mobile: queda fijo debajo de la topbar fija del shell */
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0;
+  background: var(--vm-wash);
+}
+
+.email-form-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.email-form-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--vm-ink);
+}
+
+@media (min-width: 1024px) {
+  .email-form-header {
+    top: 0;
+  }
+}
+
+.form-error {
+  margin: 0;
+  color: var(--vm-danger);
+  font-size: 0.8125rem;
+}
+
+.field-hint {
+  color: var(--vm-muted);
+  font-size: 0.75rem;
+}
+
+.form-state {
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--vm-wash);
+  color: var(--vm-muted);
+}
+
+.spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--vm-blue);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.email-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1.25rem;
+  padding: 1rem;
+  background: var(--vm-surface);
+  border: 1px solid var(--vm-line);
+  border-radius: 0.625rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field > span {
+  font-size: 0.8125rem;
+  color: var(--vm-muted);
+  font-weight: 500;
+}
+
+.field input[type='text'],
+.field input[type='email'],
+.field select,
+.field textarea {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--vm-line-strong);
+  border-radius: 0.375rem;
+  background: var(--vm-surface);
+  color: var(--vm-ink);
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid transparent;
+  border-color: var(--vm-blue);
+}
+
+.field input[readonly] {
+  background: var(--vm-wash);
+  color: var(--vm-muted);
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.field-metadata {
+  border: 1px solid var(--vm-line);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  margin: 0;
+}
+
+.field-metadata legend {
+  font-size: 0.8125rem;
+  color: var(--vm-muted);
+  font-weight: 500;
+  padding: 0 0.35rem;
+}
+
+.metadata-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Editor HTML (Quill). Las clases internas viven en el componente de ngx-quill,
+   por eso se perfora el encapsulamiento solo para ajustar el marco. */
+.field quill-editor {
+  display: block;
+}
+
+:host ::ng-deep .ql-toolbar.ql-snow {
+  border-color: var(--vm-line-strong);
+  border-radius: 0.375rem 0.375rem 0 0;
+  background: var(--vm-wash);
+}
+
+:host ::ng-deep .ql-container.ql-snow {
+  border-color: var(--vm-line-strong);
+  border-radius: 0 0 0.375rem 0.375rem;
+  min-height: 220px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--vm-ink);
+  background: var(--vm-surface);
+}
+
+:host ::ng-deep .ql-editor {
+  min-height: 220px;
+}
+
+:host ::ng-deep .ql-editor.ql-blank::before {
+  color: var(--vm-faint);
+  font-style: normal;
+}
+
+.save-error {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--veimen-accent);
+  border-radius: 0.375rem;
+  background: var(--veimen-accent);
+  color: var(--vm-abyss);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary .spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-color: currentColor;
+  border-top-color: transparent;
+}
+
+.btn-secondary {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(6, 16, 29, 0.28);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--vm-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--veimen-accent);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-accent {
+  color: var(--vm-blue-ink);
+  border-color: var(--vm-blue-line);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--vm-blue-wash);
+  border-color: var(--vm-blue-line);
+}
+
+@media (max-width: 760px) {
+  .email-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

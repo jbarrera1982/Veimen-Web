@@ -1,0 +1,175 @@
+<div class="email-form">
+  <header class="email-form-header">
+    <div class="email-form-heading">
+      <h1>
+        {{
+          isEdit()
+            ? t('emailForm.editTitle')
+            : isClone()
+              ? t('emailForm.duplicateTitle')
+              : t('emailForm.newTitle')
+        }}
+      </h1>
+      @if (error(); as err) {
+        <p class="form-error">{{ err }}</p>
+      }
+    </div>
+    @if (!isLoading()) {
+      <div class="form-actions">
+        @if (isEdit()) {
+          <button type="button" class="btn-secondary" (click)="duplicate()" [disabled]="isSaving()">
+            {{ t('emails.duplicate') }}
+          </button>
+        }
+        @if (canEvaluate()) {
+          <button
+            type="button"
+            class="btn-secondary btn-accent"
+            (click)="evaluate()"
+            [disabled]="isSaving() || isEvaluating()"
+          >
+            {{ t('emails.evaluate') }}
+          </button>
+        }
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          form="emailForm"
+          class="btn-primary"
+          [disabled]="form.invalid || isSaving() || isLoading()"
+        >
+          @if (isSaving()) {
+            <span class="spinner"></span>
+            {{ t('common.saving') }}
+          } @else {
+            {{
+              isEdit()
+                ? t('emailForm.save')
+                : isClone()
+                  ? t('emailForm.createDuplicate')
+                  : t('emailForm.create')
+            }}
+          }
+        </button>
+      </div>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="form-state">
+      <span class="spinner"></span>
+      {{ t('emailForm.loading') }}
+    </div>
+  } @else {
+    <form id="emailForm" class="email-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <label class="field">
+        <span>{{ t('emailForm.case') }}</span>
+        <input formControlName="case" type="text" />
+        @if (form.controls.case.touched && form.controls.case.invalid) {
+          <small class="form-error">
+            {{
+              form.controls.case.hasError('maxlength')
+                ? t('emailForm.caseTooLong')
+                : t('emailForm.caseRequired')
+            }}
+          </small>
+        }
+      </label>
+
+      <label class="field">
+        <span>{{ t('emailForm.scenario') }}</span>
+        <input formControlName="scenario" type="text" />
+        @if (form.controls.scenario.touched && form.controls.scenario.invalid) {
+          <small class="form-error">{{ t('emailForm.scenarioRequired') }}</small>
+        }
+      </label>
+
+      @if (contextClientId() === null) {
+        <label class="field">
+          <span>{{ t('common.client') }} *</span>
+          <select formControlName="clientId">
+            <option [ngValue]="null">{{ t('emailForm.clientSelect') }}</option>
+            @for (client of clientOptions(); track client.clientId) {
+              <option [ngValue]="client.clientId">{{ client.name }}</option>
+            }
+          </select>
+          @if (form.controls.clientId.touched && form.controls.clientId.invalid) {
+            <small class="form-error">{{ t('emailForm.clientRequired') }}</small>
+          }
+        </label>
+      }
+
+      <label class="field">
+        <span>{{ t('emailForm.from') }}</span>
+        <input formControlName="from" type="email" />
+        @if (form.controls.from.touched && form.controls.from.invalid) {
+          <small class="form-error">
+            {{
+              form.controls.from.hasError('required')
+                ? t('emailForm.fromRequired')
+                : t('emailForm.invalidEmail')
+            }}
+          </small>
+        }
+      </label>
+
+      <label class="field field-full">
+        <span>{{ t('emailForm.subject') }}</span>
+        <input formControlName="subject" type="text" />
+        @if (form.controls.subject.touched && form.controls.subject.invalid) {
+          <small class="form-error">{{ t('emailForm.subjectTooLong') }}</small>
+        }
+      </label>
+
+      <div class="field field-full">
+        <span>{{ t('emailForm.content') }}</span>
+        <quill-editor
+          formControlName="content"
+          format="html"
+          theme="snow"
+          [modules]="editorModules"
+          [placeholder]="t('emailForm.contentPlaceholder')"
+        />
+        <small class="field-hint">{{ t('emailForm.contentHint') }}</small>
+      </div>
+
+      @if (isEdit()) {
+        <fieldset class="field field-full field-metadata">
+          <legend>{{ t('emailForm.audit') }}</legend>
+          <div class="metadata-row">
+            <label class="field">
+              <span>{{ t('emailForm.createdBy') }}</span>
+              <input formControlName="createdBy" type="text" readonly />
+            </label>
+            <label class="field">
+              <span>{{ t('emailForm.createdAt') }}</span>
+              <input formControlName="createdAt" type="text" readonly />
+            </label>
+            <label class="field">
+              <span>{{ t('emailForm.updatedBy') }}</span>
+              <input formControlName="updatedBy" type="text" readonly />
+            </label>
+            <label class="field">
+              <span>{{ t('emailForm.updatedAt') }}</span>
+              <input formControlName="updatedAt" type="text" readonly />
+            </label>
+          </div>
+        </fieldset>
+      }
+
+      @if (saveError(); as saveErr) {
+        <p class="form-error save-error" role="alert">{{ saveErr }}</p>
+      }
+    </form>
+  }
+
+  <app-email-evaluation-result
+    [caseLabel]="evaluationLabel()"
+    [isLoading]="isEvaluating()"
+    [error]="evaluationError()"
+    [result]="evaluationResult()"
+    (closed)="closeEvaluation()"
+  />
+</div>

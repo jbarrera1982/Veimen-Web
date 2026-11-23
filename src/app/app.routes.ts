@@ -32,6 +32,7 @@ export const routes: Routes = [
         PERMISSIONS.mailScan,
         PERMISSIONS.serviceRequestsRead,
         PERMISSIONS.promptsRead,
+        PERMISSIONS.emailEvaluationRead,
         PERMISSIONS.usersManage,
         PERMISSIONS.businessModelRead,
       ),
@@ -95,6 +96,30 @@ export const routes: Routes = [
         path: 'prompts/:id',
         component: PromptFormComponent,
         canActivate: [permissionGuard(PERMISSIONS.promptsWrite)],
+      },
+      {
+        path: 'emails-evaluacion',
+        loadComponent: () =>
+          import('./email-evaluation/email-evaluation-list.component').then(
+            (m) => m.EmailEvaluationListComponent,
+          ),
+        canActivate: [permissionGuard(PERMISSIONS.emailEvaluationRead)],
+      },
+      {
+        path: 'emails-evaluacion/nuevo',
+        loadComponent: () =>
+          import('./email-evaluation/email-evaluation-form.component').then(
+            (m) => m.EmailEvaluationFormComponent,
+          ),
+        canActivate: [permissionGuard(PERMISSIONS.emailEvaluationWrite)],
+      },
+      {
+        path: 'emails-evaluacion/:id',
+        loadComponent: () =>
+          import('./email-evaluation/email-evaluation-form.component').then(
+            (m) => m.EmailEvaluationFormComponent,
+          ),
+        canActivate: [permissionGuard(PERMISSIONS.emailEvaluationWrite)],
       },
       {
         path: 'usuarios',
