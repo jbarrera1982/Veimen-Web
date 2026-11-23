@@ -76,7 +76,6 @@
         <table class="emails-table">
           <thead>
             <tr>
-              <th class="col-case">{{ t('emails.caseId') }}</th>
               <th class="col-scenario">{{ t('emails.scenario') }}</th>
               <th class="col-from">{{ t('emails.from') }}</th>
               <th class="col-subject">{{ t('emails.subject') }}</th>
@@ -93,7 +92,6 @@
                 (click)="openCase(item)"
                 (keydown.enter)="openCase(item)"
               >
-                <td class="col-case">{{ item.case }}</td>
                 <td class="col-scenario">{{ item.scenario || '—' }}</td>
                 <td class="col-from">{{ item.from }}</td>
                 <td class="col-subject">{{ item.subject || '—' }}</td>

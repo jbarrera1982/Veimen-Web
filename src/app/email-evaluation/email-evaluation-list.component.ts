@@ -241,7 +241,7 @@ export class EmailEvaluationListComponent implements OnInit {
   evaluate(item: EmailEvaluationCaseListItem, event?: Event): void {
     event?.stopPropagation();
 
-    this.evaluationLabel.set(item.case);
+    this.evaluationLabel.set(`#${item.id}`);
     this.evaluationResult.set(null);
     this.evaluationError.set(null);
     this.isEvaluating.set(true);
@@ -270,7 +270,7 @@ export class EmailEvaluationListComponent implements OnInit {
     if (!this.canWriteEmails()) {
       return;
     }
-    if (!window.confirm(this.t('emails.confirmDelete', { caseId: item.case }))) {
+    if (!window.confirm(this.t('emails.confirmDelete', { id: item.id }))) {
       return;
     }
 
@@ -284,7 +284,7 @@ export class EmailEvaluationListComponent implements OnInit {
         this.loadCases(true);
         this.loadScenarios();
       },
-      error: () => this.error.set(this.t('emails.deleteError', { caseId: item.case })),
+      error: () => this.error.set(this.t('emails.deleteError', { id: item.id })),
     });
   }
 

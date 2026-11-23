@@ -26,8 +26,6 @@ import { PERMISSIONS, PermissionsService } from '../services/permissions.service
 import { TranslationService } from '../i18n/translation.service';
 import { EmailEvaluationResultComponent } from './evaluation-result.component';
 
-const CASE_MAX_LENGTH = 255;
-
 @Component({
   selector: 'app-email-evaluation-form',
   standalone: true,
@@ -87,8 +85,6 @@ export class EmailEvaluationFormComponent implements OnInit {
   };
 
   readonly form = this.fb.group({
-    // Texto libre: sin restricción de caracteres, solo obligatorio y con largo máximo.
-    case: ['', [Validators.required, Validators.maxLength(CASE_MAX_LENGTH)]],
     scenario: ['', [Validators.required, Validators.maxLength(150)]],
     from: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
     subject: ['', [Validators.maxLength(500)]],
@@ -143,7 +139,6 @@ export class EmailEvaluationFormComponent implements OnInit {
 
     const raw = this.form.getRawValue();
     const payload: EmailEvaluationCasePayload = {
-      case: (raw.case ?? '').trim(),
       scenario: (raw.scenario ?? '').trim(),
       from: (raw.from ?? '').trim(),
       subject: this.nullIfBlank(raw.subject),
@@ -201,7 +196,7 @@ export class EmailEvaluationFormComponent implements OnInit {
       return;
     }
 
-    this.evaluationLabel.set(this.form.controls.case.value || String(id));
+    this.evaluationLabel.set(`#${id}`);
     this.evaluationResult.set(null);
     this.evaluationError.set(null);
     this.isEvaluating.set(true);
@@ -246,7 +241,6 @@ export class EmailEvaluationFormComponent implements OnInit {
   private applyCase(item: EmailEvaluationCase, duplicate: boolean): void {
     if (duplicate) {
       this.form.patchValue({
-        case: item.case,
         scenario: item.scenario,
         from: item.from,
         subject: item.subject,
@@ -262,7 +256,6 @@ export class EmailEvaluationFormComponent implements OnInit {
     }
 
     this.form.patchValue({
-      case: item.case,
       scenario: item.scenario,
       from: item.from,
       subject: item.subject,
@@ -356,7 +349,7 @@ export class EmailEvaluationFormComponent implements OnInit {
     return err instanceof Error && err.message ? err.message : this.t('emails.evaluationError');
   }
 
-  // El 400 del backend trae el ModelState: { errors: { Case: ['…'], From: ['…'] } }.
+  // El 400 del backend trae el ModelState: { errors: { From: ['…'] } }.
   private invalidFields(body: unknown): string[] {
     if (body && typeof body === 'object' && 'errors' in body) {
       const errors = (body as { errors?: Record<string, string[]> }).errors;

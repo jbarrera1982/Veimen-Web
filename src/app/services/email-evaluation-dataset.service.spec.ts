@@ -40,7 +40,6 @@ describe('EmailEvaluationDatasetService', () => {
       items: [
         {
           id: 7,
-          case: 'Saldo pendiente',
           scenario: 'Facturación',
           from: 'a@b.com',
           subject: null,
@@ -57,7 +56,6 @@ describe('EmailEvaluationDatasetService', () => {
       items: [
         {
           id: 7,
-          case: 'Saldo pendiente',
           scenario: 'Facturación',
           from: 'a@b.com',
           subject: '',
@@ -84,7 +82,6 @@ describe('EmailEvaluationDatasetService', () => {
   it('updateCase usa PUT con el id en la ruta', () => {
     service
       .updateCase(7, {
-        case: 'Caso con símbolos / y espacios',
         scenario: 'S',
         from: 'a@b.com',
         subject: null,
@@ -95,7 +92,7 @@ describe('EmailEvaluationDatasetService', () => {
 
     const req = httpTesting.expectOne(`${API_URL}/7`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body.case).toBe('Caso con símbolos / y espacios');
+    expect(req.request.body.scenario).toBe('S');
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
 

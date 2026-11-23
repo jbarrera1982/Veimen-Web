@@ -65,20 +65,6 @@
   } @else {
     <form id="emailForm" class="email-form-grid" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <label class="field">
-        <span>{{ t('emailForm.case') }}</span>
-        <input formControlName="case" type="text" />
-        @if (form.controls.case.touched && form.controls.case.invalid) {
-          <small class="form-error">
-            {{
-              form.controls.case.hasError('maxlength')
-                ? t('emailForm.caseTooLong')
-                : t('emailForm.caseRequired')
-            }}
-          </small>
-        }
-      </label>
-
-      <label class="field">
         <span>{{ t('emailForm.scenario') }}</span>
         <input formControlName="scenario" type="text" />
         @if (form.controls.scenario.touched && form.controls.scenario.invalid) {

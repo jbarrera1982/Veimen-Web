@@ -7,8 +7,6 @@ import { environment } from '../../environments/environment';
 export interface EmailEvaluationCase {
   // Clave autonumérica asignada por la base.
   id: number;
-  // Nombre del caso: texto libre y editable.
-  case: string;
   scenario: string;
   from: string;
   subject: string;
@@ -24,7 +22,6 @@ export interface EmailEvaluationCase {
 // Fila del listado: el backend omite el HTML completo y envía un preview en texto plano.
 export interface EmailEvaluationCaseListItem {
   id: number;
-  case: string;
   scenario: string;
   from: string;
   subject: string;
@@ -52,7 +49,6 @@ export interface EmailEvaluationCaseQuery {
 
 // Cuerpo de POST/PUT: el backend completa la auditoría y el id a partir de la ruta/base.
 export interface EmailEvaluationCasePayload {
-  case: string;
   scenario: string;
   from: string;
   subject: string | null;
@@ -62,7 +58,6 @@ export interface EmailEvaluationCasePayload {
 
 interface ApiCase {
   id: number;
-  case?: string | null;
   scenario?: string | null;
   from?: string | null;
   subject?: string | null;
@@ -76,7 +71,6 @@ interface ApiCase {
 
 interface ApiCaseListItem {
   id: number;
-  case?: string | null;
   scenario?: string | null;
   from?: string | null;
   subject?: string | null;
@@ -96,7 +90,6 @@ interface ApiCasePage {
 function normalizeCase(raw: ApiCase): EmailEvaluationCase {
   return {
     id: raw.id,
-    case: raw.case ?? '',
     scenario: raw.scenario ?? '',
     from: raw.from ?? '',
     subject: raw.subject ?? '',
@@ -112,7 +105,6 @@ function normalizeCase(raw: ApiCase): EmailEvaluationCase {
 function normalizeListItem(raw: ApiCaseListItem): EmailEvaluationCaseListItem {
   return {
     id: raw.id,
-    case: raw.case ?? '',
     scenario: raw.scenario ?? '',
     from: raw.from ?? '',
     subject: raw.subject ?? '',
@@ -170,7 +162,7 @@ export class EmailEvaluationDatasetService {
     return this.http.post<ApiCase>(this.baseUrl, payload).pipe(map(normalizeCase));
   }
 
-  // Requiere email-evaluation.write. El `case` puede cambiar; el id identifica la fila (204).
+  // Requiere email-evaluation.write. El id identifica la fila (204).
   updateCase(id: number, payload: EmailEvaluationCasePayload): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/${id}`, payload);
   }
