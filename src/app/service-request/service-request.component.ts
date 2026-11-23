@@ -246,10 +246,11 @@ export class ServiceRequestComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Rango por defecto: desde hoy hacia adelante. La fecha "Hasta" queda vacía a
+  // propósito (el backend trata la fecha ausente como "sin filtro").
   private applyDefaultRange(): void {
-    const today = new Date();
-    this.startDate.set(toDateInputValue(today));
-    this.endDate.set(toDateInputValue(today));
+    this.startDate.set(toDateInputValue(new Date()));
+    this.endDate.set(null);
   }
 
   // Listado de pendientes de revisión que pide el badge del menú: sin filtro de fechas

@@ -179,12 +179,12 @@ describe('ServiceRequestComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load data from the webhook with default date range', () => {
+  it('should load data with a default date range open-ended on the end date', () => {
     fixture.detectChanges();
 
     const req = httpTesting.expectOne((r) => r.url === API_URL);
     expect(req.request.params.get('start_date')).toBeTruthy();
-    expect(req.request.params.get('end_date')).toBeTruthy();
+    expect(req.request.params.has('end_date')).toBe(false);
 
     req.flush({
       items: [rawRequest(), rawRequest({ requestNumber: 201, status: 'Rejected' })],
