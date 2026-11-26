@@ -3,6 +3,9 @@
     <div>
       <h1>{{ t('emails.title') }}</h1>
       <p class="emails-subtitle">{{ t('emails.subtitle') }}</p>
+      <span class="scenario-counter">
+        {{ t('emails.scenarioCount', { count: totalCount() }) }}
+      </span>
       @if (isRefreshing()) {
         <span class="refreshing-badge">
           <span class="spinner"></span>
@@ -72,10 +75,33 @@
         </button>
       </div>
     } @else {
+      <ng-container *appHasPermission="PERMISSIONS.emailEvaluationWrite">
+        <div class="bulk-bar">
+          <button
+            class="row-btn row-btn-accent"
+            type="button"
+            (click)="evaluateSelected()"
+            [disabled]="selectedCount() === 0"
+          >
+            {{ t('emails.evaluateSelected') }} ({{ selectedCount() }})
+          </button>
+        </div>
+      </ng-container>
+
       <div class="table-wrap">
         <table class="emails-table">
           <thead>
             <tr>
+              <th *appHasPermission="PERMISSIONS.emailEvaluationWrite" class="col-check">
+                <input
+                  class="row-check"
+                  type="checkbox"
+                  [checked]="allPageSelected()"
+                  [indeterminate]="somePageSelected()"
+                  [attr.aria-label]="t('emails.selectAll')"
+                  (change)="toggleAll($event)"
+                />
+              </th>
               <th class="col-scenario">{{ t('emails.scenario') }}</th>
               <th class="col-from">{{ t('emails.from') }}</th>
               <th class="col-subject">{{ t('emails.subject') }}</th>
@@ -92,6 +118,20 @@
                 (click)="openCase(item)"
                 (keydown.enter)="openCase(item)"
               >
+                <td
+                  *appHasPermission="PERMISSIONS.emailEvaluationWrite"
+                  class="col-check"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                >
+                  <input
+                    class="row-check"
+                    type="checkbox"
+                    [checked]="isSelected(item.id)"
+                    [attr.aria-label]="t('emails.selectCase', { id: item.id })"
+                    (change)="toggleSelected(item.id, $event)"
+                  />
+                </td>
                 <td class="col-scenario">{{ item.scenario || '—' }}</td>
                 <td class="col-from">{{ item.from }}</td>
                 <td class="col-subject">{{ item.subject || '—' }}</td>
@@ -112,6 +152,19 @@
           </tbody>
         </table>
       </div>
+
+      <ng-container *appHasPermission="PERMISSIONS.emailEvaluationWrite">
+        <div class="bulk-bar">
+          <button
+            class="row-btn row-btn-accent"
+            type="button"
+            (click)="evaluateSelected()"
+            [disabled]="selectedCount() === 0"
+          >
+            {{ t('emails.evaluateSelected') }} ({{ selectedCount() }})
+          </button>
+        </div>
+      </ng-container>
 
       @if (totalPages() > 1) {
         <div class="pagination">

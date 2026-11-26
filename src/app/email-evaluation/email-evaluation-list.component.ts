@@ -12,6 +12,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import {
   EmailEvaluationCaseListItem,
   EmailEvaluationDatasetService,
@@ -72,6 +73,14 @@ export class EmailEvaluationListComponent implements OnInit {
   readonly evaluationResult = signal<unknown>(null);
   readonly evaluationError = signal<string | null>(null);
   readonly isEvaluating = signal(false);
+
+  readonly selectedIds = signal<ReadonlySet<number>>(new Set());
+  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly allPageSelected = computed(
+    () =>
+      this.cases().length > 0 && this.cases().every((item) => this.selectedIds().has(item.id)),
+  );
+  readonly somePageSelected = computed(() => this.selectedCount() > 0 && !this.allPageSelected());
 
   readonly canWriteEmails = computed(() => this.permissions.has(PERMISSIONS.emailEvaluationWrite));
 
@@ -144,6 +153,8 @@ export class EmailEvaluationListComponent implements OnInit {
           }
           this.cases.set(result.items);
           this.totalCount.set(result.totalCount);
+          // La selección es por página: al cambiar de página, filtro o búsqueda se limpia.
+          this.selectedIds.set(new Set());
         },
         error: () => {
           if (seq !== this.loadSeq) {
@@ -249,6 +260,54 @@ export class EmailEvaluationListComponent implements OnInit {
     this.datasetService.evaluateCase(item.id).subscribe({
       next: (result) => this.evaluationResult.set(result),
       error: (err: unknown) => this.evaluationError.set(this.extractError(err)),
+      complete: () => this.isEvaluating.set(false),
+    });
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  toggleSelected(id: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.selectedIds.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  // Marca o desmarca solo los casos de la página visible.
+  toggleAll(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.selectedIds.set(checked ? new Set(this.cases().map((item) => item.id)) : new Set());
+  }
+
+  // Evalúa todos los casos seleccionados en paralelo; un fallo no corta al resto.
+  evaluateSelected(): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0 || this.isEvaluating()) {
+      return;
+    }
+
+    this.evaluationLabel.set(this.t('emails.selectedCount', { count: ids.length }));
+    this.evaluationResult.set(null);
+    this.evaluationError.set(null);
+    this.isEvaluating.set(true);
+
+    forkJoin(
+      ids.map((id) =>
+        this.datasetService.evaluateCase(id).pipe(
+          map((result) => ({ id, result })),
+          catchError((err: unknown) => of({ id, error: this.extractError(err) })),
+        ),
+      ),
+    ).subscribe({
+      next: (results) => this.evaluationResult.set(results),
       complete: () => this.isEvaluating.set(false),
     });
   }
