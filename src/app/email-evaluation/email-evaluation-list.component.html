@@ -100,35 +100,11 @@
                 <td class="col-actions">
                   <button
                     *appHasPermission="PERMISSIONS.emailEvaluationWrite"
-                    class="row-btn"
-                    type="button"
-                    (click)="openCase(item); $event.stopPropagation()"
-                  >
-                    {{ t('common.edit') }}
-                  </button>
-                  <button
-                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
-                    class="row-btn"
-                    type="button"
-                    (click)="duplicateCase(item, $event)"
-                  >
-                    {{ t('emails.duplicate') }}
-                  </button>
-                  <button
-                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
                     class="row-btn row-btn-accent"
                     type="button"
                     (click)="evaluate(item, $event)"
                   >
                     {{ t('emails.evaluate') }}
-                  </button>
-                  <button
-                    *appHasPermission="PERMISSIONS.emailEvaluationWrite"
-                    class="row-btn row-btn-danger"
-                    type="button"
-                    (click)="removeCase(item, $event)"
-                  >
-                    {{ t('common.delete') }}
                   </button>
                 </td>
               </tr>
