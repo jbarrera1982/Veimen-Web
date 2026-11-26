@@ -158,8 +158,10 @@ export class EmailEvaluationDatasetService {
   }
 
   // Requiere email-evaluation.write. Devuelve el caso creado (201) con su id.
-  createCase(payload: EmailEvaluationCasePayload): Observable<EmailEvaluationCase> {
-    return this.http.post<ApiCase>(this.baseUrl, payload).pipe(map(normalizeCase));
+  createCase(payload: EmailEvaluationCasePayload): Observable<EmailEvaluationCase | null> {
+    return this.http
+      .post<ApiCase | null>(this.baseUrl, payload)
+      .pipe(map((raw) => (raw ? normalizeCase(raw) : null)));
   }
 
   // Requiere email-evaluation.write. El id identifica la fila (204).

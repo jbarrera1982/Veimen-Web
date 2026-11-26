@@ -158,6 +158,17 @@
   background: var(--vm-wash);
 }
 
+:host ::ng-deep .ql-toolbar.ql-snow svg {
+  width: 18px;
+  height: 18px;
+  max-width: none;
+}
+
+:host ::ng-deep .ql-toolbar.ql-snow .ql-picker-label {
+  display: inline-flex;
+  align-items: center;
+}
+
 :host ::ng-deep .ql-container.ql-snow {
   border-color: var(--vm-line-strong);
   border-radius: 0 0 0.375rem 0.375rem;
